@@ -1,6 +1,6 @@
-package wgslsmith.wgslgenerator.ast
+package internalProgRep
 
-enum class WGSLTypeEnum(val wgslType: String) {
+enum class Type(val wgslType: String) {
     BOOL("bool"),
     FLOAT("f32"),
     INT("i32"),
@@ -8,10 +8,10 @@ enum class WGSLTypeEnum(val wgslType: String) {
 }
 
 interface WGSLType {
-    val type: WGSLTypeEnum
+    val type: Type
 }
 
-class WGSLScalarType(override val type: WGSLTypeEnum) : WGSLType {
+class WGSLScalarType(override val type: Type) : WGSLType {
     override fun equals(other: Any?): Boolean {
         if (other != null && other is WGSLScalarType) {
             return type == other.type

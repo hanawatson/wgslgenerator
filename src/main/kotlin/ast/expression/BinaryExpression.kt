@@ -1,8 +1,8 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
-import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLTypeEnum
+import internalProgRep.Type
+import internalProgRep.WGSLScalarType
+import internalProgRep.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.ConfigurationManager
 import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
@@ -10,32 +10,6 @@ import wgslsmith.wgslgenerator.utils.SafeWrapperManager
 
 interface BinOpForms {
     val binOp: String
-}
-
-internal enum class BinOpArithmeticForms(override val binOp: String, val longOp: String) : BinOpForms {
-    ADD("+", "add"),
-    DIV("/", "div"),
-    MINUS("-", "minus"),
-    MOD("%", "mod"),
-    MULT("*", "mult");
-}
-
-internal enum class BinOpBitForms(override val binOp: String) : BinOpForms {
-    BIT_OR("|"),
-    BIT_AND("&"),
-    BIT_EXCLUSIVE_OR("^"),
-    SHIFT_LEFT("<<"),
-    SHIFT_RIGHT(">>"); // SHIFT_RIGHT is LOGICAL with type UNINT, ARITHMETIC with type INT
-}
-
-// when vectors are introduced maybe make another enum with only OR / AND? then pick from there if type vec<bool>
-// actually we can add together ops because we are making arraylists. no duped enums!
-
-internal enum class BinOpLogicalForms(override val binOp: String) : BinOpForms {
-    SHORT_OR("||"),
-    SHORT_AND("&&"),
-    OR("|"),
-    AND("&");
 }
 
 internal object BinOpGenerator {
@@ -47,12 +21,12 @@ internal object BinOpGenerator {
         symbolTable: SymbolTable,
         expressionType: WGSLType,
         depth: Int,
-        opType: ExpressionForms
+        opType: ExprForms
     ): Expression {
         val binOpForms: ArrayList<BinOpForms> = when (opType) {
-            ExpressionForms.BIN_OP_ARITHMETIC -> binOpArithmeticForms
-            ExpressionForms.BIN_OP_BIT        -> binOpBitForms
-            else                              -> binOpLogicalForms
+            ExprForms.BIN_OP_ARITHMETIC -> binOpArithmeticForms
+            ExprForms.BIN_OP_BIT        -> binOpBitForms
+            else                        -> binOpLogicalForms
         }
 
         val binOpFormIndex = PseudoNumberGenerator.getRandomIntInRange(
@@ -71,27 +45,27 @@ private class BinOpExpression(private val binOpForm: BinOpForms) : Expression() 
     private lateinit var lhs: Expression
     private lateinit var rhs: Expression
     private lateinit var rhsType: WGSLType
-    override lateinit var expressionType: WGSLType
+    override lateinit var returnType: WGSLType
 
     override fun generate(symbolTable: SymbolTable, expressionType: WGSLType, depth: Int):
             BinOpExpression {
-        lhs = ExpressionGenerator.getExpressionWithType(symbolTable, expressionType, depth + 1)
+        lhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, expressionType, depth + 1)
         rhsType =
             if (binOpForm == BinOpBitForms.SHIFT_LEFT || binOpForm == BinOpBitForms.SHIFT_RIGHT) {
                 // if expressionType is vec, this must also be vec
-                WGSLScalarType(WGSLTypeEnum.UNINT)
+                WGSLScalarType(Type.UNINT)
             } else {
                 expressionType
             }
-        rhs = ExpressionGenerator.getExpressionWithType(symbolTable, rhsType, depth + 1)
-        this.expressionType = expressionType
+        rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, rhsType, depth + 1)
+        this.returnType = expressionType
 
         return this
     }
 
     override fun toString(): String {
         if (binOpForm is BinOpArithmeticForms && ConfigurationManager.useSafeWrappers) {
-            val safeWrapper = SafeWrapperManager.getBinOpArithmeticSafeWrapper(expressionType, binOpForm)
+            val safeWrapper = SafeWrapperManager.getBinOpArithmeticSafeWrapper(returnType, binOpForm)
             return "$safeWrapper($lhs, $rhs)"
         }
 

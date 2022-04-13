@@ -1,9 +1,9 @@
 package wgslsmith.wgslgenerator.ast.expression
 
+import internalProgRep.WGSLType
 import wgslsmith.wgslgenerator.ast.Literal
 import wgslsmith.wgslgenerator.ast.LiteralGenerator
 import wgslsmith.wgslgenerator.ast.Symbol
-import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.ConfigurationManager
 import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
@@ -12,10 +12,10 @@ internal class IdentityExpression : Expression() {
     private var symbol: Symbol? = null
     private var literal: Literal? = null
     private var parentheses = 0
-    override lateinit var expressionType: WGSLType
+    override lateinit var returnType: WGSLType
 
     override fun generate(symbolTable: SymbolTable, expressionType: WGSLType, depth: Int): IdentityExpression {
-        this.expressionType = expressionType
+        this.returnType = expressionType
         symbol = symbolTable.getRandomSymbol(expressionType)
         if (symbol!!.getName() == "") {
             symbol = null
@@ -31,7 +31,7 @@ internal class IdentityExpression : Expression() {
     }
 
     fun getLiteralAsIdentity(literal: Literal): IdentityExpression {
-        this.expressionType = literal.getType()
+        this.returnType = literal.getType()
         this.literal = literal
 
         return this
