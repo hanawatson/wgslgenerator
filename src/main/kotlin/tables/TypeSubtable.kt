@@ -1,11 +1,19 @@
-package wgslsmith.wgslgenerator.ast.tables
+package wgslsmith.wgslgenerator.tables
 
 import wgslsmith.wgslgenerator.ast.Symbol
+import wgslsmith.wgslgenerator.ast.WGSLType
 
-class TypeSubtable {
+class TypeSubtable(val type: WGSLType) {
     private var writeableIndex: Int = 0 // var or val. man or muppet? this is the first index that is NOT readonly
     private var nextIndex: Int = 0 // the next index to insert at
-    private val symbols: HashMap<Int, Symbol> = hashMapOf() // insert a symbol at NextIndex.
+    private var symbols: HashMap<Int, Symbol> = hashMapOf() // insert a symbol at NextIndex.
+
+    fun isEmpty(ofWriteable: Boolean): Boolean {
+        if (ofWriteable) {
+            return writeableIndex == nextIndex
+        }
+        return nextIndex == 0
+    }
 
     fun addSymbol(symbol: Symbol) {
         symbols[nextIndex] = symbol
@@ -30,5 +38,15 @@ class TypeSubtable {
 
     fun getSymbolAtIndex(index: Int): Symbol? {
         return symbols[index]
+    }
+
+    internal fun copy(): TypeSubtable {
+        val typeSubtable = TypeSubtable(type)
+
+        typeSubtable.writeableIndex = this.writeableIndex
+        typeSubtable.nextIndex = this.nextIndex
+        typeSubtable.symbols = HashMap(this.symbols)
+
+        return typeSubtable
     }
 }

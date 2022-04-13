@@ -8,4 +8,8 @@ class Symbol(private val name: String, private val type: WGSLType) {
     fun getType(): WGSLType {
         return type
     }
+
+    override fun toString(): String {
+        return name
+    }
 }
