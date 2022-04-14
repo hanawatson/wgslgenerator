@@ -121,9 +121,12 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
 }
 
 internal enum class BuiltinIntegerExpr(override val operator: String, override val args: Int) : BuiltinExpr {
-    COUNT_LEADING_ZEROS("countLeadingZeros", 1),
+    // temporarily commented out - see https://github.com/gfx-rs/naga/issues/1824
+    // COUNT_LEADING_ZEROS("countLeadingZeros", 1),
     COUNT_ONE_BITS("countOneBits", 1),
-    COUNT_TRAILING_ZEROS("countTrailingZeros", 1),
+
+    // temporarily commented out - see https://github.com/gfx-rs/naga/issues/1824
+    // COUNT_TRAILING_ZEROS("countTrailingZeros", 1),
     FIRST_LEADING_BIT("firstLeadingBit", 1),
     FIRST_TRAILING_BIT("firstTrailingBit", 1),
     EXTRACT_BITS("extractBits", 3),
