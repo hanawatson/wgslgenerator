@@ -1,7 +1,7 @@
 package wgslsmith.wgslgenerator.tables
 
-import wgslsmith.wgslgenerator.ast.Symbol
 import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.Symbol
 
 class TypeSubtable(val type: WGSLType) {
     private var writeableIndex: Int = 0 // var or val. man or muppet? this is the first index that is NOT readonly

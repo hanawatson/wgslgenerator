@@ -1,4 +1,4 @@
-package wgslsmith.wgslgenerator.internalProgRep
+package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.Type.*
@@ -11,7 +11,8 @@ internal enum class ExprTypes(val exprTypes: ArrayList<Type>, val exprs: List<Ex
     BUILTIN_FLOAT(arrayListOf(FLOAT), BuiltinFloatExpr.values().asList()),
     BUILTIN_INTEGER(arrayListOf(INT, UNINT), BuiltinIntegerExpr.values().asList()),
     BUILTIN_LOGICAL(arrayListOf(BOOL), BuiltinLogicalExpr.values().asList()),
-    COMPARISON(arrayListOf(BOOL), ComparisonExpr.values().asList()),
+    COMPARISON_EQ(arrayListOf(BOOL), ComparisonEqExpr.values().asList()),
+    COMPARISON_TH(arrayListOf(BOOL), ComparisonThExpr.values().asList()),
     IDENTITY(ArrayList(Type.values().asList()), IdentityExpr.values().asList()),
     UNARY_ARITHMETIC(arrayListOf(FLOAT, INT), UnaryArithmeticExpr.values().asList()),
     UNARY_BIT(arrayListOf(INT, UNINT), UnaryBitExpr.values().asList()),
@@ -39,7 +40,8 @@ internal enum class TypeExprs(val typeExprs: ArrayList<Expr>) {
         ArrayList(
             ExprTypes.BINARY_LOGICAL.exprs +
                     ExprTypes.BUILTIN_LOGICAL.exprs +
-                    ExprTypes.COMPARISON.exprs +
+                    ExprTypes.COMPARISON_EQ.exprs +
+                    ExprTypes.COMPARISON_TH.exprs +
                     ExprTypes.IDENTITY.exprs +
                     ExprTypes.UNARY_LOGICAL.exprs
         )

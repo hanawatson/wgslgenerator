@@ -1,28 +1,27 @@
 package wgslsmith.wgslgenerator.tables
 
 import wgslsmith.wgslgenerator.ast.Symbol
+import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLTypeEnum
 import wgslsmith.wgslgenerator.utils.ConfigurationManager
 import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
 
 class SymbolTable {
-    // holds a bunch of TypeSubtables.
-    private var boolSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(WGSLTypeEnum.BOOL))
-    private var floatSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(WGSLTypeEnum.FLOAT))
-    private var intSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(WGSLTypeEnum.INT))
-    private var unIntSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(WGSLTypeEnum.UNINT))
+    private var boolSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.BOOL))
+    private var floatSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.FLOAT))
+    private var intSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.INT))
+    private var unIntSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.UNINT))
 
     private var newVarLabelIndex: Int = 0
 
     private fun getTypeSubtable(type: WGSLType): TypeSubtable {
         return when (type.type) {
-            WGSLTypeEnum.BOOL  -> boolSubtable
-            WGSLTypeEnum.FLOAT -> floatSubtable
-            WGSLTypeEnum.INT   -> intSubtable
-            WGSLTypeEnum.UNINT -> unIntSubtable
-            // else               -> throw Exception("Unknown internal expression type handled!")
+            Type.BOOL  -> boolSubtable
+            Type.FLOAT -> floatSubtable
+            Type.INT   -> intSubtable
+            Type.UNINT -> unIntSubtable
+            // else               -> throw Exception("Attempt to access symbol subtable of unknown type!")
         }
     }
 

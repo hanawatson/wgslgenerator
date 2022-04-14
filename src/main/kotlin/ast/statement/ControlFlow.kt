@@ -37,13 +37,13 @@ internal class IfStatement : Statement() {
 
     override fun generate(symbolTable: SymbolTable, depth: Int): IfStatement {
         // can mat/vecs of bools be used here? must check
-        ifCond = ExpressionGenerator.getNewExpressionWithType(symbolTable, WGSLScalarType(WGSLTypeEnum.BOOL))
+        ifCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
         ifBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
 
         while (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityIfElseBranch)
             && currentIfElseBranches < ConfigurationManager.maxIfElseBranches) {
             val elseIfCond =
-                ExpressionGenerator.getNewExpressionWithType(symbolTable, WGSLScalarType(WGSLTypeEnum.BOOL))
+                ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
             val elseIfBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
             elseIfConds.add(elseIfCond)
             elseIfBodies.add(elseIfBody)
@@ -89,9 +89,9 @@ internal class SwitchStatement : Statement() {
 
     override fun generate(symbolTable: SymbolTable, depth: Int): SwitchStatement {
         selectorType = WGSLScalarType(
-            if (PseudoNumberGenerator.getRandomBool()) WGSLTypeEnum.INT else WGSLTypeEnum.UNINT
+            if (PseudoNumberGenerator.getRandomBool()) Type.INT else Type.UNINT
         )
-        selector = ExpressionGenerator.getNewExpressionWithType(symbolTable, selectorType)
+        selector = ExpressionGenerator.getExpressionWithReturnType(symbolTable, selectorType, 0)
 
         while (currentSwitchCases < 1 ||
             (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilitySwitchCase)

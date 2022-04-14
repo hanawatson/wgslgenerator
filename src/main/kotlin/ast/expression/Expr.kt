@@ -1,4 +1,4 @@
-package wgslsmith.wgslgenerator.internalProgRep
+package wgslsmith.wgslgenerator.ast.expression
 
 internal interface Expr {
     val operator: String
@@ -32,9 +32,7 @@ internal enum class BinaryArithmeticExpr(override val operator: String) : Binary
 internal enum class BinaryBitExpr(override val operator: String) : BinaryExpr {
     BIT_OR("|"),
     BIT_AND("&"),
-    BIT_EXCLUSIVE_OR("^"),
-    SHIFT_LEFT("<<"),
-    SHIFT_RIGHT(">>"); // SHIFT_RIGHT is LOGICAL with type UNINT, ARITHMETIC with type INT
+    BIT_EXCLUSIVE_OR("^");
 }
 
 // when vectors are introduced maybe make another enum with only OR / AND? then pick from there if type vec<bool>
@@ -47,16 +45,20 @@ internal enum class BinaryLogicalExpr(override val operator: String) : BinaryExp
     AND("&");
 }
 
-internal enum class ComparisonExpr(override val operator: String) : BinaryExpr {
+internal interface ComparisonExpr : Expr
+
+internal enum class ComparisonEqExpr(override val operator: String) : ComparisonExpr {
     EQUAL("=="),
-    NOT_EQUAL("!="),
+    NOT_EQUAL("!=");
+}
+
+internal enum class ComparisonThExpr(override val operator: String) : ComparisonExpr {
     LESS_THAN("<"),
     LESS_THAN_OR_EQUAL("<="),
     MORE_THAN(">"),
     MORE_THAN_OR_EQUAL(">=");
 }
 
-// make unary or not?
 internal enum class IdentityExpr(override val operator: String) : Expr {
     ID("");
 }
@@ -74,30 +76,38 @@ internal enum class BuiltinArithmeticExpr(override val operator: String, overrid
 
 internal enum class BuiltinFloatExpr(override val operator: String, override val args: Int) : BuiltinExpr {
     ACOS("acos", 1),
+    ACOSH("acosh", 1),
     ASIN("asin", 1),
+    ASINH("asinh", 1),
     ATAN("atan", 1),
+    ATANH("atanh", 1),
     ATAN2("atan2", 2),
     CEIL("ceil", 1),
     COS("cos", 1),
     COSH("cosh", 1),
     DEGREES("degrees", 1),
-    DISTANCE("distance", 2),
+
+    // temporarily commented out until implementation of vectors is concrete
+    // DISTANCE("distance", 2),
     EXP("exp", 1),
     EXP2("exp2", 1),
     FLOOR("floor", 1),
     FMA("fma", 3),
     FRACT("fract", 1),
     INVERSE_SQRT("inverseSqrt", 1),
-    LDEXP("ldexp", 2),
+
+    // temporarily commented out until implementation of vectors is concrete
+    // LDEXP("ldexp", 2),
     LENGTH("length", 1),
     LOG("log", 1),
     LOG2("log2", 1),
-    MIX("mix", 3),
+    MIX_COMPONENT("mix", 3),
+    MIX_LINEAR("mix", 3),
     POW("pow", 2),
-    QUANTIZE_TO_F16("quantizeToF16", 1),
+
+    // temporarily commented due to lack of implementation in Tint and naga
+    // QUANTIZE_TO_F16("quantizeToF16", 1),
     RADIANS("radians", 1),
-    REFLECT("reflect", 2),
-    REFRACT("refract", 3),
     ROUND("round", 1),
     SIGN("sign", 1),
     SIN("sin", 1),
@@ -119,9 +129,14 @@ internal enum class BuiltinIntegerExpr(override val operator: String, override v
     EXTRACT_BITS("extractBits", 3),
     INSERT_BITS("insertBits", 4),
     REVERSE_BITS("reverseBits", 1);
+
+    // temporarily commented out until implementation of vectors is concrete
+    // SHIFT_LEFT("shiftLeft", 2),
+    // SHIFT_RIGHT("shiftRight", 2);
 }
 
 internal enum class BuiltinLogicalExpr(override val operator: String, override val args: Int) : BuiltinExpr {
     ALL("all", 1),
-    ANY("any", 1);
+    ANY("any", 1),
+    SELECT("select", 3);
 }

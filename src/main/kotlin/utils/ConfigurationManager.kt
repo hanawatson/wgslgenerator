@@ -1,19 +1,18 @@
 package wgslsmith.wgslgenerator.utils
 
 internal object ConfigurationManager {
-    const val maxStatementsInBody = 20
+    const val maxStatementsInBody = 5 //20
     const val maxStatementsInIfBody = 5
     const val maxStatementsInSwitchBody = 3
-    const val maxExpressionRecursion = 10
+    const val maxExpressionRecursion = 5 //10
     const val maxStatementRecursion = 3
     const val maxParentheses = 10
-    const val maxIfElseBranches = 5
-    const val maxSwitchCases = 10
+    const val maxIfElseBranches = 3 //5
+    const val maxSwitchCases = 2 //10
 
-    const val useSafeWrappers = false
     const val useExpressionParentheses = true
     const val useExcessParentheses = true
-    
+
     const val ensureNoDuplicateSwitchCases = false
     const val ensureNoFallthroughLastSwitchCase = true
 

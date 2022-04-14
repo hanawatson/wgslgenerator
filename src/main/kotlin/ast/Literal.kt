@@ -9,11 +9,11 @@ object LiteralGenerator {
             return Literal("${type.type.wgslType}()", type)
         }
         val literalString = when (type.type) {
-            WGSLTypeEnum.BOOL  -> "${PseudoNumberGenerator.getRandomBool()}"
-            WGSLTypeEnum.FLOAT -> "${PseudoNumberGenerator.getRandomFloat()}f"
-            WGSLTypeEnum.INT   -> "${PseudoNumberGenerator.getRandomIntInRange(Int.MIN_VALUE, Int.MAX_VALUE)}"
-            WGSLTypeEnum.UNINT -> "${PseudoNumberGenerator.getRandomUnIntInRange(UInt.MIN_VALUE, UInt.MAX_VALUE)}u"
-            // else               -> throw Exception("Unknown internal expression type handled!")
+            Type.BOOL  -> "${PseudoNumberGenerator.getRandomBool()}"
+            Type.FLOAT -> "${PseudoNumberGenerator.getRandomFloat()}f"
+            Type.INT   -> "${PseudoNumberGenerator.getRandomIntInRange(Int.MIN_VALUE, Int.MAX_VALUE)}"
+            Type.UNINT -> "${PseudoNumberGenerator.getRandomUnIntInRange(UInt.MIN_VALUE, UInt.MAX_VALUE)}u"
+            // else       -> throw Exception("Attempt to generate literal of unknown type!")
         }
 
         return Literal(literalString, type)

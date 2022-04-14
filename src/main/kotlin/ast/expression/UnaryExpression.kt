@@ -1,18 +1,12 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import internalProgRep.Type
-import internalProgRep.WGSLScalarType
-import internalProgRep.WGSLType
-import wgslsmith.wgslgenerator.internalProgRep.BinaryBitExpr
-import wgslsmith.wgslgenerator.internalProgRep.Expr
+import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.ConfigurationManager
 
 internal class UnaryExpression : Expression() {
-    private lateinit var lhs: Expression
-    private lateinit var rhs: Expression
-    private lateinit var lhsType: WGSLType
-    private lateinit var rhsType: WGSLType
+    private lateinit var arg: Expression
+    private lateinit var argType: WGSLType
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
@@ -21,26 +15,25 @@ internal class UnaryExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        lhsType = returnType
-        lhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, lhsType, depth + 1)
-
-        rhsType =
-            if (expr == BinaryBitExpr.SHIFT_LEFT || expr == BinaryBitExpr.SHIFT_RIGHT) {
-                WGSLScalarType(Type.UNINT)
-            } else {
-                returnType
-            }
-        rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, rhsType, depth + 1)
+        argType = returnType
+        arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
 
         return this
     }
 
     override fun toString(): String {
-        val binaryExpressionString = "$lhs ${expr.operator} $rhs"
+        // handle the special case of an attempt to apply the unary minus operator "-" to a negative
+        // f32 literal value, resulting in incorrect interpretation as the decrement operator "--"
+        val argString = if ("$arg"[0] == '-') {
+            "($arg)"
+        } else {
+            "$arg"
+        }
+        val unaryExpressionString = "${expr.operator}$argString"
 
         if (ConfigurationManager.useExpressionParentheses) {
-            return "($binaryExpressionString)"
+            return "($unaryExpressionString)"
         }
-        return binaryExpressionString
+        return unaryExpressionString
     }
 }

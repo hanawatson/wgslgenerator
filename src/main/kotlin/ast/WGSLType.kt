@@ -1,4 +1,4 @@
-package internalProgRep
+package wgslsmith.wgslgenerator.ast
 
 enum class Type(val wgslType: String) {
     BOOL("bool"),

@@ -1,18 +1,14 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import internalProgRep.Type
-import internalProgRep.WGSLScalarType
-import internalProgRep.WGSLType
-import wgslsmith.wgslgenerator.internalProgRep.BinaryBitExpr
-import wgslsmith.wgslgenerator.internalProgRep.Expr
+import wgslsmith.wgslgenerator.ast.Type
+import wgslsmith.wgslgenerator.ast.WGSLScalarType
+import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
 
 internal class BuiltinExpression : Expression() {
-    private lateinit var lhs: Expression
-    private lateinit var rhs: Expression
-    private lateinit var lhsType: WGSLType
-    private lateinit var rhsType: WGSLType
+    private var argsLimit = 0
+    private val args = ArrayList<Expression>()
+    private val argTypes = ArrayList<WGSLType>()
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
@@ -21,26 +17,64 @@ internal class BuiltinExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        lhsType = returnType
-        lhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, lhsType, depth + 1)
+        if (expr !is BuiltinExpr) {
+            throw Exception("Failure to validate BuiltinExpr during BuiltinExpression generation!")
+        }
+        argsLimit = expr.args - 1
+        for (i in (0..argsLimit)) {
+            argTypes.add(returnType)
+        }
 
-        rhsType =
-            if (expr == BinaryBitExpr.SHIFT_LEFT || expr == BinaryBitExpr.SHIFT_RIGHT) {
-                WGSLScalarType(Type.UNINT)
-            } else {
-                returnType
+        // set bool/int/unint matching types. must match existing returnType dimensions when vectors are implemented
+        val matchingBoolType = WGSLScalarType(Type.BOOL)
+        // val matchingIntType = WGSLScalarType(Type.INT)
+        // val matchingUnIntType = WGSLScalarType(Type.UNINT)
+
+        val scalarFloatType = WGSLScalarType(Type.FLOAT)
+        val scalarUnIntType = WGSLScalarType(Type.UNINT)
+
+        // allow for irregular/different type args
+        when (expr) {
+            /*BuiltinFloatExpr.LDEXP          -> {
+                argTypes[1] = matchingIntType
+            }*/
+            BuiltinFloatExpr.MIX_COMPONENT  -> {
+                argTypes[2] = scalarFloatType
             }
-        rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, rhsType, depth + 1)
+            BuiltinIntegerExpr.EXTRACT_BITS -> {
+                argTypes[1] = scalarUnIntType
+                argTypes[2] = scalarUnIntType
+            }
+            BuiltinIntegerExpr.INSERT_BITS  -> {
+                argTypes[2] = scalarUnIntType
+                argTypes[3] = scalarUnIntType
+            }
+            /*BuiltinIntegerExpr.SHIFT_LEFT -> {
+                argTypes[1] = matchingUnIntType
+            }
+            BuiltinIntegerExpr.SHIFT_RIGHT -> {
+                argTypes[1] = matchingUnIntType
+            }*/
+            BuiltinLogicalExpr.SELECT       -> {
+                argTypes[2] = matchingBoolType
+            }
+        }
+
+        for (i in (0..argsLimit)) {
+            val argExpression = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argTypes[i], depth + 1)
+            args.add(argExpression)
+        }
 
         return this
     }
 
     override fun toString(): String {
-        val binaryExpressionString = "$lhs ${expr.operator} $rhs"
-
-        if (ConfigurationManager.useExpressionParentheses) {
-            return "($binaryExpressionString)"
+        var funcString = "${expr.operator}(${args[0]}"
+        for (i in 1..argsLimit) {
+            funcString += ", ${args[i]}"
         }
-        return binaryExpressionString
+        funcString += ")"
+
+        return funcString
     }
 }

@@ -1,8 +1,8 @@
 package wgslsmith.wgslgenerator.ast.statement
 
 import wgslsmith.wgslgenerator.ast.Symbol
+import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLTypeEnum
 import wgslsmith.wgslgenerator.ast.expression.Expression
 import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
 import wgslsmith.wgslgenerator.ast.statement.AssignmentGenerator.assignmentArithmeticForms
@@ -68,16 +68,16 @@ internal class AssignmentStatement : Statement() {
     private var declaredNewSymbol = false
 
     override fun generate(symbolTable: SymbolTable, depth: Int): AssignmentStatement {
-        rhs = ExpressionGenerator.getNewExpressionWithoutType(symbolTable)
-        type = rhs.getType()
+        rhs = ExpressionGenerator.getExpressionWithoutReturnType(symbolTable, 0)
+        type = rhs.returnType
 
         val assignmentForms: ArrayList<AssignmentForms> = when (type.type) {
-            WGSLTypeEnum.BOOL  -> assignmentLogicalForms
-            WGSLTypeEnum.FLOAT -> assignmentArithmeticForms
-            WGSLTypeEnum.INT   -> ArrayList(
+            Type.BOOL  -> assignmentLogicalForms
+            Type.FLOAT -> assignmentArithmeticForms
+            Type.INT   -> ArrayList(
                 assignmentArithmeticForms + assignmentBitForms + assignmentIncDecForms
             )
-            WGSLTypeEnum.UNINT -> ArrayList(
+            Type.UNINT -> ArrayList(
                 assignmentArithmeticForms + assignmentBitForms + assignmentBitShiftForms + assignmentIncDecForms
             )
         }

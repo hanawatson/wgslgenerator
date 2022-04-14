@@ -1,14 +1,14 @@
 package wgslsmith.wgslgenerator.utils
 
+import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLTypeEnum
 import kotlin.random.Random
 import kotlin.random.nextUInt
 
 object PseudoNumberGenerator {
     private var initialized = false
-    private val WGSLEnumTypes = ArrayList(WGSLTypeEnum.values().asList())
+    private val WGSLEnumTypes = ArrayList(Type.values().asList())
 
     private lateinit var random: Random
 
@@ -52,7 +52,7 @@ object PseudoNumberGenerator {
             throw Exception("Pseudorandom generator must be initialized before use!")
         }
         // Kotlin has no "float in range" function, so we use its safe Double->Float cast function
-        // We also need to add overflow/underflow checks to make certain the casting is OK.
+        // we also need to add overflow/underflow checks to make certain the cast result is defined in WGSL
         var result = getRandomDoubleInRange(Float.MIN_VALUE.toDouble(), Float.MAX_VALUE.toDouble()).toFloat()
         if (result == Float.POSITIVE_INFINITY || result.isNaN()) {
             return 0f
