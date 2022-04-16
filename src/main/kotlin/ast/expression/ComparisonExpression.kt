@@ -21,7 +21,7 @@ internal class ComparisonExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        lhs = ExpressionGenerator.getExpressionWithoutReturnType(symbolTable, depth + 1)
+        lhs = ExpressionGenerator.getExpressionWithNumericReturnType(symbolTable, depth + 1)
         argType = lhs.returnType
         rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
 

@@ -18,6 +18,16 @@ internal object ExpressionGenerator {
         return getExpressionFromList(symbolTable, null, allExprs, depth)
     }
 
+    fun getExpressionWithNumericReturnType(symbolTable: SymbolTable, depth: Int): Expression {
+        // get a random numeric type
+        val numericTypes = arrayListOf(Type.FLOAT, Type.INT, Type.UNINT)
+        val typeIndex = PseudoNumberGenerator.getRandomIntInRange(0, numericTypes.size)
+        val returnTypeEnum = numericTypes[typeIndex]
+        val returnType = WGSLScalarType(returnTypeEnum)
+
+        return getExpressionWithReturnType(symbolTable, returnType, depth)
+    }
+
     fun getExpressionWithReturnType(symbolTable: SymbolTable, returnType: WGSLType, depth: Int): Expression {
         val exprs = (when (returnType.type) {
             Type.BOOL  -> TypeExprs.BOOL
@@ -32,9 +42,15 @@ internal object ExpressionGenerator {
         symbolTable: SymbolTable, givenReturnType: WGSLType?, exprs:
         ArrayList<Expr>, depth: Int
     ): Expression {
+        val possibleExprs = if (depth >= ConfigurationManager.maxExpressionRecursion) {
+            ArrayList(IdentityExpr.values().asList())
+        } else {
+            exprs
+        }
+
         // probabilities should be implemented here
-        val formIndex = PseudoNumberGenerator.getRandomIntInRange(0, exprs.size)
-        val expr = exprs[formIndex]
+        val formIndex = PseudoNumberGenerator.getRandomIntInRange(0, possibleExprs.size)
+        val expr = possibleExprs[formIndex]
         val exprType = ExprTypes.typeOf(expr)
         val returnType = if (givenReturnType == null) {
             val typeIndex = PseudoNumberGenerator.getRandomIntInRange(0, exprType.exprTypes.size)
@@ -43,10 +59,6 @@ internal object ExpressionGenerator {
             WGSLScalarType(returnTypeEnum)
         } else {
             givenReturnType
-        }
-
-        if (depth >= ConfigurationManager.maxExpressionRecursion) {
-            return IdentityExpression().generate(symbolTable, returnType, IdentityExpr.ID, depth)
         }
 
         return when (expr) {

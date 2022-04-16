@@ -1,13 +1,9 @@
 package wgslsmith.wgslgenerator.ast
 
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
 import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
 
 object LiteralGenerator {
     fun getLiteral(type: WGSLType): Literal {
-        if (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityZeroLiteral)) {
-            return Literal("${type.type.wgslType}()", type)
-        }
         val literalString = when (type.type) {
             Type.BOOL  -> "${PseudoNumberGenerator.getRandomBool()}"
             Type.FLOAT -> "${PseudoNumberGenerator.getRandomFloat()}f"

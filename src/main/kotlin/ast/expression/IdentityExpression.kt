@@ -20,11 +20,15 @@ internal class IdentityExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        symbol = symbolTable.getRandomSymbol(returnType)
-        // indicates that a literal value, not an existing symbol, should be generated
-        if (symbol!!.getName() == "") {
-            symbol = null
-            literal = LiteralGenerator.getLiteral(returnType)
+        if (expr == IdentityExpr.ID) {
+            symbol = symbolTable.getRandomSymbol(returnType)
+            // indicates that a literal value, not an existing symbol, should be generated
+            if (symbol!!.getName() == "") {
+                symbol = null
+                literal = LiteralGenerator.getLiteral(returnType)
+            }
+        } else if (expr == IdentityExpr.ZERO_VALUE) {
+            symbol = Symbol("${returnType.type.wgslType}()", returnType)
         }
 
         while (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityParenthesesAroundIdentity)
@@ -44,14 +48,14 @@ internal class IdentityExpression : Expression() {
     }
 
     override fun toString(): String {
-        var identity = if (symbol != null) "$symbol" else "$literal"
+        var identityString = if (symbol != null) "$symbol" else "$literal"
 
         if (ConfigurationManager.useExcessParentheses) {
             for (i in 1..parentheses) {
-                identity = "($identity)"
+                identityString = "($identityString)"
             }
         }
 
-        return identity
+        return identityString
     }
 }

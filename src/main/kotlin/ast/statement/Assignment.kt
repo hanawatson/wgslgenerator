@@ -7,7 +7,6 @@ import wgslsmith.wgslgenerator.ast.expression.Expression
 import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
 import wgslsmith.wgslgenerator.ast.statement.AssignmentGenerator.assignmentArithmeticForms
 import wgslsmith.wgslgenerator.ast.statement.AssignmentGenerator.assignmentBitForms
-import wgslsmith.wgslgenerator.ast.statement.AssignmentGenerator.assignmentBitShiftForms
 import wgslsmith.wgslgenerator.ast.statement.AssignmentGenerator.assignmentIncDecForms
 import wgslsmith.wgslgenerator.ast.statement.AssignmentGenerator.assignmentLogicalForms
 import wgslsmith.wgslgenerator.tables.SymbolTable
@@ -38,11 +37,6 @@ internal enum class AssignmentBitForms(override val op: String) : AssignmentForm
     BIT_EXCLUSIVE_OR("^=");
 }
 
-internal enum class AssignmentBitShiftForms(override val op: String) : AssignmentForms {
-    SHIFT_LEFT(">>="),
-    SHIFT_RIGHT("<<=");
-}
-
 internal enum class AssignmentLogicalForms(override val op: String) : AssignmentForms {
     OR("|="),
     AND("&=");
@@ -55,7 +49,6 @@ internal enum class AssignmentStandardForms(override val op: String) : Assignmen
 internal object AssignmentGenerator {
     val assignmentArithmeticForms = ArrayList<AssignmentForms>(AssignmentArithmeticForms.values().asList())
     val assignmentBitForms = ArrayList<AssignmentForms>(AssignmentBitForms.values().asList())
-    val assignmentBitShiftForms = ArrayList<AssignmentForms>(AssignmentBitShiftForms.values().asList())
     val assignmentIncDecForms = ArrayList<AssignmentForms>(AssignmentIncDecForms.values().asList())
     val assignmentLogicalForms = ArrayList<AssignmentForms>(AssignmentLogicalForms.values().asList())
 }
@@ -74,11 +67,9 @@ internal class AssignmentStatement : Statement() {
         val assignmentForms: ArrayList<AssignmentForms> = when (type.type) {
             Type.BOOL  -> assignmentLogicalForms
             Type.FLOAT -> assignmentArithmeticForms
-            Type.INT   -> ArrayList(
-                assignmentArithmeticForms + assignmentBitForms + assignmentIncDecForms
-            )
+            Type.INT,
             Type.UNINT -> ArrayList(
-                assignmentArithmeticForms + assignmentBitForms + assignmentBitShiftForms + assignmentIncDecForms
+                assignmentArithmeticForms + assignmentBitForms + assignmentIncDecForms
             )
         }
 

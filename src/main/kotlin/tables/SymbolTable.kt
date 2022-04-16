@@ -103,7 +103,7 @@ class SymbolTable {
         val symbolTable = SymbolTable()
 
         symbolTable.boolSubtable = this.boolSubtable.copy()
-        symbolTable.floatSubtable = this.intSubtable.copy()
+        symbolTable.floatSubtable = this.floatSubtable.copy()
         symbolTable.intSubtable = this.intSubtable.copy()
         symbolTable.unIntSubtable = this.unIntSubtable.copy()
 

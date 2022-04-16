@@ -60,7 +60,8 @@ internal enum class ComparisonThExpr(override val operator: String) : Comparison
 }
 
 internal enum class IdentityExpr(override val operator: String) : Expr {
-    ID("");
+    ID(""),
+    ZERO_VALUE("");
 }
 
 internal interface BuiltinExpr : Expr {
@@ -76,11 +77,17 @@ internal enum class BuiltinArithmeticExpr(override val operator: String, overrid
 
 internal enum class BuiltinFloatExpr(override val operator: String, override val args: Int) : BuiltinExpr {
     ACOS("acos", 1),
-    ACOSH("acosh", 1),
+
+    // temporarily commented due to lack of implementation in Tint and naga
+    //ACOSH("acosh", 1),
     ASIN("asin", 1),
-    ASINH("asinh", 1),
+
+    // temporarily commented due to lack of implementation in Tint and naga
+    //ASINH("asinh", 1),
     ATAN("atan", 1),
-    ATANH("atanh", 1),
+
+    // temporarily commented due to lack of implementation in Tint and naga
+    //ATANH("atanh", 1),
     ATAN2("atan2", 2),
     CEIL("ceil", 1),
     COS("cos", 1),
@@ -112,7 +119,7 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
     SIGN("sign", 1),
     SIN("sin", 1),
     SINH("sinh", 1),
-    SMOOTH_STEP("smoothStep", 3),
+    SMOOTHSTEP("smoothstep", 3),
     SQRT("sqrt", 1),
     STEP("step", 2),
     TAN("tan", 1),
