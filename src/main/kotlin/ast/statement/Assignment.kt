@@ -1,108 +1,75 @@
 package wgslsmith.wgslgenerator.ast.statement
 
 import wgslsmith.wgslgenerator.ast.Symbol
-import wgslsmith.wgslgenerator.ast.Type
+import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.expression.Expression
-import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
-import wgslsmith.wgslgenerator.ast.statement.AssignmentGenerator.assignmentArithmeticForms
-import wgslsmith.wgslgenerator.ast.statement.AssignmentGenerator.assignmentBitForms
-import wgslsmith.wgslgenerator.ast.statement.AssignmentGenerator.assignmentIncDecForms
-import wgslsmith.wgslgenerator.ast.statement.AssignmentGenerator.assignmentLogicalForms
+import wgslsmith.wgslgenerator.ast.expression.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.ConfigurationManager
 import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
 
-interface AssignmentForms {
-    val op: String
-}
-
-// likely need a safe math wrapper here!
-internal enum class AssignmentArithmeticForms(override val op: String) : AssignmentForms {
-    ADD("+="),
-    DIV("/="),
-    MINUS("-="),
-    MOD("%="),
-    MULT("*=");
-}
-
-internal enum class AssignmentIncDecForms(override val op: String) : AssignmentForms {
-    DECREMENT("--"),
-    INCREMENT("++");
-}
-
-internal enum class AssignmentBitForms(override val op: String) : AssignmentForms {
-    BIT_OR("|="),
-    BIT_AND("&="),
-    BIT_EXCLUSIVE_OR("^=");
-}
-
-internal enum class AssignmentLogicalForms(override val op: String) : AssignmentForms {
-    OR("|="),
-    AND("&=");
-}
-
-internal enum class AssignmentStandardForms(override val op: String) : AssignmentForms {
-    ASSIGN("=");
-}
-
-internal object AssignmentGenerator {
-    val assignmentArithmeticForms = ArrayList<AssignmentForms>(AssignmentArithmeticForms.values().asList())
-    val assignmentBitForms = ArrayList<AssignmentForms>(AssignmentBitForms.values().asList())
-    val assignmentIncDecForms = ArrayList<AssignmentForms>(AssignmentIncDecForms.values().asList())
-    val assignmentLogicalForms = ArrayList<AssignmentForms>(AssignmentLogicalForms.values().asList())
-}
-
 internal class AssignmentStatement : Statement() {
+    override lateinit var stat: Stat
     private lateinit var lhs: Symbol
     private lateinit var rhs: Expression
-    private lateinit var assignmentForm: AssignmentForms
     private lateinit var type: WGSLType
     private var declaredNewSymbol = false
 
-    override fun generate(symbolTable: SymbolTable, depth: Int): AssignmentStatement {
-        rhs = ExpressionGenerator.getExpressionWithoutReturnType(symbolTable, 0)
-        type = rhs.returnType
+    override fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): AssignmentStatement {
+        this.stat = stat
 
-        val assignmentForms: ArrayList<AssignmentForms> = when (type.type) {
-            Type.BOOL  -> assignmentLogicalForms
-            Type.FLOAT -> assignmentArithmeticForms
-            Type.INT,
-            Type.UNINT -> ArrayList(
-                assignmentArithmeticForms + assignmentBitForms + assignmentIncDecForms
-            )
+        if (stat !is AssignStat) {
+            throw Exception("Failure to validate AssignStat during AssignStatement generation!")
         }
 
-        if (assignmentForms.size > 1 && symbolTable.hasWriteableOf(type) && PseudoNumberGenerator.evaluateProbability(
-                ConfigurationManager.probabilityGenerateCompoundAssignment
-            )) {
-            // generate compound assignment
-            lhs = symbolTable.getRandomWriteableExistingSymbol(type)
-
-            val assignmentFormIndex = PseudoNumberGenerator.getRandomIntInRange(
-                0, assignmentForms.size
-            )
-            assignmentForm = assignmentForms[assignmentFormIndex]
-        } else {
-            // generate standard "=" assignment
-            if (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityAssignToAnonymous)) {
-                lhs = Symbol("_", type)
-            } else {
-                lhs = symbolTable.getRandomWriteableSymbol(type)
-                if (lhs.getName() == "") {
-                    lhs = symbolTable.declareNewSymbol(type)
-                    declaredNewSymbol = true
-                }
+        if (stat is AssignCompoundStat) {
+            // should be updated to use probability method once implemented in similar Expression code!
+            val exprEquivalent: BinaryExpr = when (stat) {
+                is AssignArithmeticCompoundStat    -> BinaryArithmeticExpr.valueOf(stat.name)
+                is AssignBitCompoundStat           -> BinaryBitExpr.valueOf(stat.name)
+                is AssignLogicalCompoundStat       -> BinaryLogicalExpr.valueOf(stat.name)
+                AssignIncDecCompoundStat.DECREMENT -> BinaryArithmeticExpr.MINUS
+                AssignIncDecCompoundStat.INCREMENT -> BinaryArithmeticExpr.ADD
+                else                               -> throw Exception(
+                    "Attempt to generate AssignCompoundStat with uncategorized operator ${stat.operator}!"
+                )
             }
-            assignmentForm = AssignmentStandardForms.ASSIGN
+            val exprType = ExprTypes.typeOf(exprEquivalent)
+            val typeIndex = PseudoNumberGenerator.getRandomIntInRange(0, exprType.exprTypes.size)
+            val typeEnum = exprType.exprTypes[typeIndex]
+            type = WGSLScalarType(typeEnum)
+
+            rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, type, 0)
+        } else {
+            rhs = ExpressionGenerator.getExpressionWithoutReturnType(symbolTable, 0)
+            type = rhs.returnType
+        }
+
+        // check if the selected compound statement can be used, and revert to simple assignment if not
+        if (stat is AssignCompoundStat && !symbolTable.hasWriteableOf(type)) {
+            this.stat = AssignEqStat.ASSIGN_SIMPLE
+        }
+
+        if (this.stat is AssignCompoundStat) {
+            lhs = symbolTable.getRandomWriteableExistingSymbol(type)
+        } else {
+            /*if (stat == AssignEqStat.ASSIGN_PHONY) {
+                lhs = Symbol("_", type)
+            } else {*/
+            lhs = symbolTable.getRandomWriteableSymbol(type)
+            if (lhs.name == "") {
+                lhs = symbolTable.declareNewSymbol(type)
+                declaredNewSymbol = true
+            }
+            //}
         }
 
         return this
     }
 
     override fun getTabbedLines(): ArrayList<String> {
-        if (assignmentForm is AssignmentIncDecForms) {
-            return arrayListOf("$lhs${assignmentForm.op};")
+        if (stat is AssignIncDecCompoundStat) {
+            return arrayListOf("$lhs${(stat as AssignStat).operator};")
         }
 
         val varDeclaration = if (declaredNewSymbol) "var " else ""
@@ -112,6 +79,6 @@ internal class AssignmentStatement : Statement() {
             ": ${type.type.wgslType}"
         } else ""
 
-        return arrayListOf("$varDeclaration$lhs$typeDeclaration ${assignmentForm.op} $rhs;")
+        return arrayListOf("$varDeclaration$lhs$typeDeclaration ${(stat as AssignStat).operator} $rhs;")
     }
 }

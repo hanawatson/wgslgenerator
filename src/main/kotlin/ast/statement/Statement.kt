@@ -5,49 +5,38 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.ConfigurationManager
 import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
 
-private interface StatementForms
-
-// Holds statements that can only be used in certain contexts e.g. fallthrough in a switch case
-private enum class ContextSpecificStatementForms : StatementForms {
-    BREAK,
-    FALLTHROUGH;
-}
-
-private enum class StandardStatementForms : StatementForms {
-    ASSIGN,
-    IF,
-    SWITCH;
-}
-
-object StatementGenerator {
-    private val allStatementForms = ArrayList<StatementForms>(StandardStatementForms.values().asList())
-
+internal object StatementGenerator {
     fun getStatement(symbolTable: SymbolTable, depth: Int, scopeState: ScopeState): Statement {
-        var statementForms = ArrayList<StatementForms>()
-        statementForms.addAll(allStatementForms)
+        var stats = ArrayList<Stat>()
+        stats.addAll(allStats)
 
         if (scopeState == ScopeState.SWITCH) {
-            statementForms.add(ContextSpecificStatementForms.BREAK)
-            statementForms.add(ContextSpecificStatementForms.FALLTHROUGH)
+            stats.add(ContextSpecificStat.BREAK)
+            stats.add(ContextSpecificStat.FALLTHROUGH)
         }
 
         if (depth >= ConfigurationManager.maxStatementRecursion) {
-            statementForms = arrayListOf(StandardStatementForms.ASSIGN)
+            stats = assignStats
         }
 
-        val statementFormIndex = PseudoNumberGenerator.getRandomIntInRange(0, statementForms.size)
-        return when (statementForms[statementFormIndex]) {
-            ContextSpecificStatementForms.BREAK       -> BreakStatement()
-            ContextSpecificStatementForms.FALLTHROUGH -> FallthroughStatement()
-            StandardStatementForms.ASSIGN             -> AssignmentStatement().generate(symbolTable, depth)
-            StandardStatementForms.IF                 -> IfStatement().generate(symbolTable, depth)
-            StandardStatementForms.SWITCH             -> SwitchStatement().generate(symbolTable, depth)
-            else                                      -> throw Exception("Unknown internal statement type handled!")
+        val statIndex = PseudoNumberGenerator.getRandomIntInRange(0, stats.size)
+        return when (val stat = stats[statIndex]) {
+            is AssignStat          -> AssignmentStatement().generate(symbolTable, stat, depth)
+            is ContextSpecificStat -> ContextSpecificStatement().generate(symbolTable, stat, depth)
+            is ControlFlowStat     -> ControlFlowStatement().generate(symbolTable, stat, depth)
+            else                   -> throw Exception("Attempt to generate Statement with uncategorized Stat $stat!")
         }
+    }
+
+    fun getContextSpecificStatement(symbolTable: SymbolTable, contextSpecificStat: ContextSpecificStat, depth: Int):
+            Statement {
+        return ContextSpecificStatement().generate(symbolTable, contextSpecificStat, depth)
     }
 }
 
-abstract class Statement {
-    abstract fun generate(symbolTable: SymbolTable, depth: Int): Statement
+internal abstract class Statement {
+    abstract var stat: Stat
+
     abstract fun getTabbedLines(): ArrayList<String>
+    abstract fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): Statement
 }

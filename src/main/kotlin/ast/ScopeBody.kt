@@ -1,14 +1,13 @@
 package wgslsmith.wgslgenerator.ast
 
-import wgslsmith.wgslgenerator.ast.statement.BreakStatement
-import wgslsmith.wgslgenerator.ast.statement.FallthroughStatement
+import wgslsmith.wgslgenerator.ast.statement.ContextSpecificStat
 import wgslsmith.wgslgenerator.ast.statement.Statement
 import wgslsmith.wgslgenerator.ast.statement.StatementGenerator
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.ConfigurationManager
 import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
 
-class ScopeBody(private val scopeState: ScopeState) {
+internal class ScopeBody(private val scopeState: ScopeState) {
     private val statements: ArrayList<Statement> = ArrayList()
 
     fun getLastStatement(): Statement {
@@ -33,7 +32,8 @@ class ScopeBody(private val scopeState: ScopeState) {
             val statement = StatementGenerator.getStatement(symbolTable, depth, scopeState)
             statements.add(statement)
 
-            generateAnotherStatement = if (statement is BreakStatement || statement is FallthroughStatement) {
+            generateAnotherStatement = if (statement.stat == ContextSpecificStat.BREAK || statement.stat ==
+                ContextSpecificStat.FALLTHROUGH) {
                 false
             } else {
                 PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityGenerateAnotherStatement)

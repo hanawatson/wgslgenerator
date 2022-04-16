@@ -9,7 +9,6 @@ import wgslsmith.wgslgenerator.utils.ConfigurationManager
 import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
 
 internal object ExpressionGenerator {
-
     fun getLiteralAsExpression(literal: Literal): Expression {
         return IdentityExpression().getLiteralAsIdentity(literal)
     }
@@ -39,8 +38,7 @@ internal object ExpressionGenerator {
     }
 
     private fun getExpressionFromList(
-        symbolTable: SymbolTable, givenReturnType: WGSLType?, exprs:
-        ArrayList<Expr>, depth: Int
+        symbolTable: SymbolTable, givenReturnType: WGSLType?, exprs: ArrayList<Expr>, depth: Int
     ): Expression {
         val possibleExprs = if (depth >= ConfigurationManager.maxExpressionRecursion) {
             ArrayList(IdentityExpr.values().asList())
@@ -49,8 +47,8 @@ internal object ExpressionGenerator {
         }
 
         // probabilities should be implemented here
-        val formIndex = PseudoNumberGenerator.getRandomIntInRange(0, possibleExprs.size)
-        val expr = possibleExprs[formIndex]
+        val exprIndex = PseudoNumberGenerator.getRandomIntInRange(0, possibleExprs.size)
+        val expr = possibleExprs[exprIndex]
         val exprType = ExprTypes.typeOf(expr)
         val returnType = if (givenReturnType == null) {
             val typeIndex = PseudoNumberGenerator.getRandomIntInRange(0, exprType.exprTypes.size)

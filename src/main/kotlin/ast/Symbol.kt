@@ -1,13 +1,6 @@
 package wgslsmith.wgslgenerator.ast
 
-class Symbol(private val name: String, private val type: WGSLType) {
-    fun getName(): String {
-        return name
-    }
-
-    fun getType(): WGSLType {
-        return type
-    }
+class Symbol(val name: String, val type: WGSLType) {
 
     override fun toString(): String {
         return name

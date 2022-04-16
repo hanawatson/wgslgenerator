@@ -7,78 +7,8 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.ConfigurationManager
 import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
 
-internal class BreakStatement : Statement() {
-    override fun generate(symbolTable: SymbolTable, depth: Int): Statement {
-        return this
-    }
-
-    override fun getTabbedLines(): ArrayList<String> {
-        return arrayListOf("break;")
-    }
-}
-
-internal class FallthroughStatement : Statement() {
-    override fun generate(symbolTable: SymbolTable, depth: Int): Statement {
-        return this
-    }
-
-    override fun getTabbedLines(): ArrayList<String> {
-        return arrayListOf("fallthrough;")
-    }
-}
-
-internal class IfStatement : Statement() {
-    private lateinit var ifCond: Expression
-    private lateinit var ifBody: ScopeBody
-    private var elseIfConds = ArrayList<Expression>()
-    private var elseIfBodies = ArrayList<ScopeBody>()
-    private var currentIfElseBranches = 0
-    private var elseBody: ScopeBody? = null
-
-    override fun generate(symbolTable: SymbolTable, depth: Int): IfStatement {
-        // can mat/vecs of bools be used here? must check
-        ifCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
-        ifBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
-
-        while (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityIfElseBranch)
-            && currentIfElseBranches < ConfigurationManager.maxIfElseBranches) {
-            val elseIfCond =
-                ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
-            val elseIfBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
-            elseIfConds.add(elseIfCond)
-            elseIfBodies.add(elseIfBody)
-            currentIfElseBranches++
-        }
-
-        if (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityElseBranch)) {
-            elseBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
-        }
-
-        return this
-    }
-
-    override fun getTabbedLines(): ArrayList<String> {
-        val ifLines = ArrayList<String>()
-        ifLines.add("if ($ifCond) {")
-        ifLines.addAll(ifBody.getTabbedLines())
-
-        for (elseIfCond in elseIfConds) {
-            val elseIfIndex = elseIfConds.indexOf(elseIfCond)
-            ifLines.add("} else if ($elseIfCond) {")
-            ifLines.addAll(elseIfBodies[elseIfIndex].getTabbedLines())
-        }
-
-        if (elseBody != null) {
-            ifLines.add("} else {")
-            ifLines.addAll(elseBody!!.getTabbedLines())
-        }
-
-        ifLines.add("}")
-        return ifLines
-    }
-}
-
 internal class SwitchStatement : Statement() {
+    override lateinit var stat: Stat
     private lateinit var selector: Expression
     private lateinit var selectorType: WGSLType
     private var switchLiterals = ArrayList<Literal>()
@@ -87,7 +17,9 @@ internal class SwitchStatement : Statement() {
     private var currentSwitchCases = 0
     private var defaultGenerated = false
 
-    override fun generate(symbolTable: SymbolTable, depth: Int): SwitchStatement {
+    override fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): SwitchStatement {
+        this.stat = stat
+
         selectorType = WGSLScalarType(
             if (PseudoNumberGenerator.getRandomBool()) Type.INT else Type.UNINT
         )
@@ -126,8 +58,11 @@ internal class SwitchStatement : Statement() {
             defaultGenerated = true
         }
         if (ConfigurationManager.ensureNoFallthroughLastSwitchCase && switchBodies[currentSwitchCases - 1]
-                .getLastStatement() is FallthroughStatement) {
-            switchBodies[currentSwitchCases - 1].replaceLastStatement(BreakStatement())
+                .getLastStatement().stat == ContextSpecificStat.FALLTHROUGH) {
+            switchBodies[currentSwitchCases - 1].replaceLastStatement(
+                StatementGenerator.getContextSpecificStatement
+                    (symbolTable, ContextSpecificStat.BREAK, depth)
+            )
         }
 
         return this

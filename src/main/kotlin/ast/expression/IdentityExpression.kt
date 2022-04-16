@@ -23,7 +23,7 @@ internal class IdentityExpression : Expression() {
         if (expr == IdentityExpr.ID) {
             symbol = symbolTable.getRandomSymbol(returnType)
             // indicates that a literal value, not an existing symbol, should be generated
-            if (symbol!!.getName() == "") {
+            if (symbol!!.name == "") {
                 symbol = null
                 literal = LiteralGenerator.getLiteral(returnType)
             }

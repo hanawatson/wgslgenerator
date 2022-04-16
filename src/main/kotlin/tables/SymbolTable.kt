@@ -41,11 +41,11 @@ class SymbolTable {
     }
 
     private fun addSymbol(symbol: Symbol) {
-        getTypeSubtable(symbol.getType()).addSymbol(symbol)
+        getTypeSubtable(symbol.type).addSymbol(symbol)
     }
 
     fun addNonWriteableSymbol(symbol: Symbol) {
-        getTypeSubtable(symbol.getType()).addNonWriteableSymbol(symbol)
+        getTypeSubtable(symbol.type).addNonWriteableSymbol(symbol)
     }
 
     fun getRandomSymbol(type: WGSLType): Symbol {
