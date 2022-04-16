@@ -2,8 +2,8 @@ package wgslsmith.wgslgenerator.ast.statement
 
 import wgslsmith.wgslgenerator.ast.ScopeState
 import wgslsmith.wgslgenerator.tables.SymbolTable
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
-import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
+import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.PRNG
 
 internal object StatementGenerator {
     fun getStatement(symbolTable: SymbolTable, depth: Int, scopeState: ScopeState): Statement {
@@ -15,11 +15,11 @@ internal object StatementGenerator {
             stats.add(ContextSpecificStat.FALLTHROUGH)
         }
 
-        if (depth >= ConfigurationManager.maxStatementRecursion) {
+        if (depth >= CNFG.maxStatementRecursion) {
             stats = assignStats
         }
 
-        val statIndex = PseudoNumberGenerator.getRandomIntInRange(0, stats.size)
+        val statIndex = PRNG.getRandomIntInRange(0, stats.size)
         return when (val stat = stats[statIndex]) {
             is AssignStat          -> AssignmentStatement().generate(symbolTable, stat, depth)
             is ContextSpecificStat -> ContextSpecificStatement().generate(symbolTable, stat, depth)

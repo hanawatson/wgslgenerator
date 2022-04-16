@@ -2,7 +2,7 @@ package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
+import wgslsmith.wgslgenerator.utils.CNFG
 
 internal class ComparisonExpression : Expression() {
     private lateinit var lhs: Expression
@@ -31,7 +31,7 @@ internal class ComparisonExpression : Expression() {
     override fun toString(): String {
         val comparisonExpressionString = "$lhs ${expr.operator} $rhs"
 
-        if (ConfigurationManager.useExpressionParentheses) {
+        if (CNFG.useExpressionParentheses) {
             return "($comparisonExpressionString)"
         }
         return comparisonExpressionString

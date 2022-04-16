@@ -1,6 +1,7 @@
 package wgslsmith.wgslgenerator.utils
 
-internal object ConfigurationManager {
+// ConfigurationManager
+internal object CNFG {
     const val maxStatementsInBody = 5 //20
     const val maxStatementsInIfBody = 5
     const val maxStatementsInSwitchBody = 3
@@ -19,11 +20,10 @@ internal object ConfigurationManager {
     const val probabilityOmitTypeFromDeclaration = 0.2
     const val probabilityParenthesesAroundIdentity = 0.5
     const val probabilityGenerateAnotherStatement = 0.9
-    const val probabilityGenerateCompoundAssignment = 0.2
-    const val probabilityAssignToAnonymous = 0.1
     const val probabilityAssignToNewSymbol = 0.6
     const val probabilityAssignLiteral = 0.3
-    const val probabilityZeroLiteral = 0.01
+
+    const val probabilityUseNumericSuffix = 0.5
 
     const val probabilityIfElseBranch = 0.3
     const val probabilityElseBranch = 0.6

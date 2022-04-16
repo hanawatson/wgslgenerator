@@ -5,8 +5,8 @@ import wgslsmith.wgslgenerator.ast.LiteralGenerator
 import wgslsmith.wgslgenerator.ast.Symbol
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
-import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
+import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class IdentityExpression : Expression() {
     private var symbol: Symbol? = null
@@ -31,8 +31,8 @@ internal class IdentityExpression : Expression() {
             symbol = Symbol("${returnType.type.wgslType}()", returnType)
         }
 
-        while (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityParenthesesAroundIdentity)
-            && parentheses < ConfigurationManager.maxParentheses) {
+        while (PRNG.evaluateProbability(CNFG.probabilityParenthesesAroundIdentity)
+            && parentheses < CNFG.maxParentheses) {
             parentheses++
         }
 
@@ -50,7 +50,7 @@ internal class IdentityExpression : Expression() {
     override fun toString(): String {
         var identityString = if (symbol != null) "$symbol" else "$literal"
 
-        if (ConfigurationManager.useExcessParentheses) {
+        if (CNFG.useExcessParentheses) {
             for (i in 1..parentheses) {
                 identityString = "($identityString)"
             }

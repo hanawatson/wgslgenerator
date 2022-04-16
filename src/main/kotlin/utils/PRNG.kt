@@ -6,7 +6,8 @@ import wgslsmith.wgslgenerator.ast.WGSLType
 import kotlin.random.Random
 import kotlin.random.nextUInt
 
-object PseudoNumberGenerator {
+// PseudoRandomNumberGenerator
+object PRNG {
     private var initialized = false
     private val WGSLEnumTypes = ArrayList(Type.values().asList())
 

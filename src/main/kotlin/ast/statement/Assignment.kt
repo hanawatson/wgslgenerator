@@ -4,8 +4,8 @@ import wgslsmith.wgslgenerator.ast.Symbol
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.expression.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
-import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
+import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class AssignmentStatement : Statement() {
     override lateinit var stat: Stat
@@ -34,7 +34,7 @@ internal class AssignmentStatement : Statement() {
                 )
             }
             val exprType = ExprTypes.typeOf(exprEquivalent)
-            val typeIndex = PseudoNumberGenerator.getRandomIntInRange(0, exprType.exprTypes.size)
+            val typeIndex = PRNG.getRandomIntInRange(0, exprType.exprTypes.size)
             type = exprType.exprTypes[typeIndex]
 
             rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, type, 0)
@@ -71,8 +71,8 @@ internal class AssignmentStatement : Statement() {
         }
 
         val varDeclaration = if (declaredNewSymbol) "var " else ""
-        val typeDeclaration = if (declaredNewSymbol && PseudoNumberGenerator.evaluateProbability(
-                ConfigurationManager.probabilityOmitTypeFromDeclaration
+        val typeDeclaration = if (declaredNewSymbol && PRNG.evaluateProbability(
+                CNFG.probabilityOmitTypeFromDeclaration
             )) {
             ": ${type.type.wgslType}"
         } else ""

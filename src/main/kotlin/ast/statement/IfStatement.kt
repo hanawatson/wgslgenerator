@@ -7,8 +7,8 @@ import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.expression.Expression
 import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
 import wgslsmith.wgslgenerator.tables.SymbolTable
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
-import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
+import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class IfStatement : Statement() {
     override lateinit var stat: Stat
@@ -25,8 +25,8 @@ internal class IfStatement : Statement() {
         ifCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
         ifBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
 
-        while (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityIfElseBranch)
-            && currentIfElseBranches < ConfigurationManager.maxIfElseBranches) {
+        while (PRNG.evaluateProbability(CNFG.probabilityIfElseBranch)
+            && currentIfElseBranches < CNFG.maxIfElseBranches) {
             val elseIfCond =
                 ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
             val elseIfBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
@@ -35,7 +35,7 @@ internal class IfStatement : Statement() {
             currentIfElseBranches++
         }
 
-        if (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityElseBranch)) {
+        if (PRNG.evaluateProbability(CNFG.probabilityElseBranch)) {
             elseBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
         }
 

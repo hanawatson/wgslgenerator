@@ -2,7 +2,7 @@ package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
+import wgslsmith.wgslgenerator.utils.CNFG
 
 internal class BinaryExpression : Expression() {
     private lateinit var lhs: Expression
@@ -29,7 +29,7 @@ internal class BinaryExpression : Expression() {
     override fun toString(): String {
         val binaryExpressionString = "$lhs ${expr.operator} $rhs"
 
-        if (ConfigurationManager.useExpressionParentheses) {
+        if (CNFG.useExpressionParentheses) {
             return "($binaryExpressionString)"
         }
         return binaryExpressionString

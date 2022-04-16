@@ -5,8 +5,8 @@ import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
-import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
+import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.PRNG
 
 internal object ExpressionGenerator {
     fun getLiteralAsExpression(literal: Literal): Expression {
@@ -20,7 +20,7 @@ internal object ExpressionGenerator {
     fun getExpressionWithNumericReturnType(symbolTable: SymbolTable, depth: Int): Expression {
         // get a random numeric type
         val numericTypes = arrayListOf(Type.FLOAT, Type.INT, Type.UNINT)
-        val typeIndex = PseudoNumberGenerator.getRandomIntInRange(0, numericTypes.size)
+        val typeIndex = PRNG.getRandomIntInRange(0, numericTypes.size)
         val returnTypeEnum = numericTypes[typeIndex]
         val returnType = WGSLScalarType(returnTypeEnum)
 
@@ -40,18 +40,18 @@ internal object ExpressionGenerator {
     private fun getExpressionFromList(
         symbolTable: SymbolTable, givenReturnType: WGSLType?, exprs: ArrayList<Expr>, depth: Int
     ): Expression {
-        val possibleExprs = if (depth >= ConfigurationManager.maxExpressionRecursion) {
+        val possibleExprs = if (depth >= CNFG.maxExpressionRecursion) {
             ArrayList(IdentityExpr.values().asList())
         } else {
             exprs
         }
 
         // probabilities should be implemented here
-        val exprIndex = PseudoNumberGenerator.getRandomIntInRange(0, possibleExprs.size)
+        val exprIndex = PRNG.getRandomIntInRange(0, possibleExprs.size)
         val expr = possibleExprs[exprIndex]
         val exprType = ExprTypes.typeOf(expr)
         val returnType = if (givenReturnType == null) {
-            val typeIndex = PseudoNumberGenerator.getRandomIntInRange(0, exprType.exprTypes.size)
+            val typeIndex = PRNG.getRandomIntInRange(0, exprType.exprTypes.size)
             exprType.exprTypes[typeIndex]
         } else {
             givenReturnType

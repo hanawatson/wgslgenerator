@@ -4,8 +4,8 @@ import wgslsmith.wgslgenerator.ast.Symbol
 import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
-import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
+import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.PRNG
 
 class SymbolTable {
     private var boolSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.BOOL))
@@ -76,11 +76,11 @@ class SymbolTable {
         val generateBlankSymbol = if (mustAlreadyExist) {
             false
         } else {
-            PseudoNumberGenerator.evaluateProbability(
+            PRNG.evaluateProbability(
                 if (mustBeWriteable) {
-                    ConfigurationManager.probabilityAssignToNewSymbol
+                    CNFG.probabilityAssignToNewSymbol
                 } else {
-                    ConfigurationManager.probabilityAssignLiteral
+                    CNFG.probabilityAssignLiteral
                 }
             )
         }
@@ -91,7 +91,7 @@ class SymbolTable {
 
         // get random index
         // a result of startIndex-blankSymbolIndices means a blank symbol (i.e. a new one/a literal) is returned
-        val randomIndex = PseudoNumberGenerator.getRandomIntInRange(startIndex, endIndex)
+        val randomIndex = PRNG.getRandomIntInRange(startIndex, endIndex)
         if (subtable.getSymbolAtIndex(randomIndex) != null) {
             return subtable.getSymbolAtIndex(randomIndex)!!
         }

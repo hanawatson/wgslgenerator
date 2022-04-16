@@ -4,8 +4,8 @@ import wgslsmith.wgslgenerator.ast.statement.ContextSpecificStat
 import wgslsmith.wgslgenerator.ast.statement.Statement
 import wgslsmith.wgslgenerator.ast.statement.StatementGenerator
 import wgslsmith.wgslgenerator.tables.SymbolTable
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
-import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
+import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class ScopeBody(private val scopeState: ScopeState) {
     private val statements: ArrayList<Statement> = ArrayList()
@@ -23,9 +23,9 @@ internal class ScopeBody(private val scopeState: ScopeState) {
         var currentStatements = 0
         var generateAnotherStatement = true
         val maxStatements = when (scopeState) {
-            ScopeState.IF     -> ConfigurationManager.maxStatementsInIfBody
-            ScopeState.SWITCH -> ConfigurationManager.maxStatementsInSwitchBody
-            else              -> ConfigurationManager.maxStatementsInBody
+            ScopeState.IF     -> CNFG.maxStatementsInIfBody
+            ScopeState.SWITCH -> CNFG.maxStatementsInSwitchBody
+            else              -> CNFG.maxStatementsInBody
         }
 
         while (generateAnotherStatement && currentStatements < maxStatements) {
@@ -36,7 +36,7 @@ internal class ScopeBody(private val scopeState: ScopeState) {
                 ContextSpecificStat.FALLTHROUGH) {
                 false
             } else {
-                PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilityGenerateAnotherStatement)
+                PRNG.evaluateProbability(CNFG.probabilityGenerateAnotherStatement)
             }
             currentStatements++
         }

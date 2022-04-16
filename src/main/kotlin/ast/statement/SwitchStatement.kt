@@ -4,8 +4,8 @@ import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.ast.expression.Expression
 import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
 import wgslsmith.wgslgenerator.tables.SymbolTable
-import wgslsmith.wgslgenerator.utils.ConfigurationManager
-import wgslsmith.wgslgenerator.utils.PseudoNumberGenerator
+import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class SwitchStatement : Statement() {
     override lateinit var stat: Stat
@@ -21,23 +21,23 @@ internal class SwitchStatement : Statement() {
         this.stat = stat
 
         selectorType = WGSLScalarType(
-            if (PseudoNumberGenerator.getRandomBool()) Type.INT else Type.UNINT
+            if (PRNG.getRandomBool()) Type.INT else Type.UNINT
         )
         selector = ExpressionGenerator.getExpressionWithReturnType(symbolTable, selectorType, 0)
 
         while (currentSwitchCases < 1 ||
-            (PseudoNumberGenerator.evaluateProbability(ConfigurationManager.probabilitySwitchCase)
-                    && currentSwitchCases < ConfigurationManager.maxSwitchCases)) {
+            (PRNG.evaluateProbability(CNFG.probabilitySwitchCase)
+                    && currentSwitchCases < CNFG.maxSwitchCases)) {
 
             val switchCase: Expression?
-            if (!defaultGenerated && PseudoNumberGenerator.evaluateProbability(
-                    ConfigurationManager.probabilitySwitchDefaultBeforeLast
+            if (!defaultGenerated && PRNG.evaluateProbability(
+                    CNFG.probabilitySwitchDefaultBeforeLast
                 )) {
                 switchCase = null
                 defaultGenerated = true
             } else {
                 var switchLiteral = LiteralGenerator.getLiteral(selectorType)
-                while (ConfigurationManager.ensureNoDuplicateSwitchCases &&
+                while (CNFG.ensureNoDuplicateSwitchCases &&
                     switchLiterals.contains(switchLiteral)) {
                     switchLiteral = LiteralGenerator.getLiteral(selectorType)
                 }
@@ -57,7 +57,7 @@ internal class SwitchStatement : Statement() {
             switchCases[currentSwitchCases - 1] = null
             defaultGenerated = true
         }
-        if (ConfigurationManager.ensureNoFallthroughLastSwitchCase && switchBodies[currentSwitchCases - 1]
+        if (CNFG.ensureNoFallthroughLastSwitchCase && switchBodies[currentSwitchCases - 1]
                 .getLastStatement().stat == ContextSpecificStat.FALLTHROUGH) {
             switchBodies[currentSwitchCases - 1].replaceLastStatement(
                 StatementGenerator.getContextSpecificStatement
