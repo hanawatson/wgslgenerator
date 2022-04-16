@@ -1,7 +1,6 @@
 package wgslsmith.wgslgenerator.ast.statement
 
 import wgslsmith.wgslgenerator.ast.Symbol
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.expression.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
@@ -36,8 +35,7 @@ internal class AssignmentStatement : Statement() {
             }
             val exprType = ExprTypes.typeOf(exprEquivalent)
             val typeIndex = PseudoNumberGenerator.getRandomIntInRange(0, exprType.exprTypes.size)
-            val typeEnum = exprType.exprTypes[typeIndex]
-            type = WGSLScalarType(typeEnum)
+            type = exprType.exprTypes[typeIndex]
 
             rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, type, 0)
         } else {

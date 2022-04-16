@@ -52,9 +52,7 @@ internal object ExpressionGenerator {
         val exprType = ExprTypes.typeOf(expr)
         val returnType = if (givenReturnType == null) {
             val typeIndex = PseudoNumberGenerator.getRandomIntInRange(0, exprType.exprTypes.size)
-            val returnTypeEnum = exprType.exprTypes[typeIndex]
-            // if statement: if matrix or vector etc. do something else here. else:
-            WGSLScalarType(returnTypeEnum)
+            exprType.exprTypes[typeIndex]
         } else {
             givenReturnType
         }
