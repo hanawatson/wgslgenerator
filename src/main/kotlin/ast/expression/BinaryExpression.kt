@@ -19,7 +19,6 @@ internal class BinaryExpression : Expression() {
 
         lhsType = returnType
         lhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, lhsType, depth + 1)
-
         rhsType = returnType
         rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, rhsType, depth + 1)
 

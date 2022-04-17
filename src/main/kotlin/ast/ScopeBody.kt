@@ -31,14 +31,16 @@ internal class ScopeBody(private val scopeState: ScopeState) {
         while (generateAnotherStatement && currentStatements < maxStatements) {
             val statement = StatementGenerator.getStatement(symbolTable, depth, scopeState)
             statements.add(statement)
+            currentStatements++
 
-            generateAnotherStatement = if (statement.stat == ContextSpecificStat.BREAK || statement.stat ==
-                ContextSpecificStat.FALLTHROUGH) {
+            generateAnotherStatement = if (
+                (statement.stat == ContextSpecificStat.BREAK && CNFG.preventCodeAfterBreak)
+                || statement.stat == ContextSpecificStat.FALLTHROUGH
+            ) {
                 false
             } else {
                 PRNG.evaluateProbability(CNFG.probabilityGenerateAnotherStatement)
             }
-            currentStatements++
         }
 
         return this

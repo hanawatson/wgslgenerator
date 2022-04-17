@@ -1,6 +1,6 @@
 package wgslsmith.wgslgenerator.ast
 
-enum class ScopeState {
+internal enum class ScopeState {
     IF,
     NONE,
     SWITCH;

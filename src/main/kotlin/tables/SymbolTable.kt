@@ -7,7 +7,7 @@ import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-class SymbolTable {
+internal class SymbolTable {
     private var boolSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.BOOL))
     private var floatSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.FLOAT))
     private var intSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.INT))
@@ -21,7 +21,7 @@ class SymbolTable {
             Type.FLOAT -> floatSubtable
             Type.INT   -> intSubtable
             Type.UNINT -> unIntSubtable
-            // else               -> throw Exception("Attempt to access symbol subtable of unknown type!")
+            else       -> throw Exception("Attempt to access symbol subtable of unknown type!")
         }
     }
 
@@ -35,13 +35,13 @@ class SymbolTable {
 
     fun declareNewSymbol(type: WGSLType): Symbol {
         val newSymbol = Symbol(getNextNewSymbolName(), type)
-        addSymbol(newSymbol)
+        addWriteableSymbol(newSymbol)
         newVarLabelIndex++
         return newSymbol
     }
 
-    private fun addSymbol(symbol: Symbol) {
-        getTypeSubtable(symbol.type).addSymbol(symbol)
+    fun addWriteableSymbol(symbol: Symbol) {
+        getTypeSubtable(symbol.type).addWriteableSymbol(symbol)
     }
 
     fun addNonWriteableSymbol(symbol: Symbol) {

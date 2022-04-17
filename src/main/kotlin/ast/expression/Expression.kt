@@ -2,7 +2,6 @@ package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.Literal
 import wgslsmith.wgslgenerator.ast.Type
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
@@ -17,22 +16,13 @@ internal object ExpressionGenerator {
         return getExpressionFromList(symbolTable, null, allExprs, depth)
     }
 
-    fun getExpressionWithNumericReturnType(symbolTable: SymbolTable, depth: Int): Expression {
-        // get a random numeric type
-        val numericTypes = arrayListOf(Type.FLOAT, Type.INT, Type.UNINT)
-        val typeIndex = PRNG.getRandomIntInRange(0, numericTypes.size)
-        val returnTypeEnum = numericTypes[typeIndex]
-        val returnType = WGSLScalarType(returnTypeEnum)
-
-        return getExpressionWithReturnType(symbolTable, returnType, depth)
-    }
-
     fun getExpressionWithReturnType(symbolTable: SymbolTable, returnType: WGSLType, depth: Int): Expression {
         val exprs = (when (returnType.type) {
             Type.BOOL  -> TypeExprs.BOOL
             Type.FLOAT -> TypeExprs.FLOAT
             Type.INT   -> TypeExprs.INT
             Type.UNINT -> TypeExprs.UNINT
+            else       -> throw Exception("Attempt to generate Expression with unknown returnType $returnType!")
         }).typeExprs
         return getExpressionFromList(symbolTable, returnType, exprs, depth)
     }
@@ -40,22 +30,15 @@ internal object ExpressionGenerator {
     private fun getExpressionFromList(
         symbolTable: SymbolTable, givenReturnType: WGSLType?, exprs: ArrayList<Expr>, depth: Int
     ): Expression {
-        val possibleExprs = if (depth >= CNFG.maxExpressionRecursion) {
+        val possibleExprs: ArrayList<Expr> = if (depth >= CNFG.maxExpressionRecursion) {
             ArrayList(IdentityExpr.values().asList())
         } else {
             exprs
         }
 
-        // probabilities should be implemented here
-        val exprIndex = PRNG.getRandomIntInRange(0, possibleExprs.size)
-        val expr = possibleExprs[exprIndex]
+        val expr = PRNG.getRandomExprFrom(possibleExprs)
         val exprType = ExprTypes.typeOf(expr)
-        val returnType = if (givenReturnType == null) {
-            val typeIndex = PRNG.getRandomIntInRange(0, exprType.exprTypes.size)
-            exprType.exprTypes[typeIndex]
-        } else {
-            givenReturnType
-        }
+        val returnType = givenReturnType ?: PRNG.getRandomTypeFrom(exprType.exprTypes)
 
         return when (expr) {
             is IdentityExpr   -> {

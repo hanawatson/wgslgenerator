@@ -34,8 +34,7 @@ internal class AssignmentStatement : Statement() {
                 )
             }
             val exprType = ExprTypes.typeOf(exprEquivalent)
-            val typeIndex = PRNG.getRandomIntInRange(0, exprType.exprTypes.size)
-            type = exprType.exprTypes[typeIndex]
+            type = PRNG.getRandomTypeFrom(exprType.exprTypes)
 
             rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, type, 0)
         } else {

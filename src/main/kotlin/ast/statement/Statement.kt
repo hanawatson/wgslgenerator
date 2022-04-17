@@ -19,8 +19,7 @@ internal object StatementGenerator {
             stats = assignStats
         }
 
-        val statIndex = PRNG.getRandomIntInRange(0, stats.size)
-        return when (val stat = stats[statIndex]) {
+        return when (val stat = PRNG.getRandomStatFrom(stats)) {
             is AssignStat          -> AssignmentStatement().generate(symbolTable, stat, depth)
             is ContextSpecificStat -> ContextSpecificStatement().generate(symbolTable, stat, depth)
             is ControlFlowStat     -> ControlFlowStatement().generate(symbolTable, stat, depth)

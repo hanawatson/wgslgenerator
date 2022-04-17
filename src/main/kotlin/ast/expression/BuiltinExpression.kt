@@ -4,6 +4,7 @@ import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
+import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class BuiltinExpression : Expression() {
     private var argsLimit = 0
@@ -27,7 +28,7 @@ internal class BuiltinExpression : Expression() {
 
         // set bool/int/unint matching types. must match existing returnType dimensions when vectors are implemented
         val matchingBoolType = WGSLScalarType(Type.BOOL)
-        // val matchingIntType = WGSLScalarType(Type.INT)
+        val matchingIntType = WGSLScalarType(Type.INT)
         // val matchingUnIntType = WGSLScalarType(Type.UNINT)
 
         val scalarFloatType = WGSLScalarType(Type.FLOAT)
@@ -35,9 +36,16 @@ internal class BuiltinExpression : Expression() {
 
         // allow for irregular/different type args
         when (expr) {
-            /*BuiltinFloatExpr.LDEXP          -> {
+            BuiltinFloatExpr.DISTANCE       -> {
+                argTypes[0] = PRNG.getRandomFloatType()
+                argTypes[1] = argTypes[0]
+            }
+            BuiltinFloatExpr.LDEXP          -> {
                 argTypes[1] = matchingIntType
-            }*/
+            }
+            BuiltinFloatExpr.LENGTH         -> {
+                argTypes[0] = PRNG.getRandomFloatType()
+            }
             BuiltinFloatExpr.MIX_COMPONENT  -> {
                 argTypes[2] = scalarFloatType
             }

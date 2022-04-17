@@ -14,6 +14,8 @@ internal object CNFG {
     const val useExpressionParentheses = true
     const val useExcessParentheses = true
 
+    const val preventCodeAfterBreak = true
+
     const val ensureNoDuplicateSwitchCases = false
     const val ensureNoFallthroughLastSwitchCase = true
 

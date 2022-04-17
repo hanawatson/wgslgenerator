@@ -23,7 +23,8 @@ internal class UnaryExpression : Expression() {
 
     override fun toString(): String {
         // handle the special case of an attempt to apply the unary minus operator "-" to a negative
-        // f32 literal value, resulting in incorrect interpretation as the decrement operator "--"
+        // literal value (i.e. one with a "-" prefix), resulting in incorrect interpretation
+        // as the decrement operator "--"
         val argString = if ("$arg"[0] == '-') {
             "($arg)"
         } else {

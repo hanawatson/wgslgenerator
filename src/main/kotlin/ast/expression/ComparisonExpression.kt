@@ -3,6 +3,7 @@ package wgslsmith.wgslgenerator.ast.expression
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class ComparisonExpression : Expression() {
     private lateinit var lhs: Expression
@@ -21,8 +22,8 @@ internal class ComparisonExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        lhs = ExpressionGenerator.getExpressionWithNumericReturnType(symbolTable, depth + 1)
-        argType = lhs.returnType
+        argType = PRNG.getRandomNumericType()
+        lhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
         rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
 
         return this

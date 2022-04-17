@@ -52,13 +52,14 @@ internal enum class ControlFlowStat : Stat {
             AssignBitCompoundStat.values().asList() +
             AssignLogicalCompoundStat.values().asList()
 )*/
-internal val assignStats = ArrayList<Stat>(AssignEqStat.values().asList())
-
-// allStats excludes ContextSpecificStat members as these cannot be used normally!
-internal val allStats = ArrayList<Stat>(assignStats + ControlFlowStat.values().asList())
 
 // holds statements that can only be used in certain contexts e.g. fallthrough in a switch case
 internal enum class ContextSpecificStat : Stat {
     BREAK,
     FALLTHROUGH;
 }
+
+internal val assignStats = ArrayList<Stat>(AssignEqStat.values().asList())
+
+// allStats excludes ContextSpecificStat members as these cannot be used normally!
+internal val allStats = ArrayList<Stat>(assignStats + ControlFlowStat.values().asList())

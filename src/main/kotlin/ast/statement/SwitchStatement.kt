@@ -20,9 +20,7 @@ internal class SwitchStatement : Statement() {
     override fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): SwitchStatement {
         this.stat = stat
 
-        selectorType = WGSLScalarType(
-            if (PRNG.getRandomBool()) Type.INT else Type.UNINT
-        )
+        selectorType = PRNG.getRandomTypeFrom(arrayListOf(WGSLScalarType(Type.INT), WGSLScalarType(Type.UNINT)))
         selector = ExpressionGenerator.getExpressionWithReturnType(symbolTable, selectorType, 0)
 
         while (currentSwitchCases < 1 ||

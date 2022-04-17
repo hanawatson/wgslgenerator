@@ -1,13 +1,13 @@
 package wgslsmith.wgslgenerator.utils
 
-import wgslsmith.wgslgenerator.ast.Type
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
-import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.*
+import wgslsmith.wgslgenerator.ast.expression.Expr
+import wgslsmith.wgslgenerator.ast.statement.Stat
 import kotlin.random.Random
 import kotlin.random.nextUInt
 
 // PseudoRandomNumberGenerator
-object PRNG {
+internal object PRNG {
     private var initialized = false
     private val WGSLEnumTypes = ArrayList(Type.values().asList())
 
@@ -82,11 +82,32 @@ object PRNG {
         return random.nextUInt(startIndex, endIndex)
     }
 
-    fun getRandomWGSLType(): WGSLType {
-        // if get mat or vec etc., return result of separate randomWGSLMatrix etc. - then can generate size and the like
-        val typeIndex = getRandomIntInRange(0, WGSLEnumTypes.size)
-        val typeEnum = WGSLEnumTypes[typeIndex]
-        // if mat/vec ...
-        return WGSLScalarType(typeEnum)
+    fun getRandomNumericType(): WGSLType {
+        return getRandomTypeFrom(numericTypes)
+    }
+
+    fun getRandomFloatType(): WGSLType {
+        return getRandomTypeFrom(floatTypes)
+    }
+
+    fun getRandomTypeFrom(types: ArrayList<WGSLType>): WGSLType {
+        val typeIndex = getRandomIntInRange(0, types.size)
+        var type = types[typeIndex]
+
+        if (type is WGSLScalarType && type.type == Type.ANY) {
+            type = getRandomTypeFrom(scalarTypes)
+        }
+
+        return type
+    }
+
+    fun getRandomExprFrom(exprs: ArrayList<Expr>): Expr {
+        val exprIndex = getRandomIntInRange(0, exprs.size)
+        return exprs[exprIndex]
+    }
+
+    fun getRandomStatFrom(stats: ArrayList<Stat>): Stat {
+        val statIndex = getRandomIntInRange(0, stats.size)
+        return stats[statIndex]
     }
 }

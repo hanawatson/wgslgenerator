@@ -3,24 +3,20 @@ package wgslsmith.wgslgenerator.ast.expression
 import wgslsmith.wgslgenerator.ast.Type.*
 import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.allTypes
+import wgslsmith.wgslgenerator.ast.numericTypes
 
 internal enum class ExprTypes(val exprTypes: ArrayList<WGSLType>, val exprs: List<Expr>) {
-    BINARY_ARITHMETIC(
-        arrayListOf(WGSLScalarType(FLOAT), WGSLScalarType(INT), WGSLScalarType(UNINT)), BinaryArithmeticExpr.values()
-            .asList()
-    ),
+    BINARY_ARITHMETIC(numericTypes, BinaryArithmeticExpr.values().asList()),
     BINARY_BIT(arrayListOf(WGSLScalarType(INT), WGSLScalarType(UNINT)), BinaryBitExpr.values().asList()),
     BINARY_LOGICAL(arrayListOf(WGSLScalarType(BOOL)), BinaryLogicalExpr.values().asList()),
-    BUILTIN_ARITHMETIC(
-        arrayListOf(WGSLScalarType(FLOAT), WGSLScalarType(INT), WGSLScalarType(UNINT)),
-        BuiltinArithmeticExpr.values().asList()
-    ),
+    BUILTIN_ARITHMETIC(numericTypes, BuiltinArithmeticExpr.values().asList()),
     BUILTIN_FLOAT(arrayListOf(WGSLScalarType(FLOAT)), BuiltinFloatExpr.values().asList()),
     BUILTIN_INTEGER(arrayListOf(WGSLScalarType(INT), WGSLScalarType(UNINT)), BuiltinIntegerExpr.values().asList()),
     BUILTIN_LOGICAL(arrayListOf(WGSLScalarType(BOOL)), BuiltinLogicalExpr.values().asList()),
     COMPARISON_EQ(arrayListOf(WGSLScalarType(BOOL)), ComparisonEqExpr.values().asList()),
     COMPARISON_TH(arrayListOf(WGSLScalarType(BOOL)), ComparisonThExpr.values().asList()),
-    IDENTITY(arrayListOf(WGSLScalarType(BOOL), WGSLScalarType(FLOAT)), IdentityExpr.values().asList()),
+    IDENTITY(allTypes, IdentityExpr.values().asList()),
     UNARY_ARITHMETIC(arrayListOf(WGSLScalarType(FLOAT), WGSLScalarType(INT)), UnaryArithmeticExpr.values().asList()),
     UNARY_BIT(arrayListOf(WGSLScalarType(INT), WGSLScalarType(UNINT)), UnaryBitExpr.values().asList()),
     UNARY_LOGICAL(arrayListOf(WGSLScalarType(BOOL)), UnaryLogicalExpr.values().asList());
@@ -36,10 +32,6 @@ internal enum class ExprTypes(val exprTypes: ArrayList<WGSLType>, val exprs: Lis
             throw Exception("Attempt to use Type without corresponding ExprType!")
         }
     }
-}
-
-internal val allExprs = ExprTypes.values().fold(ArrayList()) { acc: ArrayList<Expr>, exprType: ExprTypes ->
-    ArrayList(acc + exprType.exprs)
 }
 
 internal enum class TypeExprs(val typeExprs: ArrayList<Expr>) {

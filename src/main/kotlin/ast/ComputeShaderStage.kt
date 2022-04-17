@@ -2,7 +2,7 @@ package wgslsmith.wgslgenerator.ast
 
 import wgslsmith.wgslgenerator.tables.SymbolTable
 
-class ComputeShaderStage {
+internal class ComputeShaderStage {
     private lateinit var body: ScopeBody
 
     fun generate(symbolTable: SymbolTable): ComputeShaderStage {
@@ -26,7 +26,7 @@ class ComputeShaderStage {
             stringBuilder.append(bodyLine + "\n")
         }
 
-        // calculate checksum of globals
+        // calculate checksum of globals - currently unimplemented and simply returns as 0
         stringBuilder.append("\tchecksum = 0;\n")
 
         stringBuilder.append("}")

@@ -93,18 +93,14 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
     COS("cos", 1),
     COSH("cosh", 1),
     DEGREES("degrees", 1),
-
-    // temporarily commented out until implementation of vectors is concrete
-    // DISTANCE("distance", 2),
+    DISTANCE("distance", 2),
     EXP("exp", 1),
     EXP2("exp2", 1),
     FLOOR("floor", 1),
     FMA("fma", 3),
     FRACT("fract", 1),
     INVERSE_SQRT("inverseSqrt", 1),
-
-    // temporarily commented out until implementation of vectors is concrete
-    // LDEXP("ldexp", 2),
+    LDEXP("ldexp", 2),
     LENGTH("length", 1),
     LOG("log", 1),
     LOG2("log2", 1),
@@ -128,13 +124,18 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
 }
 
 internal enum class BuiltinIntegerExpr(override val operator: String, override val args: Int) : BuiltinExpr {
-    // temporarily commented out - see https://github.com/gfx-rs/naga/issues/1824
+    // temporarily commented out due to lack of implementation in naga
+    // see https://github.com/gfx-rs/naga/issues/1824
     // COUNT_LEADING_ZEROS("countLeadingZeros", 1),
     COUNT_ONE_BITS("countOneBits", 1),
 
-    // temporarily commented out - see https://github.com/gfx-rs/naga/issues/1824
+    // temporarily commented out due to lack of implementation in naga
+    // see https://github.com/gfx-rs/naga/issues/1824
     // COUNT_TRAILING_ZEROS("countTrailingZeros", 1),
-    FIRST_LEADING_BIT("firstLeadingBit", 1),
+
+    // temporarily commented out due to issues with implementation in naga
+    // see https://github.com/gfx-rs/naga/issues/1844
+    // FIRST_LEADING_BIT("firstLeadingBit", 1),
     FIRST_TRAILING_BIT("firstTrailingBit", 1),
     EXTRACT_BITS("extractBits", 3),
     INSERT_BITS("insertBits", 4),
@@ -150,3 +151,19 @@ internal enum class BuiltinLogicalExpr(override val operator: String, override v
     ANY("any", 1),
     SELECT("select", 3);
 }
+
+internal val allExprs = ArrayList<Expr>(
+    UnaryArithmeticExpr.values().asList() +
+            UnaryBitExpr.values().asList() +
+            UnaryLogicalExpr.values().asList() +
+            BinaryArithmeticExpr.values().asList() +
+            BinaryBitExpr.values().asList() +
+            BinaryLogicalExpr.values().asList() +
+            ComparisonEqExpr.values().asList() +
+            ComparisonThExpr.values().asList() +
+            IdentityExpr.values().asList() +
+            BuiltinArithmeticExpr.values().asList() +
+            BuiltinFloatExpr.values().asList() +
+            BuiltinIntegerExpr.values().asList() +
+            BuiltinLogicalExpr.values().asList()
+)

@@ -2,7 +2,7 @@ package wgslsmith.wgslgenerator.ast
 
 import wgslsmith.wgslgenerator.utils.PRNG
 
-object LiteralGenerator {
+internal object LiteralGenerator {
     fun getLiteral(type: WGSLType): Literal {
         val literalString = when (type) {
             WGSLScalarType(Type.BOOL)  -> "${PRNG.getRandomBool()}"
@@ -14,6 +14,7 @@ object LiteralGenerator {
 
         // temporarily commented due to lack of implementation of AbstractInt in Tint and naga
         // u suffix appended above for now - i not supported in Tint or naga, f not supported in naga
+        // see https://github.com/gfx-rs/naga/issues/1843
         /* // append optional suffix if appropriate
         if (PRNG.evaluateProbability(CNFG.probabilityUseNumericSuffix)) {
             literalString += when (type.type) {
@@ -28,7 +29,7 @@ object LiteralGenerator {
     }
 }
 
-class Literal(private val literalString: String, private val type: WGSLType) {
+internal class Literal(private val literalString: String, private val type: WGSLType) {
     fun getType(): WGSLType {
         return type
     }
