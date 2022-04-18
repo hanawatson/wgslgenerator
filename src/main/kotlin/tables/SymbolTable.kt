@@ -1,32 +1,39 @@
 package wgslsmith.wgslgenerator.tables
 
 import wgslsmith.wgslgenerator.ast.Symbol
-import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.WGSLVectorType
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
+internal interface Subtable {
+    fun isEmpty(type: WGSLType, ofWriteable: Boolean): Boolean
+    fun addSymbol(type: WGSLType, symbol: Symbol, writeable: Boolean)
+    fun getSymbolAtIndex(type: WGSLType, index: Int): Symbol?
+
+    fun getNextIndexOf(type: WGSLType): Int
+    fun getWriteableIndexOf(type: WGSLType): Int
+
+    fun copy(): Subtable
+}
+
 internal class SymbolTable {
-    private var boolSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.BOOL))
-    private var floatSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.FLOAT))
-    private var intSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.INT))
-    private var unIntSubtable: TypeSubtable = TypeSubtable(WGSLScalarType(Type.UNINT))
+    private var scalarSubtable = ScalarSubtable()
+    private var vectorSubtable = VectorSubtable()
 
     private var newVarLabelIndex: Int = 0
 
-    private fun getTypeSubtable(type: WGSLType): TypeSubtable {
-        return when (type.type) {
-            Type.BOOL  -> boolSubtable
-            Type.FLOAT -> floatSubtable
-            Type.INT   -> intSubtable
-            Type.UNINT -> unIntSubtable
-            else       -> throw Exception("Attempt to access symbol subtable of unknown type!")
+    private fun getSubtable(type: WGSLType): Subtable {
+        return when (type) {
+            is WGSLScalarType -> scalarSubtable
+            is WGSLVectorType -> vectorSubtable
+            else              -> throw Exception("Attempt to access symbol subtable of unknown type!")
         }
     }
 
     fun hasWriteableOf(type: WGSLType): Boolean {
-        return !getTypeSubtable(type).isEmpty(ofWriteable = true)
+        return !getSubtable(type).isEmpty(type, ofWriteable = true)
     }
 
     private fun getNextNewSymbolName(): String {
@@ -35,17 +42,13 @@ internal class SymbolTable {
 
     fun declareNewSymbol(type: WGSLType): Symbol {
         val newSymbol = Symbol(getNextNewSymbolName(), type)
-        addWriteableSymbol(newSymbol)
+        addSymbol(newSymbol, writeable = true)
         newVarLabelIndex++
         return newSymbol
     }
 
-    fun addWriteableSymbol(symbol: Symbol) {
-        getTypeSubtable(symbol.type).addWriteableSymbol(symbol)
-    }
-
-    fun addNonWriteableSymbol(symbol: Symbol) {
-        getTypeSubtable(symbol.type).addNonWriteableSymbol(symbol)
+    private fun addSymbol(symbol: Symbol, writeable: Boolean) {
+        getSubtable(symbol.type).addSymbol(symbol.type, symbol, writeable)
     }
 
     fun getRandomSymbol(type: WGSLType): Symbol {
@@ -61,39 +64,34 @@ internal class SymbolTable {
     }
 
     private fun getRandomSymbolFrom(type: WGSLType, mustBeWriteable: Boolean, mustAlreadyExist: Boolean): Symbol {
-        val subtable = getTypeSubtable(type)
+        val subtable = getSubtable(type)
 
         // inclusive
         val startIndex = if (mustBeWriteable) {
-            subtable.getWriteableIndex()
+            subtable.getWriteableIndexOf(type)
         } else {
             0
         }
         // exclusive
-        val endIndex = subtable.getNextIndex()
+        val endIndex = subtable.getNextIndexOf(type)
 
-        // a blank symbol represents new symbol if this must be writeable, literal otherwise
+        // a blank symbol represents the need to create a new symbol,
+        // or indicates no matching symbols already exist
         val generateBlankSymbol = if (mustAlreadyExist) {
             false
+        } else if (mustBeWriteable) {
+            PRNG.evaluateProbability(CNFG.probabilityAssignToNewSymbol)
         } else {
-            PRNG.evaluateProbability(
-                if (mustBeWriteable) {
-                    CNFG.probabilityAssignToNewSymbol
-                } else {
-                    CNFG.probabilityAssignLiteral
-                }
-            )
+            false
         }
 
         if (startIndex == endIndex || generateBlankSymbol) {
             return Symbol("", type)
         }
 
-        // get random index
-        // a result of startIndex-blankSymbolIndices means a blank symbol (i.e. a new one/a literal) is returned
         val randomIndex = PRNG.getRandomIntInRange(startIndex, endIndex)
-        if (subtable.getSymbolAtIndex(randomIndex) != null) {
-            return subtable.getSymbolAtIndex(randomIndex)!!
+        if (subtable.getSymbolAtIndex(type, randomIndex) != null) {
+            return subtable.getSymbolAtIndex(type, randomIndex)!!
         }
 
         throw Exception("Out-of-bounds symbol index generated!")
@@ -102,12 +100,10 @@ internal class SymbolTable {
     internal fun copy(): SymbolTable {
         val symbolTable = SymbolTable()
 
-        symbolTable.boolSubtable = this.boolSubtable.copy()
-        symbolTable.floatSubtable = this.floatSubtable.copy()
-        symbolTable.intSubtable = this.intSubtable.copy()
-        symbolTable.unIntSubtable = this.unIntSubtable.copy()
-
         symbolTable.newVarLabelIndex = this.newVarLabelIndex
+
+        symbolTable.scalarSubtable = this.scalarSubtable.copy()
+        symbolTable.vectorSubtable = this.vectorSubtable.copy()
 
         return symbolTable
     }

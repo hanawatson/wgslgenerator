@@ -34,7 +34,7 @@ internal class AssignmentStatement : Statement() {
                 )
             }
             val exprType = ExprTypes.typeOf(exprEquivalent)
-            type = PRNG.getRandomTypeFrom(exprType.exprTypes)
+            type = PRNG.getRandomTypeFrom(exprType.types)
 
             rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, type, 0)
         } else {
@@ -70,10 +70,10 @@ internal class AssignmentStatement : Statement() {
         }
 
         val varDeclaration = if (declaredNewSymbol) "var " else ""
-        val typeDeclaration = if (declaredNewSymbol && PRNG.evaluateProbability(
-                CNFG.probabilityOmitTypeFromDeclaration
-            )) {
-            ": ${type.type.wgslType}"
+        val typeDeclaration = if (declaredNewSymbol &&
+            PRNG.evaluateProbability(CNFG.probabilityOmitTypeFromDeclaration)
+        ) {
+            ": $type"
         } else ""
 
         return arrayListOf("$varDeclaration$lhs$typeDeclaration ${(stat as AssignStat).operator} $rhs;")

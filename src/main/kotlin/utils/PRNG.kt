@@ -9,7 +9,6 @@ import kotlin.random.nextUInt
 // PseudoRandomNumberGenerator
 internal object PRNG {
     private var initialized = false
-    private val WGSLEnumTypes = ArrayList(Type.values().asList())
 
     private lateinit var random: Random
 
@@ -96,6 +95,25 @@ internal object PRNG {
 
         if (type is WGSLScalarType && type.type == Type.ANY) {
             type = getRandomTypeFrom(scalarTypes)
+        }
+
+        if (type is WGSLVectorType) {
+            val vectorType = if (type.componentType.type == Type.ANY) {
+                getRandomTypeFrom(scalarTypes)
+            } else {
+                type.componentType
+            }
+            if (vectorType !is WGSLScalarType) {
+                throw Exception("Attempt to generate WGSLVectorType with unknown componentType $vectorType!")
+            }
+
+            val vectorLength = if (type.length == 0) {
+                getRandomIntInRange(2, 5)
+            } else {
+                type.length
+            }
+
+            type = WGSLVectorType(vectorType, vectorLength)
         }
 
         return type

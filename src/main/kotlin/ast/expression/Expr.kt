@@ -59,8 +59,18 @@ internal enum class ComparisonThExpr(override val operator: String) : Comparison
     MORE_THAN_OR_EQUAL(">=");
 }
 
-internal enum class IdentityExpr(override val operator: String) : Expr {
-    ID(""),
+internal interface IdentityExpr : Expr
+
+internal enum class IdentityConstructorExpr(override val operator: String) : IdentityExpr {
+    CONSTRUCTOR("");
+}
+
+internal enum class IdentityLiteralExpr(override val operator: String) : IdentityExpr {
+    LITERAL("");
+}
+
+internal enum class IdentityUniversalExpr(override val operator: String) : IdentityExpr {
+    SYMBOL(""),
     ZERO_VALUE("");
 }
 
@@ -161,7 +171,9 @@ internal val allExprs = ArrayList<Expr>(
             BinaryLogicalExpr.values().asList() +
             ComparisonEqExpr.values().asList() +
             ComparisonThExpr.values().asList() +
-            IdentityExpr.values().asList() +
+            IdentityConstructorExpr.values().asList() +
+            IdentityLiteralExpr.values().asList() +
+            IdentityUniversalExpr.values().asList() +
             BuiltinArithmeticExpr.values().asList() +
             BuiltinFloatExpr.values().asList() +
             BuiltinIntegerExpr.values().asList() +

@@ -20,12 +20,12 @@ internal object CNFG {
     const val ensureNoFallthroughLastSwitchCase = true
 
     const val probabilityOmitTypeFromDeclaration = 0.2
+    const val probabilityOmitTypeFromConstructible = 0.3
     const val probabilityParenthesesAroundIdentity = 0.5
     const val probabilityGenerateAnotherStatement = 0.9
     const val probabilityAssignToNewSymbol = 0.6
-    const val probabilityAssignLiteral = 0.3
 
-    const val probabilityUseNumericSuffix = 0.5
+    // const val probabilityUseNumericSuffix = 0.5
 
     const val probabilityIfElseBranch = 0.3
     const val probabilityElseBranch = 0.6

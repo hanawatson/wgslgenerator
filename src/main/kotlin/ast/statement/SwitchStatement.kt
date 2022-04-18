@@ -3,6 +3,8 @@ package wgslsmith.wgslgenerator.ast.statement
 import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.ast.expression.Expression
 import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
+import wgslsmith.wgslgenerator.ast.expression.IdentityLiteralExpr
+import wgslsmith.wgslgenerator.ast.expression.IdentityLiteralExpression
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -11,8 +13,7 @@ internal class SwitchStatement : Statement() {
     override lateinit var stat: Stat
     private lateinit var selector: Expression
     private lateinit var selectorType: WGSLType
-    private var switchLiterals = ArrayList<Literal>()
-    private var switchCases = ArrayList<Expression?>()
+    private var switchCases = ArrayList<IdentityLiteralExpression?>()
     private var switchBodies = ArrayList<ScopeBody>()
     private var currentSwitchCases = 0
     private var defaultGenerated = false
@@ -27,24 +28,23 @@ internal class SwitchStatement : Statement() {
             (PRNG.evaluateProbability(CNFG.probabilitySwitchCase)
                     && currentSwitchCases < CNFG.maxSwitchCases)) {
 
-            val switchCase: Expression?
             if (!defaultGenerated && PRNG.evaluateProbability(
                     CNFG.probabilitySwitchDefaultBeforeLast
                 )) {
-                switchCase = null
                 defaultGenerated = true
+                switchCases.add(null)
             } else {
-                var switchLiteral = LiteralGenerator.getLiteral(selectorType)
-                while (CNFG.ensureNoDuplicateSwitchCases &&
-                    switchLiterals.contains(switchLiteral)) {
-                    switchLiteral = LiteralGenerator.getLiteral(selectorType)
+                var switchCase = IdentityLiteralExpression().generate(
+                    symbolTable, selectorType, IdentityLiteralExpr.LITERAL, depth
+                )
+                while (CNFG.ensureNoDuplicateSwitchCases && switchCases.contains(switchCase)) {
+                    switchCase = IdentityLiteralExpression().generate(
+                        symbolTable, selectorType, IdentityLiteralExpr.LITERAL, depth
+                    )
                 }
-                switchLiterals.add(switchLiteral)
-                switchCase = ExpressionGenerator.getLiteralAsExpression(switchLiteral)
+                switchCases.add(switchCase)
             }
             val switchBody = ScopeBody(ScopeState.SWITCH).generate(symbolTable.copy(), depth + 1)
-
-            switchCases.add(switchCase)
             switchBodies.add(switchBody)
             currentSwitchCases++
         }

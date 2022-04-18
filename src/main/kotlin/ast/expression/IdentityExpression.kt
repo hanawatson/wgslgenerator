@@ -1,8 +1,7 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.Literal
-import wgslsmith.wgslgenerator.ast.LiteralGenerator
 import wgslsmith.wgslgenerator.ast.Symbol
+import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
@@ -10,8 +9,13 @@ import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class IdentityExpression : Expression() {
     private var symbol: Symbol? = null
-    private var literal: Literal? = null
     private var parentheses = 0
+
+    // subExpression holds more complex code for constructor literal/zero value generation
+    private var subExpression: Expression? = null
+
+    //private var literal: String? = null
+    //private val components = ArrayList<Expr>()
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
@@ -20,15 +24,37 @@ internal class IdentityExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        if (expr == IdentityExpr.ID) {
-            symbol = symbolTable.getRandomSymbol(returnType)
-            // indicates that a literal value, not an existing symbol, should be generated
-            if (symbol!!.name == "") {
-                symbol = null
-                literal = LiteralGenerator.getLiteral(returnType)
+        if (expr == IdentityUniversalExpr.SYMBOL) {
+            // indicates that no symbol of matching type yet exists
+            // instead of continuing, return a new identityExpression (constructor, literal or zero value)
+            if (!symbolTable.hasWriteableOf(returnType)) {
+                val replacementExprs: ArrayList<Expr> = if (returnType is WGSLScalarType) {
+                    arrayListOf(IdentityLiteralExpr.LITERAL)
+                } else {
+                    arrayListOf(IdentityConstructorExpr.CONSTRUCTOR)
+                }
+                replacementExprs.add(IdentityUniversalExpr.ZERO_VALUE)
+
+                this.expr = PRNG.getRandomExprFrom(replacementExprs)
+            } else {
+                symbol = symbolTable.getRandomSymbol(returnType)
             }
-        } else if (expr == IdentityExpr.ZERO_VALUE) {
-            symbol = Symbol("${returnType.type.wgslType}()", returnType)
+        }
+
+        when (this.expr) {
+            IdentityUniversalExpr.SYMBOL        -> {}
+            IdentityConstructorExpr.CONSTRUCTOR -> {
+                this.subExpression = IdentityConstructorExpression().generate(symbolTable, returnType, this.expr, depth)
+            }
+            IdentityLiteralExpr.LITERAL         -> {
+                this.subExpression = IdentityLiteralExpression().generate(symbolTable, returnType, this.expr, depth)
+            }
+            IdentityUniversalExpr.ZERO_VALUE    -> {
+                this.subExpression = IdentityZeroValExpression().generate(symbolTable, returnType, this.expr, depth)
+            }
+            else                                -> throw Exception(
+                "Attempt to generate IdentityExpression of unknown Expr $this.expr!"
+            )
         }
 
         while (PRNG.evaluateProbability(CNFG.probabilityParenthesesAroundIdentity)
@@ -39,16 +65,16 @@ internal class IdentityExpression : Expression() {
         return this
     }
 
-    fun getLiteralAsIdentity(literal: Literal): IdentityExpression {
-        this.returnType = literal.getType()
-        this.expr = IdentityExpr.ID
-        this.literal = literal
-
-        return this
-    }
-
     override fun toString(): String {
-        var identityString = if (symbol != null) "$symbol" else "$literal"
+        var identityString = if (subExpression != null) {
+            "$subExpression"
+        } else if (symbol != null) {
+            "$symbol"
+        } else {
+            throw Exception(
+                "Attempt to generate string representation of IdentityExpression without symbol or subExpression!"
+            )
+        }
 
         if (CNFG.useExcessParentheses) {
             for (i in 1..parentheses) {

@@ -1,44 +1,43 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.Literal
-import wgslsmith.wgslgenerator.ast.Type
+import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal object ExpressionGenerator {
-    fun getLiteralAsExpression(literal: Literal): Expression {
-        return IdentityExpression().getLiteralAsIdentity(literal)
-    }
-
     fun getExpressionWithoutReturnType(symbolTable: SymbolTable, depth: Int): Expression {
         return getExpressionFromList(symbolTable, null, allExprs, depth)
     }
 
+    // need to alter this for more complex types!
     fun getExpressionWithReturnType(symbolTable: SymbolTable, returnType: WGSLType, depth: Int): Expression {
-        val exprs = (when (returnType.type) {
-            Type.BOOL  -> TypeExprs.BOOL
-            Type.FLOAT -> TypeExprs.FLOAT
-            Type.INT   -> TypeExprs.INT
-            Type.UNINT -> TypeExprs.UNINT
-            else       -> throw Exception("Attempt to generate Expression with unknown returnType $returnType!")
-        }).typeExprs
+        val exprs = ExprTypes.getExprs(returnType)
         return getExpressionFromList(symbolTable, returnType, exprs, depth)
     }
 
     private fun getExpressionFromList(
         symbolTable: SymbolTable, givenReturnType: WGSLType?, exprs: ArrayList<Expr>, depth: Int
     ): Expression {
-        val possibleExprs: ArrayList<Expr> = if (depth >= CNFG.maxExpressionRecursion) {
-            ArrayList(IdentityExpr.values().asList())
+        val possibleExprs = ArrayList<Expr>()
+        if (depth >= CNFG.maxExpressionRecursion) {
+            possibleExprs += IdentityUniversalExpr.values().asList()
+            if (givenReturnType != null && givenReturnType is WGSLScalarType) {
+                possibleExprs += IdentityLiteralExpr.values().asList()
+            } else if (givenReturnType != null) {
+                possibleExprs += IdentityConstructorExpr.values().asList()
+            } else {
+                possibleExprs += IdentityLiteralExpr.values().asList()
+                possibleExprs += IdentityConstructorExpr.values().asList()
+            }
         } else {
-            exprs
+            possibleExprs += exprs
         }
 
         val expr = PRNG.getRandomExprFrom(possibleExprs)
         val exprType = ExprTypes.typeOf(expr)
-        val returnType = givenReturnType ?: PRNG.getRandomTypeFrom(exprType.exprTypes)
+        val returnType = givenReturnType ?: PRNG.getRandomTypeFrom(exprType.types)
 
         return when (expr) {
             is IdentityExpr   -> {
