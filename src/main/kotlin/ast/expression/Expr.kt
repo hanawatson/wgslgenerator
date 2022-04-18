@@ -35,14 +35,14 @@ internal enum class BinaryBitExpr(override val operator: String) : BinaryExpr {
     BIT_EXCLUSIVE_OR("^");
 }
 
-// when vectors are introduced maybe make another enum with only OR / AND? then pick from there if type vec<bool>
-// actually we can add together ops because we are making arraylists. no duped enums!
-
 internal enum class BinaryLogicalExpr(override val operator: String) : BinaryExpr {
-    SHORT_OR("||"),
-    SHORT_AND("&&"),
     OR("|"),
     AND("&");
+}
+
+internal enum class BinaryLogicalScalarExpr(override val operator: String) : BinaryExpr {
+    SHORT_OR("||"),
+    SHORT_AND("&&");
 }
 
 internal interface ComparisonExpr : Expr
@@ -61,11 +61,11 @@ internal enum class ComparisonThExpr(override val operator: String) : Comparison
 
 internal interface IdentityExpr : Expr
 
-internal enum class IdentityConstructorExpr(override val operator: String) : IdentityExpr {
+internal enum class IdentityConstructibleExpr(override val operator: String) : IdentityExpr {
     CONSTRUCTOR("");
 }
 
-internal enum class IdentityLiteralExpr(override val operator: String) : IdentityExpr {
+internal enum class IdentityScalarExpr(override val operator: String) : IdentityExpr {
     LITERAL("");
 }
 
@@ -83,6 +83,10 @@ internal enum class BuiltinArithmeticExpr(override val operator: String, overrid
     CLAMP("clamp", 3),
     MAX("max", 2),
     MIN("min", 2);
+}
+
+internal enum class BuiltinArithmeticScalarExpr(override val operator: String, override val args: Int) : BuiltinExpr {
+    DOT("dot", 2)
 }
 
 internal enum class BuiltinFloatExpr(override val operator: String, override val args: Int) : BuiltinExpr {
@@ -103,7 +107,6 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
     COS("cos", 1),
     COSH("cosh", 1),
     DEGREES("degrees", 1),
-    DISTANCE("distance", 2),
     EXP("exp", 1),
     EXP2("exp2", 1),
     FLOOR("floor", 1),
@@ -111,11 +114,9 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
     FRACT("fract", 1),
     INVERSE_SQRT("inverseSqrt", 1),
     LDEXP("ldexp", 2),
-    LENGTH("length", 1),
     LOG("log", 1),
     LOG2("log2", 1),
-    MIX_COMPONENT("mix", 3),
-    MIX_LINEAR("mix", 3),
+    MIX("mix", 3),
     POW("pow", 2),
 
     // temporarily commented due to lack of implementation in Tint and naga
@@ -131,6 +132,25 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
     TAN("tan", 1),
     TANH("tanh", 1),
     TRUNC("trunc", 1);
+}
+
+internal enum class BuiltinFloatScalarExpr(override val operator: String, override val args: Int) : BuiltinExpr {
+    DISTANCE("distance", 2),
+    LENGTH("length", 1);
+}
+
+internal enum class BuiltinFloatVectorExpr(override val operator: String, override val args: Int) : BuiltinExpr {
+    NORMALIZE("normalize", 1),
+    REFLECT("reflect", 2),
+    REFRACT("refract", 3);
+}
+
+internal enum class BuiltinFloatVector3Expr(override val operator: String, override val args: Int) : BuiltinExpr {
+    CROSS("cross", 2);
+}
+
+internal enum class BuiltinGeneralExpr(override val operator: String, override val args: Int) : BuiltinExpr {
+    SELECT("select", 3);
 }
 
 internal enum class BuiltinIntegerExpr(override val operator: String, override val args: Int) : BuiltinExpr {
@@ -158,8 +178,17 @@ internal enum class BuiltinIntegerExpr(override val operator: String, override v
 
 internal enum class BuiltinLogicalExpr(override val operator: String, override val args: Int) : BuiltinExpr {
     ALL("all", 1),
-    ANY("any", 1),
-    SELECT("select", 3);
+    ANY("any", 1);
+}
+
+internal interface AccessExpr : IdentityExpr
+
+internal enum class AccessConvenienceExpr(override val operator: String) : AccessExpr {
+    CONVENIENCE("");
+}
+
+internal enum class AccessSubscriptExpr(override val operator: String) : AccessExpr {
+    SUBSCRIPT("");
 }
 
 internal val allExprs = ArrayList<Expr>(
@@ -169,13 +198,26 @@ internal val allExprs = ArrayList<Expr>(
             BinaryArithmeticExpr.values().asList() +
             BinaryBitExpr.values().asList() +
             BinaryLogicalExpr.values().asList() +
+            BinaryLogicalScalarExpr.values().asList() +
             ComparisonEqExpr.values().asList() +
             ComparisonThExpr.values().asList() +
-            IdentityConstructorExpr.values().asList() +
-            IdentityLiteralExpr.values().asList() +
+            IdentityConstructibleExpr.values().asList() +
+            IdentityScalarExpr.values().asList() +
             IdentityUniversalExpr.values().asList() +
             BuiltinArithmeticExpr.values().asList() +
+            BuiltinArithmeticScalarExpr.values().asList() +
             BuiltinFloatExpr.values().asList() +
+            BuiltinFloatScalarExpr.values().asList() +
+            BuiltinFloatVectorExpr.values().asList() +
+            BuiltinFloatVector3Expr.values().asList() +
+            BuiltinGeneralExpr.values().asList() +
             BuiltinIntegerExpr.values().asList() +
-            BuiltinLogicalExpr.values().asList()
+            BuiltinLogicalExpr.values().asList() +
+            AccessConvenienceExpr.values().asList() +
+            AccessSubscriptExpr.values().asList()
+)
+internal val compoundAssignableExprs = ArrayList<Expr>(
+    BinaryArithmeticExpr.values().asList() +
+            BinaryBitExpr.values().asList() +
+            BinaryLogicalExpr.values().asList()
 )

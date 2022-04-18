@@ -12,92 +12,84 @@ internal class IdentityConstructorExpression : Expression() {
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
 
-    private fun addComponentWithReturnType(symbolTable: SymbolTable, returnType: WGSLType, depth: Int) {
-        components.add(ExpressionGenerator.getExpressionWithReturnType(symbolTable, returnType, depth + 1))
-    }
-
     override fun generate(
-        symbolTable: SymbolTable,
-        returnType: WGSLType,
-        expr: Expr,
-        depth: Int
+        symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int
     ): IdentityConstructorExpression {
         this.returnType = returnType
         this.expr = expr
 
         when (returnType) {
             is WGSLVectorType -> {
-                when (returnType.length) {
-                    2    -> {
-                        addComponentWithReturnType(symbolTable, returnType.componentType, depth)
-                        addComponentWithReturnType(symbolTable, returnType.componentType, depth)
+                fun addComponentWithLength(length: Int) {
+                    val componentType = if (length == 1) {
+                        returnType.componentType
+                    } else {
+                        WGSLVectorType(returnType.componentType, length)
                     }
-                    3    -> {
-                        val firstLength = PRNG.getRandomIntInRange(1, 3)
-                        if (firstLength == 2) {
-                            addComponentWithReturnType(
-                                symbolTable, WGSLVectorType(returnType.componentType, 2), depth
-                            )
-                            addComponentWithReturnType(symbolTable, returnType.componentType, depth)
-                        } else {
-                            val secondLength = PRNG.getRandomIntInRange(1, 3)
-                            if (secondLength == 2) {
-                                addComponentWithReturnType(
-                                    symbolTable, WGSLVectorType(returnType.componentType, 2), depth
-                                )
-                            } else {
-                                addComponentWithReturnType(symbolTable, returnType.componentType, depth)
-                                addComponentWithReturnType(symbolTable, returnType.componentType, depth)
+                    components.add(
+                        ExpressionGenerator.getExpressionWithReturnType(symbolTable, componentType, depth + 1)
+                    )
+                }
+
+                fun addComponentsWithRandomLengths(totalLength: Int) {
+                    when (totalLength) {
+                        2 -> {
+                            when (PRNG.getRandomIntInRange(1, 3)) {
+                                2 -> {
+                                    addComponentWithLength(2)
+                                }
+                                1 -> {
+                                    addComponentWithLength(1)
+                                    addComponentWithLength(1)
+                                }
                             }
                         }
-                    }
-                    4    -> {
-                        val firstLength = PRNG.getRandomIntInRange(1, 4)
-                        if (firstLength == 3) {
-                            addComponentWithReturnType(
-                                symbolTable, WGSLVectorType(returnType.componentType, 3), depth
-                            )
-                            addComponentWithReturnType(symbolTable, returnType.componentType, depth)
-                        } else if (firstLength == 2) {
-                            addComponentWithReturnType(
-                                symbolTable, WGSLVectorType(returnType.componentType, 2), depth
-                            )
-                            val secondLength = PRNG.getRandomIntInRange(1, 3)
-                            if (secondLength == 2) {
-                                addComponentWithReturnType(
-                                    symbolTable, WGSLVectorType(returnType.componentType, 2), depth
-                                )
-                            } else {
-                                addComponentWithReturnType(symbolTable, returnType.componentType, depth)
-                                addComponentWithReturnType(symbolTable, returnType.componentType, depth)
+                        3 -> {
+                            when (PRNG.getRandomIntInRange(1, 4)) {
+                                3 -> {
+                                    addComponentWithLength(3)
+                                }
+                                2 -> {
+                                    addComponentWithLength(2)
+                                    addComponentWithLength(1)
+                                }
+                                1 -> {
+                                    addComponentWithLength(1)
+                                    addComponentsWithRandomLengths(2)
+                                }
                             }
-                        } else {
-                            addComponentWithReturnType(symbolTable, returnType.componentType, depth)
-                            val secondLength = PRNG.getRandomIntInRange(1, 4)
-                            if (secondLength == 3) {
-                                addComponentWithReturnType(
-                                    symbolTable, WGSLVectorType(returnType.componentType, 3), depth
-                                )
-                            } else if (secondLength == 2) {
-                                addComponentWithReturnType(
-                                    symbolTable, WGSLVectorType(returnType.componentType, 2), depth
-                                )
-                                addComponentWithReturnType(symbolTable, returnType.componentType, depth)
-                            } else {
-                                addComponentWithReturnType(symbolTable, returnType.componentType, depth)
-                                val thirdLength = PRNG.getRandomIntInRange(1, 3)
-                                if (thirdLength == 2) {
-                                    addComponentWithReturnType(
-                                        symbolTable, WGSLVectorType(returnType.componentType, 2), depth
-                                    )
-                                } else {
-                                    addComponentWithReturnType(symbolTable, returnType.componentType, depth)
-                                    addComponentWithReturnType(symbolTable, returnType.componentType, depth)
+                        }
+                        4 -> {
+                            when (PRNG.getRandomIntInRange(1, 5)) {
+                                4 -> {
+                                    addComponentWithLength(4)
+                                }
+                                3 -> {
+                                    addComponentWithLength(3)
+                                    addComponentWithLength(1)
+                                }
+                                2 -> {
+                                    addComponentWithLength(2)
+                                    addComponentsWithRandomLengths(2)
+                                }
+                                1 -> {
+                                    addComponentWithLength(1)
+                                    addComponentsWithRandomLengths(3)
                                 }
                             }
                         }
                     }
-                    else -> throw Exception("Attempt to generate vector of unknown length ${returnType.length}!")
+                }
+
+                if (PRNG.evaluateProbability(CNFG.probabilityGenerateVectorWithSingleValue)) {
+                    addComponentWithLength(1)
+                } else {
+                    when (returnType.length) {
+                        2    -> addComponentsWithRandomLengths(2)
+                        3    -> addComponentsWithRandomLengths(3)
+                        4    -> addComponentsWithRandomLengths(4)
+                        else -> throw Exception("Attempt to generate vector of unknown length ${returnType.length}!")
+                    }
                 }
             }
             else              -> throw Exception("Attempt to generate constructible of unknown type $returnType!")

@@ -1,8 +1,8 @@
 package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.Type
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.scalarIntType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.PRNG
 
@@ -22,12 +22,12 @@ internal class IdentityLiteralExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        literalValue = when (returnType) {
-            WGSLScalarType(Type.BOOL)  -> "${PRNG.getRandomBool()}"
-            WGSLScalarType(Type.FLOAT) -> "${PRNG.getRandomFloat()}"
-            WGSLScalarType(Type.INT)   -> "${PRNG.getRandomIntInRange(Int.MIN_VALUE, Int.MAX_VALUE)}"
-            WGSLScalarType(Type.UNINT) -> "${PRNG.getRandomUnIntInRange(UInt.MIN_VALUE, UInt.MAX_VALUE)}"
-            else                       -> throw Exception("Attempt to generate literal of unknown type $returnType!")
+        literalValue = when (returnType.type) {
+            Type.BOOL  -> "${PRNG.getRandomBool()}"
+            Type.FLOAT -> "${PRNG.getRandomFloat()}"
+            Type.INT   -> "${PRNG.getRandomIntInRange(Int.MIN_VALUE, Int.MAX_VALUE)}"
+            Type.UNINT -> "${PRNG.getRandomUnIntInRange(UInt.MIN_VALUE, UInt.MAX_VALUE)}"
+            else       -> throw Exception("Attempt to generate literal of unknown type $returnType!")
         }
 
         // temporarily commented due to lack of implementation of AbstractInt in Tint and naga
@@ -46,6 +46,13 @@ internal class IdentityLiteralExpression : Expression() {
         if (returnType.type == Type.UNINT) {
             literalSuffix = "u"
         }
+
+        return this
+    }
+
+    fun generateIntLiteralInRange(symbolTable: SymbolTable, minValue: Int, maxValue: Int): IdentityLiteralExpression {
+        this.generate(symbolTable, scalarIntType, IdentityScalarExpr.LITERAL, 0)
+        literalValue = "${PRNG.getRandomIntInRange(minValue, maxValue)}"
 
         return this
     }

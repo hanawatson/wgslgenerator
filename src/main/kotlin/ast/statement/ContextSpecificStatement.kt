@@ -5,8 +5,9 @@ import wgslsmith.wgslgenerator.ast.statement.ContextSpecificStat.FALLTHROUGH
 import wgslsmith.wgslgenerator.tables.SymbolTable
 
 internal class ContextSpecificStatement : Statement() {
-    override lateinit var stat: Stat
     private lateinit var keyword: String
+    
+    override lateinit var stat: Stat
 
     override fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): Statement {
         this.stat = stat

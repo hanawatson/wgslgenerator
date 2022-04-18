@@ -18,6 +18,7 @@ internal object CNFG {
 
     const val ensureNoDuplicateSwitchCases = false
     const val ensureNoFallthroughLastSwitchCase = true
+    const val ensureSubscriptAccessInBounds = true
 
     const val probabilityOmitTypeFromDeclaration = 0.2
     const val probabilityOmitTypeFromConstructible = 0.3
@@ -26,6 +27,9 @@ internal object CNFG {
     const val probabilityAssignToNewSymbol = 0.6
 
     // const val probabilityUseNumericSuffix = 0.5
+    const val probabilityGenerateVectorWithSingleValue = 0.2
+    const val probabilityReplaceVectorBinaryOperandWithScalar = 0.3
+    const val probabilityGenerateSubscriptAccessInBounds = 0.5
 
     const val probabilityIfElseBranch = 0.3
     const val probabilityElseBranch = 0.6

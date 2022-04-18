@@ -3,8 +3,8 @@ package wgslsmith.wgslgenerator.ast.statement
 import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.ast.expression.Expression
 import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
-import wgslsmith.wgslgenerator.ast.expression.IdentityLiteralExpr
 import wgslsmith.wgslgenerator.ast.expression.IdentityLiteralExpression
+import wgslsmith.wgslgenerator.ast.expression.IdentityScalarExpr
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -35,11 +35,11 @@ internal class SwitchStatement : Statement() {
                 switchCases.add(null)
             } else {
                 var switchCase = IdentityLiteralExpression().generate(
-                    symbolTable, selectorType, IdentityLiteralExpr.LITERAL, depth
+                    symbolTable, selectorType, IdentityScalarExpr.LITERAL, depth
                 )
                 while (CNFG.ensureNoDuplicateSwitchCases && switchCases.contains(switchCase)) {
                     switchCase = IdentityLiteralExpression().generate(
-                        symbolTable, selectorType, IdentityLiteralExpr.LITERAL, depth
+                        symbolTable, selectorType, IdentityScalarExpr.LITERAL, depth
                     )
                 }
                 switchCases.add(switchCase)

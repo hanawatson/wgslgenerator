@@ -81,14 +81,6 @@ internal object PRNG {
         return random.nextUInt(startIndex, endIndex)
     }
 
-    fun getRandomNumericType(): WGSLType {
-        return getRandomTypeFrom(numericTypes)
-    }
-
-    fun getRandomFloatType(): WGSLType {
-        return getRandomTypeFrom(floatTypes)
-    }
-
     fun getRandomTypeFrom(types: ArrayList<WGSLType>): WGSLType {
         val typeIndex = getRandomIntInRange(0, types.size)
         var type = types[typeIndex]

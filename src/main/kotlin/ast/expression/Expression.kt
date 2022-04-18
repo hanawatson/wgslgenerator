@@ -2,6 +2,7 @@ package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.WGSLVectorType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -24,12 +25,12 @@ internal object ExpressionGenerator {
         if (depth >= CNFG.maxExpressionRecursion) {
             possibleExprs += IdentityUniversalExpr.values().asList()
             if (givenReturnType != null && givenReturnType is WGSLScalarType) {
-                possibleExprs += IdentityLiteralExpr.values().asList()
-            } else if (givenReturnType != null) {
-                possibleExprs += IdentityConstructorExpr.values().asList()
+                possibleExprs += IdentityScalarExpr.values().asList()
+            } else if (givenReturnType != null && givenReturnType is WGSLVectorType) {
+                possibleExprs += IdentityConstructibleExpr.values().asList()
             } else {
-                possibleExprs += IdentityLiteralExpr.values().asList()
-                possibleExprs += IdentityConstructorExpr.values().asList()
+                possibleExprs += IdentityConstructibleExpr.values().asList()
+                possibleExprs += IdentityScalarExpr.values().asList()
             }
         } else {
             possibleExprs += exprs
@@ -40,20 +41,23 @@ internal object ExpressionGenerator {
         val returnType = givenReturnType ?: PRNG.getRandomTypeFrom(exprType.types)
 
         return when (expr) {
-            is IdentityExpr   -> {
-                IdentityExpression().generate(symbolTable, returnType, expr, depth)
-            }
-            is ComparisonExpr -> {
-                ComparisonExpression().generate(symbolTable, returnType, expr, depth)
-            }
-            is UnaryExpr      -> {
-                UnaryExpression().generate(symbolTable, returnType, expr, depth)
+            is AccessExpr     -> {
+                AccessExpression().generate(symbolTable, returnType, expr, depth)
             }
             is BinaryExpr     -> {
                 BinaryExpression().generate(symbolTable, returnType, expr, depth)
             }
             is BuiltinExpr    -> {
                 BuiltinExpression().generate(symbolTable, returnType, expr, depth)
+            }
+            is ComparisonExpr -> {
+                ComparisonExpression().generate(symbolTable, returnType, expr, depth)
+            }
+            is IdentityExpr   -> {
+                IdentityExpression().generate(symbolTable, returnType, expr, depth)
+            }
+            is UnaryExpr      -> {
+                UnaryExpression().generate(symbolTable, returnType, expr, depth)
             }
             else              -> throw Exception("Attempt to generate Expression with uncategorized Expr $expr!")
         }

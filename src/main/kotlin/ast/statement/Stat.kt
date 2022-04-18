@@ -13,30 +13,10 @@ internal enum class AssignEqStat(override val operator: String) : AssignStat {
     // ASSIGN_PHONY("=");
 }
 
-internal interface AssignCompoundStat : AssignStat
-
-internal enum class AssignArithmeticCompoundStat(override val operator: String) : AssignCompoundStat {
-    ADD("+="),
-    DIV("/="),
-    MINUS("-="),
-    MOD("%="),
-    MULT("*=");
-}
-
-internal enum class AssignBitCompoundStat(override val operator: String) : AssignCompoundStat {
-    BIT_OR("|="),
-    BIT_AND("&="),
-    BIT_EXCLUSIVE_OR("^=");
-}
-
-internal enum class AssignIncDecCompoundStat(override val operator: String) : AssignCompoundStat {
+internal enum class AssignCompoundStat(override val operator: String) : AssignStat {
+    BINARY_OPERATOR(""),
     DECREMENT("--"),
     INCREMENT("++");
-}
-
-internal enum class AssignLogicalCompoundStat(override val operator: String) : AssignCompoundStat {
-    OR("|="),
-    AND("&=");
 }
 
 internal enum class ControlFlowStat : Stat {
@@ -44,22 +24,13 @@ internal enum class ControlFlowStat : Stat {
     SWITCH;
 }
 
-// temporary removal of compound assignments until probability is implemented to encourage generation of control flow
-/*internal val assignStats = ArrayList<Stat>(
-    AssignEqStat.values().asList() +
-            AssignArithmeticCompoundStat.values().asList() +
-            AssignIncDecCompoundStat.values().asList() +
-            AssignBitCompoundStat.values().asList() +
-            AssignLogicalCompoundStat.values().asList()
-)*/
-
 // holds statements that can only be used in certain contexts e.g. fallthrough in a switch case
 internal enum class ContextSpecificStat : Stat {
     BREAK,
     FALLTHROUGH;
 }
 
-internal val assignStats = ArrayList<Stat>(AssignEqStat.values().asList())
+internal val assignStats = ArrayList<Stat>(AssignCompoundStat.values().asList() + AssignEqStat.values().asList())
 
 // allStats excludes ContextSpecificStat members as these cannot be used normally!
 internal val allStats = ArrayList<Stat>(assignStats + ControlFlowStat.values().asList())

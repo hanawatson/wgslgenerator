@@ -3,6 +3,7 @@ package wgslsmith.wgslgenerator.ast.expression
 import wgslsmith.wgslgenerator.ast.Symbol
 import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.WGSLVectorType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -11,11 +12,8 @@ internal class IdentityExpression : Expression() {
     private var symbol: Symbol? = null
     private var parentheses = 0
 
-    // subExpression holds more complex code for constructor literal/zero value generation
-    private var subExpression: Expression? = null
-
-    //private var literal: String? = null
-    //private val components = ArrayList<Expr>()
+    // subExpression holds more complex code for non-symbol generation
+    var subExpression: Expression? = null
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
@@ -26,14 +24,33 @@ internal class IdentityExpression : Expression() {
 
         if (expr == IdentityUniversalExpr.SYMBOL) {
             // indicates that no symbol of matching type yet exists
-            // instead of continuing, return a new identityExpression (constructor, literal or zero value)
+            // instead of continuing, find a new IdentityExpr (constructor, literal or zero value)
+            // an AccessExpr can also be used, since it lets us transform to a new type
+
+            // !!! in future, type conversions will also probably be OK to use here
             if (!symbolTable.hasWriteableOf(returnType)) {
-                val replacementExprs: ArrayList<Expr> = if (returnType is WGSLScalarType) {
-                    arrayListOf(IdentityLiteralExpr.LITERAL)
-                } else {
-                    arrayListOf(IdentityConstructorExpr.CONSTRUCTOR)
+                val replacementExprs: ArrayList<Expr> = when (returnType) {
+                    is WGSLScalarType -> {
+                        arrayListOf(
+                            AccessConvenienceExpr.CONVENIENCE,
+                            AccessSubscriptExpr.SUBSCRIPT,
+                            IdentityScalarExpr.LITERAL,
+                            //IdentityUniversalExpr.ZERO_VALUE
+                        )
+                    }
+                    is WGSLVectorType -> {
+                        arrayListOf(
+                            AccessConvenienceExpr.CONVENIENCE,
+                            IdentityConstructibleExpr.CONSTRUCTOR,
+                            //IdentityUniversalExpr.ZERO_VALUE
+                        )
+                    }
+                    else              -> {
+                        throw Exception(
+                            "Attempt to generate replacement IdentityExpr list for unknown type $returnType!"
+                        )
+                    }
                 }
-                replacementExprs.add(IdentityUniversalExpr.ZERO_VALUE)
 
                 this.expr = PRNG.getRandomExprFrom(replacementExprs)
             } else {
@@ -42,23 +59,22 @@ internal class IdentityExpression : Expression() {
         }
 
         when (this.expr) {
-            IdentityUniversalExpr.SYMBOL        -> {}
-            IdentityConstructorExpr.CONSTRUCTOR -> {
-                this.subExpression = IdentityConstructorExpression().generate(symbolTable, returnType, this.expr, depth)
-            }
-            IdentityLiteralExpr.LITERAL         -> {
-                this.subExpression = IdentityLiteralExpression().generate(symbolTable, returnType, this.expr, depth)
-            }
-            IdentityUniversalExpr.ZERO_VALUE    -> {
-                this.subExpression = IdentityZeroValExpression().generate(symbolTable, returnType, this.expr, depth)
-            }
-            else                                -> throw Exception(
+            is AccessExpr                         -> subExpression =
+                AccessExpression().generate(symbolTable, returnType, this.expr, depth)
+            IdentityUniversalExpr.SYMBOL          -> {}
+            IdentityConstructibleExpr.CONSTRUCTOR -> subExpression =
+                IdentityConstructorExpression().generate(symbolTable, returnType, this.expr, depth)
+            IdentityScalarExpr.LITERAL            -> subExpression =
+                IdentityLiteralExpression().generate(symbolTable, returnType, this.expr, depth)
+            IdentityUniversalExpr.ZERO_VALUE      -> subExpression =
+                IdentityZeroValExpression().generate(symbolTable, returnType, this.expr, depth)
+            else                                  -> throw Exception(
                 "Attempt to generate IdentityExpression of unknown Expr $this.expr!"
             )
         }
 
         while (PRNG.evaluateProbability(CNFG.probabilityParenthesesAroundIdentity)
-            && parentheses < CNFG.maxParentheses) {
+            && parentheses < CNFG.maxParentheses && this.expr !is AccessExpr) {
             parentheses++
         }
 

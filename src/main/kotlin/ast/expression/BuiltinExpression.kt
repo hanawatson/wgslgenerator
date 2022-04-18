@@ -1,8 +1,6 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.Type
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
-import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.PRNG
 
@@ -27,33 +25,51 @@ internal class BuiltinExpression : Expression() {
         }
 
         // set bool/int/unint matching types. must match existing returnType dimensions when vectors are implemented
-        val matchingBoolType = WGSLScalarType(Type.BOOL)
-        val matchingIntType = WGSLScalarType(Type.INT)
-        // val matchingUnIntType = WGSLScalarType(Type.UNINT)
+        var matchingBoolType: WGSLType = WGSLScalarType(Type.BOOL)
+        var matchingIntType: WGSLType = WGSLScalarType(Type.INT)
+        // var matchingUnIntType: WGSLType = WGSLScalarType(Type.UNINT)
+        if (returnType is WGSLVectorType) {
+            matchingBoolType = WGSLVectorType(matchingBoolType as WGSLScalarType, returnType.length)
+            matchingIntType = WGSLVectorType(matchingIntType as WGSLScalarType, returnType.length)
+            // matchingUnIntType = WGSLVectorType(matchingUnIntType as WGSLScalarType, 0)
+        }
 
-        val scalarFloatType = WGSLScalarType(Type.FLOAT)
-        val scalarUnIntType = WGSLScalarType(Type.UNINT)
+        var matchingVectorType: WGSLType = abstractWGSLVectorType
+        if (returnType is WGSLScalarType) {
+            matchingVectorType = WGSLVectorType(returnType, 0)
+        }
 
         // allow for irregular/different type args
         when (expr) {
-            BuiltinFloatExpr.DISTANCE       -> {
-                argTypes[0] = PRNG.getRandomFloatType()
+            BuiltinArithmeticScalarExpr.DOT                -> {
+                argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(matchingVectorType))
                 argTypes[1] = argTypes[0]
             }
-            BuiltinFloatExpr.LDEXP          -> {
+            BuiltinFloatExpr.LDEXP                         -> {
                 argTypes[1] = matchingIntType
             }
-            BuiltinFloatExpr.LENGTH         -> {
-                argTypes[0] = PRNG.getRandomFloatType()
+            BuiltinFloatExpr.MIX                           -> {
+                // cover both the linear and component versions of the mix function
+                argTypes[2] = PRNG.getRandomTypeFrom(arrayListOf(scalarFloatType, returnType))
             }
-            BuiltinFloatExpr.MIX_COMPONENT  -> {
+            BuiltinFloatScalarExpr.DISTANCE                -> {
+                argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(scalarFloatType, vectorFloatType))
+                argTypes[1] = argTypes[0]
+            }
+            BuiltinFloatScalarExpr.LENGTH                  -> {
+                argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(scalarFloatType, vectorFloatType))
+            }
+            BuiltinFloatVectorExpr.REFRACT                 -> {
                 argTypes[2] = scalarFloatType
             }
-            BuiltinIntegerExpr.EXTRACT_BITS -> {
+            BuiltinGeneralExpr.SELECT                      -> {
+                argTypes[2] = matchingBoolType
+            }
+            BuiltinIntegerExpr.EXTRACT_BITS                -> {
                 argTypes[1] = scalarUnIntType
                 argTypes[2] = scalarUnIntType
             }
-            BuiltinIntegerExpr.INSERT_BITS  -> {
+            BuiltinIntegerExpr.INSERT_BITS                 -> {
                 argTypes[2] = scalarUnIntType
                 argTypes[3] = scalarUnIntType
             }
@@ -63,8 +79,8 @@ internal class BuiltinExpression : Expression() {
             BuiltinIntegerExpr.SHIFT_RIGHT -> {
                 argTypes[1] = matchingUnIntType
             }*/
-            BuiltinLogicalExpr.SELECT       -> {
-                argTypes[2] = matchingBoolType
+            BuiltinLogicalExpr.ALL, BuiltinLogicalExpr.ANY -> {
+                argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(scalarBoolType, vectorBoolType))
             }
         }
 

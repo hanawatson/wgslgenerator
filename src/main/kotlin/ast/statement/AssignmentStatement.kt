@@ -3,16 +3,20 @@ package wgslsmith.wgslgenerator.ast.statement
 import wgslsmith.wgslgenerator.ast.Symbol
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.expression.*
+import wgslsmith.wgslgenerator.ast.scalarIntType
+import wgslsmith.wgslgenerator.ast.scalarUnIntType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class AssignmentStatement : Statement() {
-    override lateinit var stat: Stat
     private lateinit var lhs: Symbol
     private lateinit var rhs: Expression
     private lateinit var type: WGSLType
     private var declaredNewSymbol = false
+    private var compoundBinaryOperator = ""
+
+    override lateinit var stat: Stat
 
     override fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): AssignmentStatement {
         this.stat = stat
@@ -22,21 +26,28 @@ internal class AssignmentStatement : Statement() {
         }
 
         if (stat is AssignCompoundStat) {
-            // should be updated to use probability method once implemented in similar Expression code!
-            val exprEquivalent: BinaryExpr = when (stat) {
-                is AssignArithmeticCompoundStat    -> BinaryArithmeticExpr.valueOf(stat.name)
-                is AssignBitCompoundStat           -> BinaryBitExpr.valueOf(stat.name)
-                is AssignLogicalCompoundStat       -> BinaryLogicalExpr.valueOf(stat.name)
-                AssignIncDecCompoundStat.DECREMENT -> BinaryArithmeticExpr.MINUS
-                AssignIncDecCompoundStat.INCREMENT -> BinaryArithmeticExpr.ADD
-                else                               -> throw Exception(
-                    "Attempt to generate AssignCompoundStat with uncategorized operator ${stat.operator}!"
-                )
+            val exprEquivalent = when (stat) {
+                AssignCompoundStat.DECREMENT       -> BinaryArithmeticExpr.MINUS
+                AssignCompoundStat.INCREMENT       -> BinaryArithmeticExpr.ADD
+                AssignCompoundStat.BINARY_OPERATOR -> PRNG.getRandomExprFrom(compoundAssignableExprs)
             }
-            val exprType = ExprTypes.typeOf(exprEquivalent)
-            type = PRNG.getRandomTypeFrom(exprType.types)
+            type = when (stat) {
+                AssignCompoundStat.DECREMENT,
+                AssignCompoundStat.INCREMENT       -> PRNG.getRandomTypeFrom(
+                    arrayListOf(scalarIntType, scalarUnIntType)
+                )
+                AssignCompoundStat.BINARY_OPERATOR -> {
+                    compoundBinaryOperator = "${exprEquivalent.operator}="
+                    val exprType = ExprTypes.typeOf(exprEquivalent)
+                    PRNG.getRandomTypeFrom(exprType.types)
+                }
+            }
 
-            rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, type, 0)
+            val binaryExpressionEquivalent = BinaryExpression().generate(
+                symbolTable, type, exprEquivalent, 0
+            )
+
+            rhs = binaryExpressionEquivalent.getRHS()
         } else {
             rhs = ExpressionGenerator.getExpressionWithoutReturnType(symbolTable, 0)
             type = rhs.returnType
@@ -45,6 +56,7 @@ internal class AssignmentStatement : Statement() {
         // check if the selected compound statement can be used, and revert to simple assignment if not
         if (stat is AssignCompoundStat && !symbolTable.hasWriteableOf(type)) {
             this.stat = AssignEqStat.ASSIGN_SIMPLE
+            type = rhs.returnType
         }
 
         if (this.stat is AssignCompoundStat) {
@@ -65,8 +77,16 @@ internal class AssignmentStatement : Statement() {
     }
 
     override fun getTabbedLines(): ArrayList<String> {
-        if (stat is AssignIncDecCompoundStat) {
-            return arrayListOf("$lhs${(stat as AssignStat).operator};")
+        if (stat != AssignCompoundStat.BINARY_OPERATOR && lhs.type != rhs.returnType) {
+            print("")
+        }
+        val operator = if (stat == AssignCompoundStat.BINARY_OPERATOR) {
+            compoundBinaryOperator
+        } else {
+            (stat as AssignStat).operator
+        }
+        if (stat == AssignCompoundStat.DECREMENT || stat == AssignCompoundStat.INCREMENT) {
+            return arrayListOf("$lhs$operator;")
         }
 
         val varDeclaration = if (declaredNewSymbol) "var " else ""
@@ -76,6 +96,6 @@ internal class AssignmentStatement : Statement() {
             ": $type"
         } else ""
 
-        return arrayListOf("$varDeclaration$lhs$typeDeclaration ${(stat as AssignStat).operator} $rhs;")
+        return arrayListOf("$varDeclaration$lhs$typeDeclaration $operator $rhs;")
     }
 }

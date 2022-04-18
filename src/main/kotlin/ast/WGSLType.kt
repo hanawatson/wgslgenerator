@@ -21,7 +21,7 @@ internal interface WGSLType {
 internal class WGSLScalarType(override val type: Type) : WGSLType {
     override fun isRepresentedBy(abstractType: WGSLType): Boolean {
         if (abstractType is WGSLScalarType) {
-            return abstractType.type == Type.ANY
+            return abstractType.type == Type.ANY || abstractType.type == type
         }
         return false
     }
@@ -59,8 +59,8 @@ internal class WGSLVectorType(val componentType: WGSLScalarType, val length: Int
                 return abstractType.length == 0 || abstractType.length == length
             }
             if (abstractType.length == 0) {
-                return abstractType.componentType ==
-                        WGSLScalarType(Type.ANY) || abstractType.componentType == componentType
+                return abstractType.componentType == WGSLScalarType(Type.ANY)
+                        || abstractType.componentType == componentType
             }
         }
         return false
@@ -84,6 +84,18 @@ internal class WGSLVectorType(val componentType: WGSLScalarType, val length: Int
     }
 }
 
+internal val scalarBoolType = WGSLScalarType(Type.BOOL)
+internal val scalarFloatType = WGSLScalarType(Type.FLOAT)
+internal val scalarIntType = WGSLScalarType(Type.INT)
+internal val scalarUnIntType = WGSLScalarType(Type.UNINT)
+
+internal val vectorBoolType = WGSLVectorType(scalarBoolType, 0)
+internal val vectorFloatType = WGSLVectorType(scalarFloatType, 0)
+internal val vectorIntType = WGSLVectorType(scalarIntType, 0)
+internal val vectorUnIntType = WGSLVectorType(scalarUnIntType, 0)
+
+internal val vector3FloatType = WGSLVectorType(scalarFloatType, 3)
+
 internal val abstractWGSLScalarType = WGSLScalarType(Type.ANY)
 internal val abstractWGSLVectorType = WGSLVectorType(abstractWGSLScalarType, 0)
 
@@ -92,18 +104,18 @@ internal val allTypes: ArrayList<WGSLType> = arrayListOf(
     abstractWGSLVectorType
 )
 internal val scalarTypes: ArrayList<WGSLType> = arrayListOf(
-    WGSLScalarType(Type.BOOL),
-    WGSLScalarType(Type.FLOAT),
-    WGSLScalarType(Type.INT),
-    WGSLScalarType(Type.UNINT)
+    scalarBoolType,
+    scalarFloatType,
+    scalarIntType,
+    scalarUnIntType
 )
 internal val numericTypes: ArrayList<WGSLType> = arrayListOf(
-    WGSLScalarType(Type.FLOAT),
-    WGSLScalarType(Type.INT),
-    WGSLScalarType(Type.UNINT)
-)
-internal val floatTypes: ArrayList<WGSLType> = arrayListOf(
-    WGSLScalarType(Type.FLOAT)
+    scalarFloatType,
+    scalarIntType,
+    scalarUnIntType,
+    vectorFloatType,
+    vectorIntType,
+    vectorUnIntType
 )
 internal val constructibleTypes: ArrayList<WGSLType> = arrayListOf(
     abstractWGSLVectorType

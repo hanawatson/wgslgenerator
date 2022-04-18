@@ -1,24 +1,100 @@
 package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.*
-import wgslsmith.wgslgenerator.ast.Type.*
 
 internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Expr>) {
-    BINARY_ARITHMETIC(numericTypes, BinaryArithmeticExpr.values().asList()),
-    BINARY_BIT(arrayListOf(WGSLScalarType(INT), WGSLScalarType(UNINT)), BinaryBitExpr.values().asList()),
-    BINARY_LOGICAL(arrayListOf(WGSLScalarType(BOOL)), BinaryLogicalExpr.values().asList()),
-    BUILTIN_ARITHMETIC(numericTypes, BuiltinArithmeticExpr.values().asList()),
-    BUILTIN_FLOAT(arrayListOf(WGSLScalarType(FLOAT)), BuiltinFloatExpr.values().asList()),
-    BUILTIN_INTEGER(arrayListOf(WGSLScalarType(INT), WGSLScalarType(UNINT)), BuiltinIntegerExpr.values().asList()),
-    BUILTIN_LOGICAL(arrayListOf(WGSLScalarType(BOOL)), BuiltinLogicalExpr.values().asList()),
-    COMPARISON_EQ(arrayListOf(WGSLScalarType(BOOL)), ComparisonEqExpr.values().asList()),
-    COMPARISON_TH(arrayListOf(WGSLScalarType(BOOL)), ComparisonThExpr.values().asList()),
-    IDENTITY_CONSTRUCTOR(constructibleTypes, IdentityConstructorExpr.values().asList()),
-    IDENTITY_LITERAL(scalarTypes, IdentityLiteralExpr.values().asList()),
-    IDENTITY_UNIVERSAL(allTypes, IdentityUniversalExpr.values().asList()),
-    UNARY_ARITHMETIC(arrayListOf(WGSLScalarType(FLOAT), WGSLScalarType(INT)), UnaryArithmeticExpr.values().asList()),
-    UNARY_BIT(arrayListOf(WGSLScalarType(INT), WGSLScalarType(UNINT)), UnaryBitExpr.values().asList()),
-    UNARY_LOGICAL(arrayListOf(WGSLScalarType(BOOL)), UnaryLogicalExpr.values().asList());
+    ACCESS_CONVENIENCE(
+        arrayListOf(abstractWGSLScalarType, abstractWGSLVectorType),
+        AccessConvenienceExpr.values().asList()
+    ),
+    ACCESS_SUBSCRIPT(
+        arrayListOf(abstractWGSLScalarType),
+        AccessSubscriptExpr.values().asList()
+    ),
+    BINARY_ARITHMETIC(
+        numericTypes,
+        BinaryArithmeticExpr.values().asList()
+    ),
+    BINARY_BIT(
+        arrayListOf(scalarIntType, scalarUnIntType, vectorIntType, vectorUnIntType),
+        BinaryBitExpr.values().asList()
+    ),
+    BINARY_LOGICAL(
+        arrayListOf(scalarBoolType, vectorBoolType),
+        BinaryLogicalExpr.values().asList()
+    ),
+    BINARY_LOGICAL_SCALAR(
+        arrayListOf(scalarBoolType),
+        BinaryLogicalScalarExpr.values().asList()
+    ),
+    BUILTIN_ARITHMETIC(
+        numericTypes,
+        BuiltinArithmeticExpr.values().asList()
+    ),
+    BUILTIN_ARITHMETIC_SCALAR(
+        arrayListOf(scalarFloatType, scalarIntType, scalarUnIntType),
+        BuiltinArithmeticScalarExpr.values().asList()
+    ),
+    BUILTIN_FLOAT(
+        arrayListOf(scalarFloatType, vectorFloatType),
+        BuiltinFloatExpr.values().asList()
+    ),
+    BUILTIN_FLOAT_SCALAR(
+        arrayListOf(scalarFloatType),
+        BuiltinFloatScalarExpr.values().asList()
+    ),
+    BUILTIN_FLOAT_VECTOR(
+        arrayListOf(vectorFloatType),
+        BuiltinFloatVectorExpr.values().asList()
+    ),
+    BUILTIN_FLOAT_VECTOR3(
+        arrayListOf(vector3FloatType),
+        BuiltinFloatVector3Expr.values().asList()
+    ),
+    BUILTIN_GENERAL(
+        arrayListOf(abstractWGSLScalarType, abstractWGSLVectorType),
+        BuiltinGeneralExpr.values().asList()
+    ),
+    BUILTIN_INTEGER(
+        arrayListOf(scalarIntType, scalarUnIntType, vectorIntType, vectorUnIntType),
+        BuiltinIntegerExpr.values().asList()
+    ),
+    BUILTIN_LOGICAL(
+        arrayListOf(scalarBoolType),
+        BuiltinLogicalExpr.values().asList()
+    ),
+    COMPARISON_EQ(
+        arrayListOf(scalarBoolType),
+        ComparisonEqExpr.values().asList()
+    ),
+    COMPARISON_TH(
+        arrayListOf(scalarBoolType),
+        ComparisonThExpr.values().asList()
+    ),
+    IDENTITY_CONSTRUCTOR(
+        constructibleTypes,
+        IdentityConstructibleExpr.values().asList()
+    ),
+    IDENTITY_LITERAL(
+        scalarTypes,
+        IdentityScalarExpr.values().asList()
+    ),
+    IDENTITY_UNIVERSAL(
+        allTypes,
+        IdentityUniversalExpr.values().asList()
+    ),
+    UNARY_ARITHMETIC(
+        arrayListOf(scalarFloatType, scalarIntType, vectorFloatType, vectorIntType),
+        UnaryArithmeticExpr.values().asList()
+    ),
+    UNARY_BIT(
+        arrayListOf(scalarIntType, scalarUnIntType, vectorIntType, vectorUnIntType),
+        UnaryBitExpr.values().asList()
+    ),
+    UNARY_LOGICAL(
+        arrayListOf(scalarBoolType, vectorBoolType),
+        UnaryLogicalExpr.values().asList()
+    );
 
     companion object {
         fun typeOf(expr: Expr): ExprTypes {
@@ -52,51 +128,3 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
         }
     }
 }
-
-// needs a rework to be simplified for future types!
-/*internal enum class TypeExprs(val typeExprs: ArrayList<Expr>) {
-    BOOL(
-        ArrayList(
-            ExprTypes.BINARY_LOGICAL.exprs +
-                    ExprTypes.BUILTIN_LOGICAL.exprs +
-                    ExprTypes.COMPARISON_EQ.exprs +
-                    ExprTypes.COMPARISON_TH.exprs +
-                    ExprTypes.IDENTITY_LITERAL.exprs +
-                    ExprTypes.IDENTITY_UNIVERSAL.exprs +
-                    ExprTypes.UNARY_LOGICAL.exprs
-        )
-    ),
-    FLOAT(
-        ArrayList(
-            ExprTypes.BINARY_ARITHMETIC.exprs +
-                    ExprTypes.BUILTIN_ARITHMETIC.exprs +
-                    ExprTypes.BUILTIN_FLOAT.exprs +
-                    ExprTypes.IDENTITY_LITERAL.exprs +
-                    ExprTypes.IDENTITY_UNIVERSAL.exprs +
-                    ExprTypes.UNARY_ARITHMETIC.exprs
-        )
-    ),
-    INT(
-        ArrayList(
-            ExprTypes.BINARY_ARITHMETIC.exprs +
-                    ExprTypes.BINARY_BIT.exprs +
-                    ExprTypes.BUILTIN_ARITHMETIC.exprs +
-                    ExprTypes.BUILTIN_INTEGER.exprs +
-                    ExprTypes.IDENTITY_LITERAL.exprs +
-                    ExprTypes.IDENTITY_UNIVERSAL.exprs +
-                    ExprTypes.UNARY_ARITHMETIC.exprs +
-                    ExprTypes.UNARY_BIT.exprs
-        )
-    ),
-    UNINT(
-        ArrayList(
-            ExprTypes.BINARY_ARITHMETIC.exprs +
-                    ExprTypes.BINARY_BIT.exprs +
-                    ExprTypes.BUILTIN_ARITHMETIC.exprs +
-                    ExprTypes.BUILTIN_INTEGER.exprs +
-                    ExprTypes.IDENTITY_LITERAL.exprs +
-                    ExprTypes.IDENTITY_UNIVERSAL.exprs +
-                    ExprTypes.UNARY_BIT.exprs
-        )
-    );
-}*/

@@ -1,6 +1,6 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -22,7 +22,23 @@ internal class ComparisonExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        argType = PRNG.getRandomNumericType()
+        val comparableTypes: ArrayList<WGSLType> = arrayListOf(scalarFloatType, scalarIntType, scalarUnIntType)
+        if (expr is ComparisonEqExpr) {
+            comparableTypes.add(scalarBoolType)
+        }
+
+        val argInnerType = PRNG.getRandomTypeFrom(comparableTypes) as WGSLScalarType
+
+        argType = when {
+            returnType.isRepresentedBy(vectorBoolType) -> WGSLVectorType(
+                argInnerType, (returnType as WGSLVectorType).length
+            )
+            returnType.isRepresentedBy(scalarBoolType) -> argInnerType
+            else                                       -> throw Exception(
+                "Attempt to generate ComparisonExpression of unknown returnType $returnType!"
+            )
+        }
+
         lhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
         rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
 
