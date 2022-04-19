@@ -5,18 +5,18 @@ internal interface Expr {
     // val probability: Int
 }
 
-internal interface UnaryExpr : Expr
+internal interface AccessExpr : IdentityExpr
 
-internal enum class UnaryArithmeticExpr(override val operator: String) : UnaryExpr {
-    NEGATE("-");
+internal enum class AccessConvenienceExpr(override val operator: String) : AccessExpr {
+    CONVENIENCE("");
 }
 
-internal enum class UnaryBitExpr(override val operator: String) : UnaryExpr {
-    COMPLEMENT("~");
+internal enum class AccessSubscriptScalarExpr(override val operator: String) : AccessExpr {
+    SUBSCRIPT_SCALAR("");
 }
 
-internal enum class UnaryLogicalExpr(override val operator: String) : UnaryExpr {
-    NOT("!");
+internal enum class AccessSubscriptVectorExpr(override val operator: String) : AccessExpr {
+    SUBSCRIPT_VECTOR("");
 }
 
 internal interface BinaryExpr : Expr
@@ -46,35 +46,6 @@ internal enum class BinaryLogicalExpr(override val operator: String) : BinaryExp
 internal enum class BinaryLogicalScalarExpr(override val operator: String) : BinaryExpr {
     SHORT_OR("||"),
     SHORT_AND("&&");
-}
-
-internal interface ComparisonExpr : Expr
-
-internal enum class ComparisonEqExpr(override val operator: String) : ComparisonExpr {
-    EQUAL("=="),
-    NOT_EQUAL("!=");
-}
-
-internal enum class ComparisonThExpr(override val operator: String) : ComparisonExpr {
-    LESS_THAN("<"),
-    LESS_THAN_OR_EQUAL("<="),
-    MORE_THAN(">"),
-    MORE_THAN_OR_EQUAL(">=");
-}
-
-internal interface IdentityExpr : Expr
-
-internal enum class IdentityCompositeExpr(override val operator: String) : IdentityExpr {
-    CONSTRUCTOR("");
-}
-
-internal enum class IdentityScalarExpr(override val operator: String) : IdentityExpr {
-    LITERAL("");
-}
-
-internal enum class IdentityUniversalExpr(override val operator: String) : IdentityExpr {
-    SYMBOL(""),
-    ZERO_VALUE("");
 }
 
 internal interface BuiltinExpr : Expr {
@@ -188,34 +159,58 @@ internal enum class BuiltinLogicalExpr(override val operator: String, override v
     ANY("any", 1);
 }
 
-internal interface AccessExpr : IdentityExpr
+internal interface ComparisonExpr : Expr
 
-internal enum class AccessConvenienceExpr(override val operator: String) : AccessExpr {
-    CONVENIENCE("");
+internal enum class ComparisonEqExpr(override val operator: String) : ComparisonExpr {
+    EQUAL("=="),
+    NOT_EQUAL("!=");
 }
 
-internal enum class AccessSubscriptScalarExpr(override val operator: String) : AccessExpr {
-    SUBSCRIPT_SCALAR("");
+internal enum class ComparisonThExpr(override val operator: String) : ComparisonExpr {
+    LESS_THAN("<"),
+    LESS_THAN_OR_EQUAL("<="),
+    MORE_THAN(">"),
+    MORE_THAN_OR_EQUAL(">=");
 }
 
-internal enum class AccessSubscriptVectorExpr(override val operator: String) : AccessExpr {
-    SUBSCRIPT_VECTOR("");
+internal interface IdentityExpr : Expr
+
+internal enum class IdentityCompositeExpr(override val operator: String) : IdentityExpr {
+    CONSTRUCTOR("");
+}
+
+internal enum class IdentityScalarExpr(override val operator: String) : IdentityExpr {
+    LITERAL("");
+}
+
+internal enum class IdentityUniversalExpr(override val operator: String) : IdentityExpr {
+    SYMBOL(""),
+    ZERO_VALUE("");
+}
+
+internal interface UnaryExpr : Expr
+
+internal enum class UnaryArithmeticExpr(override val operator: String) : UnaryExpr {
+    NEGATE("-");
+}
+
+internal enum class UnaryBitExpr(override val operator: String) : UnaryExpr {
+    COMPLEMENT("~");
+}
+
+internal enum class UnaryLogicalExpr(override val operator: String) : UnaryExpr {
+    NOT("!");
 }
 
 internal val allExprs = ArrayList<Expr>(
-    UnaryArithmeticExpr.values().asList() +
-            UnaryBitExpr.values().asList() +
-            UnaryLogicalExpr.values().asList() +
+    AccessConvenienceExpr.values().asList() +
+            AccessSubscriptScalarExpr.values().asList() +
+            AccessSubscriptVectorExpr.values().asList() +
             BinaryArithmeticMatrixNumericExpr.values().asList() +
             BinaryArithmeticNumericExpr.values().asList() +
             BinaryBitExpr.values().asList() +
             BinaryLogicalExpr.values().asList() +
             BinaryLogicalScalarExpr.values().asList() +
-            ComparisonEqExpr.values().asList() +
-            ComparisonThExpr.values().asList() +
-            IdentityCompositeExpr.values().asList() +
-            IdentityScalarExpr.values().asList() +
-            IdentityUniversalExpr.values().asList() +
             BuiltinArithmeticExpr.values().asList() +
             BuiltinArithmeticScalarExpr.values().asList() +
             BuiltinFloatExpr.values().asList() +
@@ -225,9 +220,14 @@ internal val allExprs = ArrayList<Expr>(
             BuiltinGeneralExpr.values().asList() +
             BuiltinIntegerExpr.values().asList() +
             BuiltinLogicalExpr.values().asList() +
-            AccessConvenienceExpr.values().asList() +
-            AccessSubscriptScalarExpr.values().asList() +
-            AccessSubscriptVectorExpr.values().asList()
+            ComparisonEqExpr.values().asList() +
+            ComparisonThExpr.values().asList() +
+            IdentityCompositeExpr.values().asList() +
+            IdentityScalarExpr.values().asList() +
+            IdentityUniversalExpr.values().asList() +
+            UnaryArithmeticExpr.values().asList() +
+            UnaryBitExpr.values().asList() +
+            UnaryLogicalExpr.values().asList()
 )
 internal val compoundAssignableExprs = ArrayList<Expr>(
     BinaryArithmeticMatrixNumericExpr.values().asList() +
