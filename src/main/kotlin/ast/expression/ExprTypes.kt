@@ -35,6 +35,10 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
         arrayListOf(scalarBoolType),
         BinaryLogicalScalarExpr.values().asList()
     ),
+    BITCAST(
+        numericTypes,
+        BitcastExpr.values().asList()
+    ),
     BUILTIN_ARITHMETIC(
         numericTypes,
         BuiltinArithmeticExpr.values().asList()
@@ -79,6 +83,14 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
         arrayListOf(scalarBoolType),
         ComparisonThExpr.values().asList()
     ),
+    DATA_PACK(
+        arrayListOf(scalarUnIntType),
+        DataPackExpr.values().asList()
+    ),
+    DATA_UNPACK(
+        arrayListOf(vector2FloatType, vector4FloatType),
+        DataUnpackExpr.values().asList()
+    ),
     IDENTITY_COMPOSITE(
         compositeTypes,
         IdentityCompositeExpr.values().asList()
@@ -112,7 +124,7 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
                 }
             }
 
-            throw Exception("Attempt to use Type without corresponding ExprType!")
+            throw Exception("Attempt to retrieve ExprTypes of unknown Expr $expr!")
         }
 
         fun getExprs(returnType: WGSLType): ArrayList<Expr> {

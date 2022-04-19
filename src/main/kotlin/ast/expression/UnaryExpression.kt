@@ -1,14 +1,12 @@
 package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLVectorType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class UnaryExpression : Expression() {
     private lateinit var arg: Expression
-    private lateinit var argType: WGSLType
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
@@ -18,8 +16,7 @@ internal class UnaryExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        argType = returnType
-        arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
+        arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, returnType, depth + 1)
 
         return this
     }
@@ -34,10 +31,6 @@ internal class UnaryExpression : Expression() {
             "($arg)"
         } else {
             "$arg"
-        }
-
-        if (arg.expr == UnaryLogicalExpr.NOT && arg.returnType !is WGSLVectorType) {
-            print("")
         }
 
         var unaryExpressionString = "${expr.operator}$argString"

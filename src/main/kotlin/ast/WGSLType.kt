@@ -129,7 +129,9 @@ internal val vectorFloatType = WGSLVectorType(scalarFloatType, 0)
 internal val vectorIntType = WGSLVectorType(scalarIntType, 0)
 internal val vectorUnIntType = WGSLVectorType(scalarUnIntType, 0)
 
+internal val vector2FloatType = WGSLVectorType(scalarFloatType, 2)
 internal val vector3FloatType = WGSLVectorType(scalarFloatType, 3)
+internal val vector4FloatType = WGSLVectorType(scalarFloatType, 4)
 
 internal val abstractWGSLScalarType = WGSLScalarType(Type.ANY)
 internal val abstractWGSLVectorType = WGSLVectorType(abstractWGSLScalarType, 0)
@@ -146,14 +148,17 @@ internal val scalarTypes: ArrayList<WGSLType> = arrayListOf(
     scalarIntType,
     scalarUnIntType
 )
-internal val numericTypes: ArrayList<WGSLType> = arrayListOf(
+internal val numericScalarTypes: ArrayList<WGSLType> = arrayListOf(
     scalarFloatType,
     scalarIntType,
-    scalarUnIntType,
+    scalarUnIntType
+)
+internal val numericVectorTypes: ArrayList<WGSLType> = arrayListOf(
     vectorFloatType,
     vectorIntType,
     vectorUnIntType
 )
+internal val numericTypes: ArrayList<WGSLType> = ArrayList(numericScalarTypes + numericVectorTypes)
 internal val compositeTypes: ArrayList<WGSLType> = arrayListOf(
     abstractWGSLVectorType,
     abstractWGSLMatrixType

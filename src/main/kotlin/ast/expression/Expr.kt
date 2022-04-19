@@ -48,6 +48,10 @@ internal enum class BinaryLogicalScalarExpr(override val operator: String) : Bin
     SHORT_AND("&&");
 }
 
+internal enum class BitcastExpr(override val operator: String) : Expr {
+    BITCAST("bitcast");
+}
+
 internal interface BuiltinExpr : Expr {
     val args: Int
 }
@@ -173,6 +177,16 @@ internal enum class ComparisonThExpr(override val operator: String) : Comparison
     MORE_THAN_OR_EQUAL(">=");
 }
 
+internal interface DataExpr : Expr
+
+internal enum class DataPackExpr(override val operator: String) : DataExpr {
+    PACK("pack");
+}
+
+internal enum class DataUnpackExpr(override val operator: String) : DataExpr {
+    UNPACK("unpack");
+}
+
 internal interface IdentityExpr : Expr
 
 internal enum class IdentityCompositeExpr(override val operator: String) : IdentityExpr {
@@ -211,6 +225,7 @@ internal val allExprs = ArrayList<Expr>(
             BinaryBitExpr.values().asList() +
             BinaryLogicalExpr.values().asList() +
             BinaryLogicalScalarExpr.values().asList() +
+            BitcastExpr.values().asList() +
             BuiltinArithmeticExpr.values().asList() +
             BuiltinArithmeticScalarExpr.values().asList() +
             BuiltinFloatExpr.values().asList() +
@@ -222,6 +237,8 @@ internal val allExprs = ArrayList<Expr>(
             BuiltinLogicalExpr.values().asList() +
             ComparisonEqExpr.values().asList() +
             ComparisonThExpr.values().asList() +
+            DataPackExpr.values().asList() +
+            DataUnpackExpr.values().asList() +
             IdentityCompositeExpr.values().asList() +
             IdentityScalarExpr.values().asList() +
             IdentityUniversalExpr.values().asList() +
