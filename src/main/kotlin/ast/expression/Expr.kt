@@ -113,7 +113,9 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
     FMA("fma", 3),
     FRACT("fract", 1),
     INVERSE_SQRT("inverseSqrt", 1),
-    LDEXP("ldexp", 2),
+
+    // temporarily commented due to nonfunctional implementation in naga
+    // LDEXP("ldexp", 2),
     LOG("log", 1),
     LOG2("log2", 1),
     MIX("mix", 3),
@@ -141,8 +143,10 @@ internal enum class BuiltinFloatScalarExpr(override val operator: String, overri
 
 internal enum class BuiltinFloatVectorExpr(override val operator: String, override val args: Int) : BuiltinExpr {
     NORMALIZE("normalize", 1),
-    REFLECT("reflect", 2),
-    REFRACT("refract", 3);
+    REFLECT("reflect", 2);
+
+    // temporarily commented out due to lack of implementation in naga
+    //REFRACT("refract", 3);
 }
 
 internal enum class BuiltinFloatVector3Expr(override val operator: String, override val args: Int) : BuiltinExpr {
@@ -166,7 +170,7 @@ internal enum class BuiltinIntegerExpr(override val operator: String, override v
     // temporarily commented out due to issues with implementation in naga
     // see https://github.com/gfx-rs/naga/issues/1844
     // FIRST_LEADING_BIT("firstLeadingBit", 1),
-    FIRST_TRAILING_BIT("firstTrailingBit", 1),
+    // FIRST_TRAILING_BIT("firstTrailingBit", 1),
     EXTRACT_BITS("extractBits", 3),
     INSERT_BITS("insertBits", 4),
     REVERSE_BITS("reverseBits", 1);

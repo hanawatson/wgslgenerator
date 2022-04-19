@@ -26,11 +26,11 @@ internal class BuiltinExpression : Expression() {
 
         // set bool/int/unint matching types. must match existing returnType dimensions when vectors are implemented
         var matchingBoolType: WGSLType = WGSLScalarType(Type.BOOL)
-        var matchingIntType: WGSLType = WGSLScalarType(Type.INT)
+        // var matchingIntType: WGSLType = WGSLScalarType(Type.INT)
         // var matchingUnIntType: WGSLType = WGSLScalarType(Type.UNINT)
         if (returnType is WGSLVectorType) {
             matchingBoolType = WGSLVectorType(matchingBoolType as WGSLScalarType, returnType.length)
-            matchingIntType = WGSLVectorType(matchingIntType as WGSLScalarType, returnType.length)
+            // matchingIntType = WGSLVectorType(matchingIntType as WGSLScalarType, returnType.length)
             // matchingUnIntType = WGSLVectorType(matchingUnIntType as WGSLScalarType, 0)
         }
 
@@ -45,9 +45,9 @@ internal class BuiltinExpression : Expression() {
                 argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(matchingVectorType))
                 argTypes[1] = argTypes[0]
             }
-            BuiltinFloatExpr.LDEXP                         -> {
+            /*BuiltinFloatExpr.LDEXP                         -> {
                 argTypes[1] = matchingIntType
-            }
+            }*/
             BuiltinFloatExpr.MIX                           -> {
                 // cover both the linear and component versions of the mix function
                 argTypes[2] = PRNG.getRandomTypeFrom(arrayListOf(scalarFloatType, returnType))
@@ -59,9 +59,9 @@ internal class BuiltinExpression : Expression() {
             BuiltinFloatScalarExpr.LENGTH                  -> {
                 argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(scalarFloatType, vectorFloatType))
             }
-            BuiltinFloatVectorExpr.REFRACT                 -> {
+            /*BuiltinFloatVectorExpr.REFRACT                 -> {
                 argTypes[2] = scalarFloatType
-            }
+            }*/
             BuiltinGeneralExpr.SELECT                      -> {
                 argTypes[2] = matchingBoolType
             }
@@ -79,8 +79,11 @@ internal class BuiltinExpression : Expression() {
             BuiltinIntegerExpr.SHIFT_RIGHT -> {
                 argTypes[1] = matchingUnIntType
             }*/
+
+            // temporarily restricted to vectorBools only due to nonfunctional implementation
+            // acting on scalarBools in naga
             BuiltinLogicalExpr.ALL, BuiltinLogicalExpr.ANY -> {
-                argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(scalarBoolType, vectorBoolType))
+                argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(/*scalarBoolType, */vectorBoolType))
             }
         }
 
