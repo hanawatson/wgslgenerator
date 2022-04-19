@@ -4,10 +4,9 @@ import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 
 internal class IdentityZeroValExpression : Expression() {
-    private lateinit var zeroValString: String
-
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
+    override var numberOfParentheses = 0
 
     override fun generate(
         symbolTable: SymbolTable,
@@ -18,12 +17,10 @@ internal class IdentityZeroValExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        zeroValString = "$returnType()"
-
         return this
     }
 
     override fun toString(): String {
-        return zeroValString
+        return "$returnType()"
     }
 }

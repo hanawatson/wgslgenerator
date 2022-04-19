@@ -8,6 +8,15 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal object ExpressionGenerator {
+    fun getUsefulParenthesizedExpressionString(expression: Expression): String {
+        return if (CNFG.useUsefulExpressionParentheses && (expression is BinaryExpression
+                    || expression is ComparisonExpression)) {
+            "($expression)"
+        } else {
+            "$expression"
+        }
+    }
+
     fun getExpressionWithoutReturnType(symbolTable: SymbolTable, depth: Int): Expression {
         return getExpressionFromList(symbolTable, null, allExprs, depth)
     }
@@ -67,6 +76,7 @@ internal object ExpressionGenerator {
 internal abstract class Expression {
     abstract var returnType: WGSLType
     abstract var expr: Expr
+    abstract var numberOfParentheses: Int
 
     abstract fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): Expression
 }

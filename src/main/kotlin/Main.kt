@@ -9,9 +9,10 @@ fun main(/*args: Array<String>*/) {
     PRNG.initializeWithoutSeed()
 
     val shader = Shader().generate()
-    //println(shader)
+    // println(shader)
     File("../tint/out/Debug/test.wgsl").writeText("$shader")
 
     val processTint = ProcessBuilder("./tint", "test.wgsl").directory(File("../tint/out/Debug")).start()
     processTint.inputStream.reader(Charset.defaultCharset()).use { println(it.readText()) }
+    processTint.errorStream.reader(Charset.defaultCharset()).use { println(it.readText()) }
 }

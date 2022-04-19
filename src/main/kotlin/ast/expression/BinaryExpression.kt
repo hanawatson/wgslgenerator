@@ -15,6 +15,7 @@ internal class BinaryExpression : Expression() {
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
+    override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     override fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): BinaryExpression {
         this.returnType = returnType
@@ -50,11 +51,17 @@ internal class BinaryExpression : Expression() {
     }
 
     override fun toString(): String {
-        val binaryExpressionString = "$lhs ${expr.operator} $rhs"
+        val lhsString = ExpressionGenerator.getUsefulParenthesizedExpressionString(lhs)
+        val rhsString = ExpressionGenerator.getUsefulParenthesizedExpressionString(rhs)
 
-        if (CNFG.useExpressionParentheses) {
-            return "($binaryExpressionString)"
+        var binaryExpressionString = "$lhsString ${expr.operator} $rhsString"
+
+        if (CNFG.useExcessParentheses) {
+            for (i in 1..numberOfParentheses) {
+                binaryExpressionString = "($binaryExpressionString)"
+            }
         }
+
         return binaryExpressionString
     }
 }

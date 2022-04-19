@@ -120,4 +120,15 @@ internal object PRNG {
         val statIndex = getRandomIntInRange(0, stats.size)
         return stats[statIndex]
     }
+
+    fun getNumberOfParentheses(): Int {
+        var numberOfParentheses = 0
+
+        while (evaluateProbability(CNFG.probabilityParenthesesAroundExpression)
+            && numberOfParentheses < CNFG.maxParentheses) {
+            numberOfParentheses++
+        }
+
+        return numberOfParentheses
+    }
 }

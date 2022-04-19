@@ -11,6 +11,7 @@ internal class IdentityConstructorExpression : Expression() {
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
+    override var numberOfParentheses = 0
 
     override fun generate(
         symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int

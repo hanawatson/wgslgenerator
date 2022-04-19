@@ -1,8 +1,10 @@
 package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.WGSLVectorType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class UnaryExpression : Expression() {
     private lateinit var arg: Expression
@@ -10,6 +12,7 @@ internal class UnaryExpression : Expression() {
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
+    override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     override fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): UnaryExpression {
         this.returnType = returnType
@@ -22,19 +25,29 @@ internal class UnaryExpression : Expression() {
     }
 
     override fun toString(): String {
-        // handle the special case of an attempt to apply the unary minus operator "-" to a negative
-        // literal value (i.e. one with a "-" prefix), resulting in incorrect interpretation
-        // as the decrement operator "--"
-        val argString = if ("$arg"[0] == '-') {
+        // handles special case of negative arg literal causing incorrect interpretation
+        // (should literals just be,,, positive and then can be negative if - is generated???)
+        val argString = if (CNFG.useNecessaryExpressionParentheses && ((arg !is IdentityExpression
+                    && arg !is AccessExpression && arg !is BuiltinExpression) || "$arg"[0] == '-')) {
+            "($arg)"
+        } else if (CNFG.useUsefulExpressionParentheses && arg is AccessExpression) {
             "($arg)"
         } else {
             "$arg"
         }
-        val unaryExpressionString = "${expr.operator}$argString"
 
-        if (CNFG.useExpressionParentheses) {
-            return "($unaryExpressionString)"
+        if (arg.expr == UnaryLogicalExpr.NOT && arg.returnType !is WGSLVectorType) {
+            print("")
         }
+
+        var unaryExpressionString = "${expr.operator}$argString"
+
+        if (CNFG.useExcessParentheses) {
+            for (i in 1..numberOfParentheses) {
+                unaryExpressionString = "($unaryExpressionString)"
+            }
+        }
+
         return unaryExpressionString
     }
 }

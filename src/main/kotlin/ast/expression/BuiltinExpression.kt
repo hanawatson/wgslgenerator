@@ -2,6 +2,7 @@ package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
+import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class BuiltinExpression : Expression() {
@@ -11,6 +12,7 @@ internal class BuiltinExpression : Expression() {
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
+    override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     override fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): BuiltinExpression {
         this.returnType = returnType
@@ -96,12 +98,18 @@ internal class BuiltinExpression : Expression() {
     }
 
     override fun toString(): String {
-        var funcString = "${expr.operator}(${args[0]}"
+        var builtinExpressionString = "${expr.operator}(${args[0]}"
         for (i in 1..argsLimit) {
-            funcString += ", ${args[i]}"
+            builtinExpressionString += ", ${args[i]}"
         }
-        funcString += ")"
+        builtinExpressionString += ")"
 
-        return funcString
+        if (CNFG.useExcessParentheses) {
+            for (i in 1..numberOfParentheses) {
+                builtinExpressionString = "($builtinExpressionString)"
+            }
+        }
+
+        return builtinExpressionString
     }
 }

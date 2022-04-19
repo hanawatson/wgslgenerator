@@ -12,6 +12,7 @@ internal class IdentityLiteralExpression : Expression() {
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
+    override var numberOfParentheses = 0
 
     override fun generate(
         symbolTable: SymbolTable,

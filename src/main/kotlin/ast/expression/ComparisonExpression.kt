@@ -12,6 +12,7 @@ internal class ComparisonExpression : Expression() {
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
+    override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     override fun generate(
         symbolTable: SymbolTable,
@@ -46,11 +47,17 @@ internal class ComparisonExpression : Expression() {
     }
 
     override fun toString(): String {
-        val comparisonExpressionString = "$lhs ${expr.operator} $rhs"
+        val lhsString = ExpressionGenerator.getUsefulParenthesizedExpressionString(lhs)
+        val rhsString = ExpressionGenerator.getUsefulParenthesizedExpressionString(rhs)
 
-        if (CNFG.useExpressionParentheses) {
-            return "($comparisonExpressionString)"
+        var comparisonExpressionString = "$lhsString ${expr.operator} $rhsString"
+
+        if (CNFG.useExcessParentheses) {
+            for (i in 1..numberOfParentheses) {
+                comparisonExpressionString = "($comparisonExpressionString)"
+            }
         }
+
         return comparisonExpressionString
     }
 }

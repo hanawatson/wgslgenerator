@@ -2,16 +2,17 @@ package wgslsmith.wgslgenerator.utils
 
 // ConfigurationManager
 internal object CNFG {
-    const val maxStatementsInBody = 20
+    const val maxStatementsInBody = 5
     const val maxStatementsInIfBody = 5
     const val maxStatementsInSwitchBody = 3
-    const val maxExpressionRecursion = 10
+    const val maxExpressionRecursion = 5
     const val maxStatementRecursion = 3
     const val maxParentheses = 10
     const val maxIfElseBranches = 5
     const val maxSwitchCases = 10
 
-    const val useExpressionParentheses = true
+    const val useNecessaryExpressionParentheses = true // enables necessary parentheses (e.g. will error without use)
+    const val useUsefulExpressionParentheses = true // enables "safe" parentheses (e.g. will reduce ambiguities)
     const val useExcessParentheses = true
 
     const val preventCodeAfterBreak = true
@@ -24,7 +25,7 @@ internal object CNFG {
 
     // temporarily zeroed due to lack of implementation in naga
     const val probabilityOmitTypeFromConstructible = 0.0
-    const val probabilityParenthesesAroundIdentity = 0.5
+    const val probabilityParenthesesAroundExpression = 0.7
     const val probabilityGenerateAnotherStatement = 0.9
     const val probabilityAssignToNewSymbol = 0.6
 

@@ -10,13 +10,13 @@ import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class IdentityExpression : Expression() {
     private var symbol: Symbol? = null
-    private var parentheses = 0
 
     // subExpression holds more complex code for non-symbol generation
     var subExpression: Expression? = null
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
+    override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     override fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): IdentityExpression {
         this.returnType = returnType
@@ -73,16 +73,11 @@ internal class IdentityExpression : Expression() {
             )
         }
 
-        while (PRNG.evaluateProbability(CNFG.probabilityParenthesesAroundIdentity)
-            && parentheses < CNFG.maxParentheses && this.expr !is AccessExpr) {
-            parentheses++
-        }
-
         return this
     }
 
     override fun toString(): String {
-        var identityString = if (subExpression != null) {
+        var identityExpressionString = if (subExpression != null) {
             "$subExpression"
         } else if (symbol != null) {
             "$symbol"
@@ -93,11 +88,11 @@ internal class IdentityExpression : Expression() {
         }
 
         if (CNFG.useExcessParentheses) {
-            for (i in 1..parentheses) {
-                identityString = "($identityString)"
+            for (i in 1..numberOfParentheses) {
+                identityExpressionString = "($identityExpressionString)"
             }
         }
 
-        return identityString
+        return identityExpressionString
     }
 }
