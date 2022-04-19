@@ -27,8 +27,8 @@ internal class AssignmentStatement : Statement() {
 
         if (stat is AssignCompoundStat) {
             val exprEquivalent = when (stat) {
-                AssignCompoundStat.DECREMENT       -> BinaryArithmeticExpr.MINUS
-                AssignCompoundStat.INCREMENT       -> BinaryArithmeticExpr.ADD
+                AssignCompoundStat.DECREMENT       -> BinaryArithmeticMatrixNumericExpr.MINUS
+                AssignCompoundStat.INCREMENT       -> BinaryArithmeticMatrixNumericExpr.ADD
                 AssignCompoundStat.BINARY_OPERATOR -> PRNG.getRandomExprFrom(compoundAssignableExprs)
             }
             type = when (stat) {
@@ -48,6 +48,11 @@ internal class AssignmentStatement : Statement() {
             )
 
             rhs = binaryExpressionEquivalent.getRHS()
+
+            // temporary code to handle lack of implementation in naga of mixed operands during compound assignment
+            if (rhs.returnType != type) {
+                rhs = IdentityZeroValExpression().generate(symbolTable, type, IdentityUniversalExpr.ZERO_VALUE, 0)
+            }
         } else {
             rhs = ExpressionGenerator.getExpressionWithoutReturnType(symbolTable, 0)
             type = rhs.returnType

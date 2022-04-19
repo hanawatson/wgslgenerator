@@ -1,8 +1,6 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLVectorType
-import wgslsmith.wgslgenerator.ast.scalarIntType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -23,12 +21,55 @@ internal class BinaryExpression : Expression() {
 
         lhsType = returnType
         rhsType = returnType
-        if (returnType is WGSLVectorType && expr is BinaryArithmeticExpr
-            && PRNG.evaluateProbability(CNFG.probabilityReplaceVectorBinaryOperandWithScalar)) {
-            if (PRNG.getRandomBool()) {
-                lhsType = returnType.componentType
-            } else {
-                rhsType = returnType.componentType
+
+        if (expr is BinaryArithmeticNumericExpr || expr is BinaryArithmeticMatrixNumericExpr) {
+            var mixedType: WGSLType? = null
+
+            if (expr == BinaryArithmeticMatrixNumericExpr.MULT) {
+                if (returnType is WGSLVectorType &&
+                    PRNG.evaluateProbability(CNFG.probabilityReplaceVectorMultOperandWithOther)) {
+                    val randomMixedType = if (returnType.componentType == scalarFloatType) {
+                        PRNG.getRandomTypeFrom(
+                            arrayListOf(returnType.componentType, WGSLVectorType(returnType.componentType, 0))
+                        )
+                    } else {
+                        returnType.componentType
+                    }
+                    if (randomMixedType is WGSLVectorType) {
+                        if (PRNG.getRandomBool()) {
+                            lhsType = randomMixedType
+                            rhsType = WGSLMatrixType(
+                                randomMixedType.componentType, returnType.length, randomMixedType.length
+                            )
+                        } else {
+                            lhsType = WGSLMatrixType(
+                                randomMixedType.componentType, randomMixedType.length, returnType.length
+                            )
+                            rhsType = randomMixedType
+                        }
+                    } else {
+                        mixedType = randomMixedType
+                    }
+                } else if (returnType is WGSLMatrixType) {
+                    if (PRNG.evaluateProbability(CNFG.probabilityReplaceMatrixMultOperandWithOther)) {
+                        mixedType = returnType.componentType
+                    } else {
+                        val randomDimension = PRNG.getRandomIntInRange(2, 5)
+                        lhsType = WGSLMatrixType(returnType.componentType, randomDimension, returnType.length)
+                        rhsType = WGSLMatrixType(returnType.componentType, returnType.width, randomDimension)
+                    }
+                }
+            } else if (returnType is WGSLVectorType &&
+                PRNG.evaluateProbability(CNFG.probabilityReplaceVectorNonMultOperandWithScalar)) {
+                mixedType = returnType.componentType
+            }
+
+            if (mixedType != null) {
+                if (PRNG.getRandomBool()) {
+                    lhsType = mixedType
+                } else {
+                    rhsType = mixedType
+                }
             }
         }
 
@@ -39,7 +80,7 @@ internal class BinaryExpression : Expression() {
     }
 
     fun generateModWithIntExpressions(symbolTable: SymbolTable, lhs: Expression, rhs: Expression): BinaryExpression {
-        this.generate(symbolTable, scalarIntType, BinaryArithmeticExpr.MOD, CNFG.maxExpressionRecursion)
+        this.generate(symbolTable, scalarIntType, BinaryArithmeticNumericExpr.MOD, CNFG.maxExpressionRecursion)
         this.lhs = lhs
         this.rhs = rhs
 

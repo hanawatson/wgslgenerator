@@ -1,9 +1,6 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.Symbol
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
-import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLVectorType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -33,16 +30,26 @@ internal class IdentityExpression : Expression() {
                     is WGSLScalarType -> {
                         arrayListOf(
                             AccessConvenienceExpr.CONVENIENCE,
-                            AccessSubscriptExpr.SUBSCRIPT,
+                            AccessSubscriptScalarExpr.SUBSCRIPT_SCALAR,
                             IdentityScalarExpr.LITERAL,
-                            //IdentityUniversalExpr.ZERO_VALUE
+                            IdentityUniversalExpr.ZERO_VALUE
                         )
                     }
                     is WGSLVectorType -> {
-                        arrayListOf(
+                        val replacementAllExprs: ArrayList<Expr> = arrayListOf(
                             AccessConvenienceExpr.CONVENIENCE,
-                            IdentityConstructibleExpr.CONSTRUCTOR,
-                            //IdentityUniversalExpr.ZERO_VALUE
+                            IdentityCompositeExpr.CONSTRUCTOR,
+                            IdentityUniversalExpr.ZERO_VALUE
+                        )
+                        if (returnType.componentType in matrixComponentTypes) {
+                            replacementAllExprs.add(AccessSubscriptVectorExpr.SUBSCRIPT_VECTOR)
+                        }
+                        replacementAllExprs
+                    }
+                    is WGSLMatrixType -> {
+                        arrayListOf(
+                            IdentityCompositeExpr.CONSTRUCTOR,
+                            IdentityUniversalExpr.ZERO_VALUE
                         )
                     }
                     else              -> {
@@ -59,16 +66,16 @@ internal class IdentityExpression : Expression() {
         }
 
         when (this.expr) {
-            is AccessExpr                         -> subExpression =
+            is AccessExpr                     -> subExpression =
                 AccessExpression().generate(symbolTable, returnType, this.expr, depth)
-            IdentityUniversalExpr.SYMBOL          -> {}
-            IdentityConstructibleExpr.CONSTRUCTOR -> subExpression =
+            IdentityUniversalExpr.SYMBOL      -> {}
+            IdentityCompositeExpr.CONSTRUCTOR -> subExpression =
                 IdentityConstructorExpression().generate(symbolTable, returnType, this.expr, depth)
-            IdentityScalarExpr.LITERAL            -> subExpression =
+            IdentityScalarExpr.LITERAL        -> subExpression =
                 IdentityLiteralExpression().generate(symbolTable, returnType, this.expr, depth)
-            IdentityUniversalExpr.ZERO_VALUE      -> subExpression =
+            IdentityUniversalExpr.ZERO_VALUE  -> subExpression =
                 IdentityZeroValExpression().generate(symbolTable, returnType, this.expr, depth)
-            else                                  -> throw Exception(
+            else                              -> throw Exception(
                 "Attempt to generate IdentityExpression of unknown Expr $this.expr!"
             )
         }

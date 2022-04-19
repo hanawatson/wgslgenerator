@@ -1,5 +1,7 @@
 package wgslsmith.wgslgenerator.ast.expression
 
+import wgslsmith.wgslgenerator.ast.WGSLMatrixType
+import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.WGSLVectorType
 import wgslsmith.wgslgenerator.tables.SymbolTable
@@ -19,17 +21,23 @@ internal class IdentityConstructorExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
+        fun addComponentWithWidthLengthType(width: Int, length: Int, type: WGSLScalarType) {
+            val componentType = if (length == 1) {
+                type
+            } else if (width == 1) {
+                WGSLVectorType(type, length)
+            } else {
+                WGSLMatrixType(type, width, length)
+            }
+            components.add(
+                ExpressionGenerator.getExpressionWithReturnType(symbolTable, componentType, depth + 1)
+            )
+        }
+
         when (returnType) {
             is WGSLVectorType -> {
                 fun addComponentWithLength(length: Int) {
-                    val componentType = if (length == 1) {
-                        returnType.componentType
-                    } else {
-                        WGSLVectorType(returnType.componentType, length)
-                    }
-                    components.add(
-                        ExpressionGenerator.getExpressionWithReturnType(symbolTable, componentType, depth + 1)
-                    )
+                    addComponentWithWidthLengthType(1, length, returnType.componentType)
                 }
 
                 fun addComponentsWithRandomLengths(totalLength: Int) {
@@ -93,6 +101,40 @@ internal class IdentityConstructorExpression : Expression() {
                     }
                 }
             }
+            is WGSLMatrixType -> {
+                fun addComponentWithWidthLength(width: Int, length: Int) {
+                    addComponentWithWidthLengthType(width, length, returnType.componentType)
+                }
+
+                fun addComponentsWithRandomWidthsLengths() {
+                    // temporarily commented due to lack of implementation in Tint
+                    /*when (PRNG.getRandomIntInRange(0, 3)) {
+                        0    -> {
+                            addComponentWithWidthLength(returnType.width, returnType.length)
+                        }*/
+                    when (PRNG.getRandomIntInRange(1, 3)) {
+                        1    -> {
+                            for (i in 1..returnType.width) {
+                                addComponentWithWidthLength(1, returnType.length)
+                            }
+                        }
+                        else -> {
+                            val numberOfScalars = returnType.width * returnType.length
+                            for (i in 1..numberOfScalars) {
+                                addComponentWithWidthLength(1, 1)
+                            }
+                        }
+                    }
+                }
+                if (returnType.width in 2..4 && returnType.length in 2..4) {
+                    addComponentsWithRandomWidthsLengths()
+                } else {
+                    throw Exception(
+                        "Attempt to generate matrix of unknown " +
+                                "width ${returnType.width}, length ${returnType.length}!"
+                    )
+                }
+            }
             else              -> throw Exception("Attempt to generate constructible of unknown type $returnType!")
         }
 
@@ -100,23 +142,38 @@ internal class IdentityConstructorExpression : Expression() {
     }
 
     override fun toString(): String {
-        if (returnType is WGSLVectorType) {
-            var vectorString = "$returnType"
-            if (PRNG.evaluateProbability(CNFG.probabilityOmitTypeFromConstructible)) {
-                // omit the componentType, preserving "vec2"/"vec3"/"vec4" only
-                vectorString = vectorString.substring(0..3)
-            }
+        when (returnType) {
+            is WGSLVectorType -> {
+                var vectorString = "$returnType"
+                if (PRNG.evaluateProbability(CNFG.probabilityOmitTypeFromComposite)) {
+                    vectorString = vectorString.substring(0..3)
+                }
 
-            vectorString += "(${components[0]}"
-            for (i in 1 until components.size) {
-                vectorString += ", ${components[i]}"
+                vectorString += "(${components[0]}"
+                for (i in 1 until components.size) {
+                    vectorString += ", ${components[i]}"
+                }
+                vectorString += ")"
+                return vectorString
             }
-            vectorString += ")"
-            return vectorString
-        } else {
-            throw Exception(
-                "Attempt to generate string representation of constructible of unknown type $returnType!"
-            )
+            is WGSLMatrixType -> {
+                var matrixString = "$returnType"
+                if (PRNG.evaluateProbability(CNFG.probabilityOmitTypeFromComposite)) {
+                    matrixString = matrixString.substring(0..5)
+                }
+
+                matrixString += "(${components[0]}"
+                for (i in 1 until components.size) {
+                    matrixString += ", ${components[i]}"
+                }
+                matrixString += ")"
+                return matrixString
+            }
+            else              -> {
+                throw Exception(
+                    "Attempt to generate string representation of composite of unknown type $returnType!"
+                )
+            }
         }
     }
 }

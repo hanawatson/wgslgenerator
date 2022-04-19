@@ -1,9 +1,6 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
-import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLVectorType
-import wgslsmith.wgslgenerator.ast.scalarIntType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -22,7 +19,7 @@ internal class AccessExpression : Expression() {
         this.expr = expr
 
         when (expr) {
-            AccessConvenienceExpr.CONVENIENCE -> {
+            AccessConvenienceExpr.CONVENIENCE          -> {
                 val convenienceLettering = if (PRNG.getRandomBool()) {
                     "rgba"
                 } else {
@@ -62,17 +59,33 @@ internal class AccessExpression : Expression() {
                     convenienceLetters += convenienceLettering[convenienceIndex]
                 }
             }
-            AccessSubscriptExpr.SUBSCRIPT     -> {
-                if (returnType !is WGSLScalarType) {
-                    throw Exception("Attempt to generate subscript for unknown type $returnType!")
-                }
-
-                val argType = PRNG.getRandomTypeFrom(
-                    arrayListOf(WGSLVectorType(returnType, 0))
+            AccessSubscriptScalarExpr.SUBSCRIPT_SCALAR,
+            AccessSubscriptVectorExpr.SUBSCRIPT_VECTOR -> {
+                val argTypes = arrayListOf(
+                    when (expr) {
+                        is AccessSubscriptScalarExpr -> {
+                            if (returnType !is WGSLScalarType) {
+                                throw Exception("Attempt to generate subscript scalar access for unknown type $returnType!")
+                            } else {
+                                WGSLVectorType(returnType, 0)
+                            }
+                        }
+                        is AccessSubscriptVectorExpr -> {
+                            if (returnType !is WGSLVectorType) {
+                                throw Exception("Attempt to generate subscript vector access for unknown type $returnType!")
+                            } else {
+                                WGSLMatrixType(returnType.componentType, 0, returnType.length)
+                            }
+                        }
+                        else                         -> throw Exception("Attempt to generate subscript access for unknown Expr $expr!")
+                    }
                 )
+
+                val argType = PRNG.getRandomTypeFrom(argTypes)
                 arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
                 val subscriptBound = when (argType) {
                     is WGSLVectorType -> argType.length
+                    is WGSLMatrixType -> argType.width
                     else              -> throw Exception(
                         "Unable to evaluate upperBound for access of unknown type $argType!"
                     )
@@ -95,7 +108,7 @@ internal class AccessExpression : Expression() {
                     }
                 }
             }
-            else                              -> throw Exception(
+            else                                       -> throw Exception(
                 "Attempt to generate AccessExpression of unknown Expr $this.expr!"
             )
         }
@@ -104,11 +117,14 @@ internal class AccessExpression : Expression() {
     }
 
     override fun toString(): String {
-        // parentheses are necessary in all cases but IdentityExpressions
-        // accessed.subExpression must also be validated as an IdentityExpression
-        // to prevent non-bracketed repeated convenience accesses (e.g. vectorVar.xyz.xyz, which will error)
-        val argString = if (CNFG.useNecessaryExpressionParentheses && arg is IdentityExpression
-            && (arg as IdentityExpression).subExpression is IdentityExpression) {
+        // parentheses are necessary in all cases but IdentityExpressions/AccessExpressions that are not conveniences
+        // accessed.subExpression must also be validated as an IdentityExpression/non-convenience AccessExpression
+        // to prevent repeated convenience accesses (e.g. vectorVar.xyz.xyz, which will error) from the subexpression
+        val argString = if (CNFG.useNecessaryExpressionParentheses && (
+                    (arg is IdentityExpression && ((arg as IdentityExpression).subExpression == null
+                            || (arg as IdentityExpression).subExpression!!.expr != AccessConvenienceExpr.CONVENIENCE))
+                            || (arg is AccessExpression
+                            && (arg as AccessExpression).expr != AccessConvenienceExpr.CONVENIENCE))) {
             "$arg"
         } else {
             "($arg)"

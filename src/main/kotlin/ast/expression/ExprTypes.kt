@@ -7,13 +7,21 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
         arrayListOf(abstractWGSLScalarType, abstractWGSLVectorType),
         AccessConvenienceExpr.values().asList()
     ),
-    ACCESS_SUBSCRIPT(
+    ACCESS_SUBSCRIPT_SCALAR(
         arrayListOf(abstractWGSLScalarType),
-        AccessSubscriptExpr.values().asList()
+        AccessSubscriptScalarExpr.values().asList()
     ),
-    BINARY_ARITHMETIC(
+    ACCESS_SUBSCRIPT_VECTOR(
+        matrixColumnTypes,
+        AccessSubscriptVectorExpr.values().asList()
+    ),
+    BINARY_ARITHMETIC_NUMERIC(
         numericTypes,
-        BinaryArithmeticExpr.values().asList()
+        BinaryArithmeticNumericExpr.values().asList()
+    ),
+    BINARY_ARITHMETIC_MATRIX_NUMERIC(
+        ArrayList(numericTypes + arrayListOf(abstractWGSLMatrixType)),
+        BinaryArithmeticMatrixNumericExpr.values().asList()
     ),
     BINARY_BIT(
         arrayListOf(scalarIntType, scalarUnIntType, vectorIntType, vectorUnIntType),
@@ -71,11 +79,11 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
         arrayListOf(scalarBoolType),
         ComparisonThExpr.values().asList()
     ),
-    IDENTITY_CONSTRUCTOR(
-        constructibleTypes,
-        IdentityConstructibleExpr.values().asList()
+    IDENTITY_COMPOSITE(
+        compositeTypes,
+        IdentityCompositeExpr.values().asList()
     ),
-    IDENTITY_LITERAL(
+    IDENTITY_SCALAR(
         scalarTypes,
         IdentityScalarExpr.values().asList()
     ),

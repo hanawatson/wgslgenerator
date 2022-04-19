@@ -3,10 +3,13 @@ package wgslsmith.wgslgenerator.ast
 enum class Type {
     // ANY type used only as a stand-in for generation purposes!
     ANY,
+
     BOOL,
     FLOAT,
     INT,
     UNINT,
+
+    MAT,
     VEC;
 }
 
@@ -55,13 +58,11 @@ internal class WGSLVectorType(val componentType: WGSLScalarType, val length: Int
 
     override fun isRepresentedBy(abstractType: WGSLType): Boolean {
         if (abstractType is WGSLVectorType) {
-            if (abstractType.componentType == WGSLScalarType(Type.ANY)) {
-                return abstractType.length == 0 || abstractType.length == length
-            }
-            if (abstractType.length == 0) {
-                return abstractType.componentType == WGSLScalarType(Type.ANY)
-                        || abstractType.componentType == componentType
-            }
+            val matchesComponentType = abstractType.componentType == abstractWGSLScalarType
+                    || abstractType.componentType == componentType
+            val matchesLength = abstractType.length == 0 || abstractType.length == length
+
+            return matchesComponentType && matchesLength
         }
         return false
     }
@@ -84,6 +85,40 @@ internal class WGSLVectorType(val componentType: WGSLScalarType, val length: Int
     }
 }
 
+internal class WGSLMatrixType(val componentType: WGSLScalarType, val width: Int, val length: Int) : WGSLType {
+    override val type = Type.MAT
+
+    override fun isRepresentedBy(abstractType: WGSLType): Boolean {
+        if (abstractType is WGSLMatrixType) {
+            val matchesComponentType = abstractType.componentType == abstractWGSLScalarType
+                    || abstractType.componentType == componentType
+            val matchesWidth = abstractType.width == 0 || abstractType.width == width
+            val matchesLength = abstractType.length == 0 || abstractType.length == length
+
+            return matchesComponentType && matchesWidth && matchesLength
+        }
+        return false
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other != null && other is WGSLMatrixType) {
+            return componentType == other.componentType && width == other.width && length == other.length
+        }
+        return false
+    }
+
+    override fun hashCode(): Int {
+        var result = componentType.hashCode()
+        result = 31 * result + width
+        result = 31 * result + length
+        return result
+    }
+
+    override fun toString(): String {
+        return "mat${width}x$length<$componentType>"
+    }
+}
+
 internal val scalarBoolType = WGSLScalarType(Type.BOOL)
 internal val scalarFloatType = WGSLScalarType(Type.FLOAT)
 internal val scalarIntType = WGSLScalarType(Type.INT)
@@ -98,10 +133,12 @@ internal val vector3FloatType = WGSLVectorType(scalarFloatType, 3)
 
 internal val abstractWGSLScalarType = WGSLScalarType(Type.ANY)
 internal val abstractWGSLVectorType = WGSLVectorType(abstractWGSLScalarType, 0)
+internal val abstractWGSLMatrixType = WGSLMatrixType(abstractWGSLScalarType, 0, 0)
 
 internal val allTypes: ArrayList<WGSLType> = arrayListOf(
     abstractWGSLScalarType,
-    abstractWGSLVectorType
+    abstractWGSLVectorType,
+    abstractWGSLMatrixType
 )
 internal val scalarTypes: ArrayList<WGSLType> = arrayListOf(
     scalarBoolType,
@@ -117,6 +154,13 @@ internal val numericTypes: ArrayList<WGSLType> = arrayListOf(
     vectorIntType,
     vectorUnIntType
 )
-internal val constructibleTypes: ArrayList<WGSLType> = arrayListOf(
-    abstractWGSLVectorType
+internal val compositeTypes: ArrayList<WGSLType> = arrayListOf(
+    abstractWGSLVectorType,
+    abstractWGSLMatrixType
+)
+internal val matrixComponentTypes: ArrayList<WGSLType> = arrayListOf(
+    scalarFloatType
+)
+internal val matrixColumnTypes: ArrayList<WGSLType> = arrayListOf(
+    vectorFloatType
 )

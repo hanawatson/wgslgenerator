@@ -1,5 +1,6 @@
 package wgslsmith.wgslgenerator.ast.expression
 
+import wgslsmith.wgslgenerator.ast.WGSLMatrixType
 import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.WGSLVectorType
@@ -31,15 +32,15 @@ internal object ExpressionGenerator {
         symbolTable: SymbolTable, givenReturnType: WGSLType?, exprs: ArrayList<Expr>, depth: Int
     ): Expression {
         val possibleExprs = ArrayList<Expr>()
-        if (depth >= CNFG.maxExpressionRecursion) {
+        if (depth >= CNFG.maxExpressionRecursion && givenReturnType != null) {
             possibleExprs += IdentityUniversalExpr.values().asList()
-            if (givenReturnType != null && givenReturnType is WGSLScalarType) {
-                possibleExprs += IdentityScalarExpr.values().asList()
-            } else if (givenReturnType != null && givenReturnType is WGSLVectorType) {
-                possibleExprs += IdentityConstructibleExpr.values().asList()
-            } else {
-                possibleExprs += IdentityConstructibleExpr.values().asList()
-                possibleExprs += IdentityScalarExpr.values().asList()
+            possibleExprs += when (givenReturnType) {
+                is WGSLScalarType -> IdentityScalarExpr.values().asList()
+                is WGSLVectorType,
+                is WGSLMatrixType -> IdentityCompositeExpr.values().asList()
+                else              -> throw Exception(
+                    "Unable to generate non-recursive Expression for unknown type $givenReturnType!"
+                )
             }
         } else {
             possibleExprs += exprs

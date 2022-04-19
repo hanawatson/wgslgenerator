@@ -1,9 +1,6 @@
 package wgslsmith.wgslgenerator.tables
 
-import wgslsmith.wgslgenerator.ast.Symbol
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
-import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLVectorType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
@@ -21,6 +18,7 @@ internal interface Subtable {
 internal class SymbolTable {
     private var scalarSubtable = ScalarSubtable()
     private var vectorSubtable = VectorSubtable()
+    private var matrixSubtable = MatrixSubtable()
 
     private var newVarLabelIndex: Int = 0
 
@@ -28,6 +26,7 @@ internal class SymbolTable {
         return when (type) {
             is WGSLScalarType -> scalarSubtable
             is WGSLVectorType -> vectorSubtable
+            is WGSLMatrixType -> matrixSubtable
             else              -> throw Exception("Attempt to access symbol subtable of unknown type!")
         }
     }
@@ -104,6 +103,7 @@ internal class SymbolTable {
 
         symbolTable.scalarSubtable = this.scalarSubtable.copy()
         symbolTable.vectorSubtable = this.vectorSubtable.copy()
+        symbolTable.matrixSubtable = this.matrixSubtable.copy()
 
         return symbolTable
     }

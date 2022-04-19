@@ -85,12 +85,12 @@ internal object PRNG {
         val typeIndex = getRandomIntInRange(0, types.size)
         var type = types[typeIndex]
 
-        if (type is WGSLScalarType && type.type == Type.ANY) {
+        if (type is WGSLScalarType && type == abstractWGSLScalarType) {
             type = getRandomTypeFrom(scalarTypes)
         }
 
         if (type is WGSLVectorType) {
-            val vectorType = if (type.componentType.type == Type.ANY) {
+            val vectorType = if (type.componentType == abstractWGSLScalarType) {
                 getRandomTypeFrom(scalarTypes)
             } else {
                 type.componentType
@@ -106,6 +106,31 @@ internal object PRNG {
             }
 
             type = WGSLVectorType(vectorType, vectorLength)
+        }
+
+        if (type is WGSLMatrixType) {
+            val matrixType = if (type.componentType == abstractWGSLScalarType) {
+                getRandomTypeFrom(matrixComponentTypes)
+            } else {
+                type.componentType
+            }
+            if (matrixType !is WGSLScalarType) {
+                throw Exception("Attempt to generate WGSLMatrixType with unknown componentType $matrixType!")
+            }
+
+            val matrixWidth = if (type.width == 0) {
+                getRandomIntInRange(2, 5)
+            } else {
+                type.width
+            }
+
+            val matrixLength = if (type.length == 0) {
+                getRandomIntInRange(2, 5)
+            } else {
+                type.length
+            }
+
+            type = WGSLMatrixType(matrixType, matrixWidth, matrixLength)
         }
 
         return type
