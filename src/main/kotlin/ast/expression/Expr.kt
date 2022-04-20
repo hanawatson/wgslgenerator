@@ -7,16 +7,16 @@ internal interface Expr {
 
 internal interface AccessExpr : IdentityExpr
 
-internal enum class AccessConvenienceExpr(override val operator: String) : AccessExpr {
-    CONVENIENCE("");
+internal enum class AccessConvenienceExpr(override val operator: String = "") : AccessExpr {
+    CONVENIENCE;
 }
 
-internal enum class AccessSubscriptScalarExpr(override val operator: String) : AccessExpr {
-    SUBSCRIPT_SCALAR("");
+internal enum class AccessSubscriptScalarExpr(override val operator: String = "") : AccessExpr {
+    SUBSCRIPT_SCALAR;
 }
 
-internal enum class AccessSubscriptVectorExpr(override val operator: String) : AccessExpr {
-    SUBSCRIPT_VECTOR("");
+internal enum class AccessSubscriptVectorExpr(override val operator: String = "") : AccessExpr {
+    SUBSCRIPT_VECTOR;
 }
 
 internal interface BinaryExpr : Expr
@@ -46,10 +46,6 @@ internal enum class BinaryLogicalExpr(override val operator: String) : BinaryExp
 internal enum class BinaryLogicalScalarExpr(override val operator: String) : BinaryExpr {
     SHORT_OR("||"),
     SHORT_AND("&&");
-}
-
-internal enum class BitcastExpr(override val operator: String) : Expr {
-    BITCAST("bitcast");
 }
 
 internal interface BuiltinExpr : Expr {
@@ -177,6 +173,16 @@ internal enum class ComparisonThExpr(override val operator: String) : Comparison
     MORE_THAN_OR_EQUAL(">=");
 }
 
+internal interface ConversionExpr : Expr
+
+internal enum class ConversionBitcastExpr(override val operator: String) : ConversionExpr {
+    BITCAST("bitcast");
+}
+
+internal enum class ConversionGeneralExpr(override val operator: String) : ConversionExpr {
+    CONVERSION("");
+}
+
 internal interface DataExpr : Expr
 
 internal enum class DataPackExpr(override val operator: String) : DataExpr {
@@ -189,17 +195,17 @@ internal enum class DataUnpackExpr(override val operator: String) : DataExpr {
 
 internal interface IdentityExpr : Expr
 
-internal enum class IdentityCompositeExpr(override val operator: String) : IdentityExpr {
-    CONSTRUCTOR("");
+internal enum class IdentityCompositeExpr(override val operator: String = "") : IdentityExpr {
+    CONSTRUCTOR;
 }
 
-internal enum class IdentityScalarExpr(override val operator: String) : IdentityExpr {
-    LITERAL("");
+internal enum class IdentityScalarExpr(override val operator: String = "") : IdentityExpr {
+    LITERAL;
 }
 
-internal enum class IdentityUniversalExpr(override val operator: String) : IdentityExpr {
-    SYMBOL(""),
-    ZERO_VALUE("");
+internal enum class IdentityUniversalExpr(override val operator: String = "") : IdentityExpr {
+    SYMBOL,
+    ZERO_VALUE;
 }
 
 internal interface UnaryExpr : Expr
@@ -225,7 +231,6 @@ internal val allExprs = ArrayList<Expr>(
             BinaryBitExpr.values().asList() +
             BinaryLogicalExpr.values().asList() +
             BinaryLogicalScalarExpr.values().asList() +
-            BitcastExpr.values().asList() +
             BuiltinArithmeticExpr.values().asList() +
             BuiltinArithmeticScalarExpr.values().asList() +
             BuiltinFloatExpr.values().asList() +
@@ -237,6 +242,8 @@ internal val allExprs = ArrayList<Expr>(
             BuiltinLogicalExpr.values().asList() +
             ComparisonEqExpr.values().asList() +
             ComparisonThExpr.values().asList() +
+            ConversionBitcastExpr.values().asList() +
+            ConversionGeneralExpr.values().asList() +
             DataPackExpr.values().asList() +
             DataUnpackExpr.values().asList() +
             IdentityCompositeExpr.values().asList() +

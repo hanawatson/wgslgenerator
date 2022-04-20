@@ -28,6 +28,7 @@ internal object CNFG {
     const val probabilityParenthesesAroundExpression = 0.7
     const val probabilityGenerateAnotherStatement = 0.9
     const val probabilityAssignToNewSymbol = 0.6
+    const val probabilityAssignToAccessExpression = 0.4
 
     // const val probabilityUseNumericSuffix = 0.5
     const val probabilityGenerateVectorWithSingleValue = 0.2

@@ -20,11 +20,7 @@ internal class AccessExpression : Expression() {
 
         when (expr) {
             AccessConvenienceExpr.CONVENIENCE          -> {
-                val convenienceLettering = if (PRNG.getRandomBool()) {
-                    "rgba"
-                } else {
-                    "xyzw"
-                }
+                val convenienceLettering = if (PRNG.getRandomBool()) "rgba" else "xyzw"
 
                 val numberOfLetters: Int
                 val returnInnerType: WGSLType
@@ -77,7 +73,9 @@ internal class AccessExpression : Expression() {
                                 WGSLMatrixType(returnType.componentType, 0, returnType.length)
                             }
                         }
-                        else                         -> throw Exception("Attempt to generate subscript access for unknown Expr $expr!")
+                        else                         -> throw Exception(
+                            "Attempt to generate subscript access for unknown Expr $expr!"
+                        )
                     }
                 )
 
@@ -91,22 +89,7 @@ internal class AccessExpression : Expression() {
                     )
                 }
 
-                if (PRNG.evaluateProbability(CNFG.probabilityGenerateSubscriptAccessInBounds)) {
-                    subscriptExpression = IdentityLiteralExpression().generateIntLiteralInRange(
-                        symbolTable, 0, subscriptBound
-                    )
-                } else {
-                    subscriptExpression = ExpressionGenerator.getExpressionWithReturnType(
-                        symbolTable, scalarIntType, depth + 1
-                    )
-                    if (CNFG.ensureSubscriptAccessInBounds) {
-                        subscriptExpression = BinaryExpression().generateModWithIntExpressions(
-                            symbolTable, subscriptExpression!!, IdentityLiteralExpression().generateIntLiteralInRange(
-                                symbolTable, subscriptBound, subscriptBound + 1
-                            )
-                        )
-                    }
-                }
+                subscriptExpression = generateSubscriptWithUpperBound(symbolTable, subscriptBound, depth)
             }
             else                                       -> throw Exception(
                 "Attempt to generate AccessExpression of unknown Expr $this.expr!"
@@ -114,6 +97,26 @@ internal class AccessExpression : Expression() {
         }
 
         return this
+    }
+
+    fun generateSubscriptWithUpperBound(symbolTable: SymbolTable, subscriptBound: Int, depth: Int): Expression {
+        if (PRNG.evaluateProbability(CNFG.probabilityGenerateSubscriptAccessInBounds)) {
+            return IdentityLiteralExpression().generateIntLiteralInRange(
+                symbolTable, 0, subscriptBound
+            )
+        } else {
+            var subscriptExpression = ExpressionGenerator.getExpressionWithReturnType(
+                symbolTable, scalarIntType, depth + 1
+            )
+            if (CNFG.ensureSubscriptAccessInBounds) {
+                subscriptExpression = BinaryExpression().generateModWithIntExpressions(
+                    symbolTable, subscriptExpression, IdentityLiteralExpression().generateIntLiteralInRange(
+                        symbolTable, subscriptBound, subscriptBound + 1
+                    )
+                )
+            }
+            return subscriptExpression
+        }
     }
 
     override fun toString(): String {

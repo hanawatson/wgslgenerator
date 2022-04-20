@@ -1,7 +1,6 @@
 package wgslsmith.wgslgenerator.tables
 
 import wgslsmith.wgslgenerator.ast.*
-import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal interface Subtable {
@@ -39,30 +38,30 @@ internal class SymbolTable {
         return "var$newVarLabelIndex"
     }
 
-    fun declareNewSymbol(type: WGSLType): Symbol {
-        val newSymbol = Symbol(getNextNewSymbolName(), type)
-        addSymbol(newSymbol, writeable = true)
-        newVarLabelIndex++
-        return newSymbol
+    fun declareNewWriteableSymbol(type: WGSLType): Symbol {
+        return addSymbol(type, writeable = true)
     }
 
-    private fun addSymbol(symbol: Symbol, writeable: Boolean) {
+    fun declareNewNonWriteableSymbol(type: WGSLType): Symbol {
+        return addSymbol(type, writeable = false)
+    }
+
+    private fun addSymbol(type: WGSLType, writeable: Boolean): Symbol {
+        val symbol = Symbol(getNextNewSymbolName(), type)
         getSubtable(symbol.type).addSymbol(symbol.type, symbol, writeable)
+        newVarLabelIndex++
+        return symbol
     }
 
     fun getRandomSymbol(type: WGSLType): Symbol {
-        return getRandomSymbolFrom(type, mustBeWriteable = false, mustAlreadyExist = false)
+        return getRandomSymbolFrom(type, mustBeWriteable = false)
     }
 
     fun getRandomWriteableSymbol(type: WGSLType): Symbol {
-        return getRandomSymbolFrom(type, mustBeWriteable = true, mustAlreadyExist = false)
+        return getRandomSymbolFrom(type, mustBeWriteable = true)
     }
 
-    fun getRandomWriteableExistingSymbol(type: WGSLType): Symbol {
-        return getRandomSymbolFrom(type, mustBeWriteable = true, mustAlreadyExist = true)
-    }
-
-    private fun getRandomSymbolFrom(type: WGSLType, mustBeWriteable: Boolean, mustAlreadyExist: Boolean): Symbol {
+    private fun getRandomSymbolFrom(type: WGSLType, mustBeWriteable: Boolean): Symbol {
         val subtable = getSubtable(type)
 
         // inclusive
@@ -73,20 +72,6 @@ internal class SymbolTable {
         }
         // exclusive
         val endIndex = subtable.getNextIndexOf(type)
-
-        // a blank symbol represents the need to create a new symbol,
-        // or indicates no matching symbols already exist
-        val generateBlankSymbol = if (mustAlreadyExist) {
-            false
-        } else if (mustBeWriteable) {
-            PRNG.evaluateProbability(CNFG.probabilityAssignToNewSymbol)
-        } else {
-            false
-        }
-
-        if (startIndex == endIndex || generateBlankSymbol) {
-            return Symbol("", type)
-        }
 
         val randomIndex = PRNG.getRandomIntInRange(startIndex, endIndex)
         if (subtable.getSymbolAtIndex(type, randomIndex) != null) {

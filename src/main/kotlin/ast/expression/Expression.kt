@@ -35,7 +35,7 @@ internal object ExpressionGenerator {
             possibleExprs += IdentityUniversalExpr.values().asList()
             possibleExprs += when (givenReturnType) {
                 is WGSLScalarType -> IdentityScalarExpr.values().asList()
-                is WGSLVectorType,
+                is WGSLVectorType -> IdentityCompositeExpr.values().asList()
                 is WGSLMatrixType -> IdentityCompositeExpr.values().asList()
                 else              -> throw Exception(
                     "Unable to generate non-recursive Expression for unknown type $givenReturnType!"
@@ -52,7 +52,7 @@ internal object ExpressionGenerator {
         return when (expr) {
             is AccessExpr     -> AccessExpression()
             is BinaryExpr     -> BinaryExpression()
-            is BitcastExpr    -> BitcastExpression()
+            is ConversionExpr -> ConversionExpression()
             is BuiltinExpr    -> BuiltinExpression()
             is ComparisonExpr -> ComparisonExpression()
             is DataExpr       -> DataExpression()

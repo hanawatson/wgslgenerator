@@ -43,21 +43,11 @@ internal class IdentityConstructorExpression : Expression() {
                 fun addComponentsWithRandomLengths(totalLength: Int) {
                     when (totalLength) {
                         2 -> {
-                            when (PRNG.getRandomIntInRange(1, 3)) {
-                                2 -> {
-                                    addComponentWithLength(2)
-                                }
-                                1 -> {
-                                    addComponentWithLength(1)
-                                    addComponentWithLength(1)
-                                }
-                            }
+                            addComponentWithLength(1)
+                            addComponentWithLength(1)
                         }
                         3 -> {
-                            when (PRNG.getRandomIntInRange(1, 4)) {
-                                3 -> {
-                                    addComponentWithLength(3)
-                                }
+                            when (PRNG.getRandomIntInRange(1, 3)) {
                                 2 -> {
                                     addComponentWithLength(2)
                                     addComponentWithLength(1)
@@ -69,10 +59,7 @@ internal class IdentityConstructorExpression : Expression() {
                             }
                         }
                         4 -> {
-                            when (PRNG.getRandomIntInRange(1, 5)) {
-                                4 -> {
-                                    addComponentWithLength(4)
-                                }
+                            when (PRNG.getRandomIntInRange(1, 4)) {
                                 3 -> {
                                     addComponentWithLength(3)
                                     addComponentWithLength(1)

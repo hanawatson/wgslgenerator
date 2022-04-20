@@ -35,10 +35,6 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
         arrayListOf(scalarBoolType),
         BinaryLogicalScalarExpr.values().asList()
     ),
-    BITCAST(
-        numericTypes,
-        BitcastExpr.values().asList()
-    ),
     BUILTIN_ARITHMETIC(
         numericTypes,
         BuiltinArithmeticExpr.values().asList()
@@ -82,6 +78,14 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
     COMPARISON_TH(
         arrayListOf(scalarBoolType),
         ComparisonThExpr.values().asList()
+    ),
+    CONVERSION_BITCAST(
+        numericTypes,
+        ConversionBitcastExpr.values().asList()
+    ),
+    CONVERSION_GENERAL(
+        arrayListOf(abstractWGSLScalarType, abstractWGSLVectorType),
+        ConversionGeneralExpr.values().asList()
     ),
     DATA_PACK(
         arrayListOf(scalarUnIntType),

@@ -6,11 +6,14 @@ internal interface AssignStat : Stat {
     val operator: String
 }
 
-internal enum class AssignEqStat(override val operator: String) : AssignStat {
-    ASSIGN_SIMPLE("="),
+internal enum class AssignEqStat(override val operator: String = "=") : AssignStat {
+    ASSIGN_DECLARE,
+    ASSIGN_LET,
 
     // temporarily commented due to lack of implementation in naga
-    // ASSIGN_PHONY("=");
+    // ASSIGN_PHONY;
+
+    ASSIGN_SIMPLE
 }
 
 internal enum class AssignCompoundStat(override val operator: String) : AssignStat {
