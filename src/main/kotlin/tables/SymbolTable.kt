@@ -39,15 +39,19 @@ internal class SymbolTable {
     }
 
     fun declareNewWriteableSymbol(type: WGSLType): Symbol {
-        return addSymbol(type, writeable = true)
+        return addSymbol(getNextNewSymbolName(), type, writeable = true)
     }
 
     fun declareNewNonWriteableSymbol(type: WGSLType): Symbol {
-        return addSymbol(type, writeable = false)
+        return addSymbol(getNextNewSymbolName(), type, writeable = false)
     }
 
-    private fun addSymbol(type: WGSLType, writeable: Boolean): Symbol {
-        val symbol = Symbol(getNextNewSymbolName(), type)
+    fun addNewNonWriteableSymbol(name: String, type: WGSLType): Symbol {
+        return addSymbol(name, type, writeable = false)
+    }
+
+    private fun addSymbol(name: String, type: WGSLType, writeable: Boolean): Symbol {
+        val symbol = Symbol(name, type)
         getSubtable(symbol.type).addSymbol(symbol.type, symbol, writeable)
         newVarLabelIndex++
         return symbol

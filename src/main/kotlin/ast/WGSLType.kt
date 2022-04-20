@@ -132,6 +132,7 @@ internal val vectorUnIntType = WGSLVectorType(scalarUnIntType, 0)
 internal val vector2FloatType = WGSLVectorType(scalarFloatType, 2)
 internal val vector3FloatType = WGSLVectorType(scalarFloatType, 3)
 internal val vector4FloatType = WGSLVectorType(scalarFloatType, 4)
+internal val vector3UnIntType = WGSLVectorType(scalarUnIntType, 3)
 
 internal val abstractWGSLScalarType = WGSLScalarType(Type.ANY)
 internal val abstractWGSLVectorType = WGSLVectorType(abstractWGSLScalarType, 0)
