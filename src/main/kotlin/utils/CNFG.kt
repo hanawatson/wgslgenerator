@@ -30,7 +30,8 @@ internal object CNFG {
     const val probabilityAssignToNewSymbol = 0.6
     const val probabilityAssignToAccessExpression = 0.4
 
-    // const val probabilityUseNumericSuffix = 0.5
+    const val probabilityUseHexLiteral = 0.3
+    const val probabilityUseLiteralSuffix = 0.5
     const val probabilityGenerateVectorWithSingleValue = 0.2
     const val probabilityReplaceVectorNonMultOperandWithScalar = 0.5
     const val probabilityReplaceVectorMultOperandWithOther = 0.5

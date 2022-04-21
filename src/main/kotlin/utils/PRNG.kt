@@ -47,21 +47,15 @@ internal object PRNG {
         return random.nextDouble(startDouble, endDouble)
     }
 
-    fun getRandomFloat(): Float {
+    fun getRandomPositiveFloat(): Float {
         if (!initialized) {
             throw Exception("Pseudorandom generator must be initialized before use!")
         }
         // Kotlin has no "float in range" function, so we use its safe Double->Float cast function
         // we also need to add overflow/underflow checks to make certain the cast result is defined in WGSL
-        var result = getRandomDoubleInRange(Float.MIN_VALUE.toDouble(), Float.MAX_VALUE.toDouble()).toFloat()
+        val result = getRandomDoubleInRange(Float.MIN_VALUE.toDouble(), Float.MAX_VALUE.toDouble()).toFloat()
         if (result == Float.POSITIVE_INFINITY || result.isNaN()) {
             return 0f
-        }
-        if (getRandomBool()) {
-            result = result.unaryMinus()
-            if (result == Float.NEGATIVE_INFINITY || result.isNaN()) {
-                return 0f
-            }
         }
         return result
     }

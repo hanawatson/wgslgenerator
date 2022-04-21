@@ -24,7 +24,7 @@ internal class ComputeShaderStage {
         stringBuilder.append("\t@builtin(global_invocation_id) global_id: vec3<u32>,\n")
         stringBuilder.append("\t@builtin(local_invocation_id) local_id: vec3<u32>,\n")
         stringBuilder.append("\t@builtin(workgroup_id) workgroup_id: vec3<u32>,\n")
-        stringBuilder.append("\t@builtin(num_workgroups) num_workgroups: vec3<u32>,\n")
+        stringBuilder.append("\t@builtin(num_workgroups) num_workgroups: vec3<u32>\n")
         stringBuilder.append(") {\n")
 
         for (bodyLine in body.getTabbedLines()) {

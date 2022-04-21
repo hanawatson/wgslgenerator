@@ -4,9 +4,13 @@ import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.scalarIntType
 import wgslsmith.wgslgenerator.tables.SymbolTable
+import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
+import java.lang.Float.toHexString
 
 internal class IdentityLiteralExpression : Expression() {
+    private var useHex: Boolean = false
+    private var useSuffix: Boolean = false
     private lateinit var literalValue: String
     private var literalSuffix: String = ""
 
@@ -23,29 +27,32 @@ internal class IdentityLiteralExpression : Expression() {
         this.returnType = returnType
         this.expr = expr
 
-        literalValue = when (returnType.type) {
-            Type.BOOL  -> "${PRNG.getRandomBool()}"
-            Type.FLOAT -> "${PRNG.getRandomFloat()}"
-            Type.INT   -> "${PRNG.getRandomIntInRange(Int.MIN_VALUE, Int.MAX_VALUE)}"
-            Type.UNINT -> "${PRNG.getRandomUnIntInRange(UInt.MIN_VALUE, UInt.MAX_VALUE)}"
-            else       -> throw Exception("Attempt to generate literal of unknown type $returnType!")
-        }
-
         // temporarily commented due to lack of implementation of AbstractInt in Tint and naga
         // u suffix appended above for now - i not supported in Tint or naga, f not supported in naga
         // see https://github.com/gfx-rs/naga/issues/1843
-        /* // append optional suffix if appropriate
-        if (PRNG.evaluateProbability(CNFG.probabilityUseNumericSuffix)) {
-            literalSuffix = when (type.type) {
-                Type.FLOAT -> "f"
-                Type.INT   -> "i"
-                Type.UNINT -> "u"
-                else       -> ""
-            }
-        }*/
+        // useSuffix = PRNG.evaluateProbability(CNFG.probabilityUseLiteralSuffix)
 
-        if (returnType.type == Type.UNINT) {
-            literalSuffix = "u"
+        useSuffix = returnType.type == Type.UNINT
+        useHex = PRNG.evaluateProbability(CNFG.probabilityUseHexLiteral)
+
+        literalValue = when (returnType.type) {
+            Type.BOOL  -> "${PRNG.getRandomBool()}"
+            Type.FLOAT -> {
+                literalSuffix = "f"
+                val float = PRNG.getRandomPositiveFloat()
+                if (useHex) toHexString(float) else "$float"
+            }
+            Type.INT   -> {
+                literalSuffix = "i"
+                val int = PRNG.getRandomIntInRange(0, Int.MAX_VALUE)
+                if (useHex) "0x${int.toString(16)}" else "$int"
+            }
+            Type.UNINT -> {
+                literalSuffix = "u"
+                val unInt = PRNG.getRandomUnIntInRange(0u, UInt.MAX_VALUE)
+                if (useHex) "0x${unInt.toString(16)}" else "$unInt"
+            }
+            else       -> throw Exception("Attempt to generate literal of unknown type $returnType!")
         }
 
         return this
@@ -53,12 +60,14 @@ internal class IdentityLiteralExpression : Expression() {
 
     fun generateIntLiteralInRange(symbolTable: SymbolTable, minValue: Int, maxValue: Int): IdentityLiteralExpression {
         this.generate(symbolTable, scalarIntType, IdentityScalarExpr.LITERAL, 0)
-        literalValue = "${PRNG.getRandomIntInRange(minValue, maxValue)}"
+        val int = PRNG.getRandomIntInRange(minValue, maxValue)
+        literalValue = if (useHex) "0x${int.toString(16)}" else "$int"
 
         return this
     }
 
     override fun toString(): String {
+        if (!useSuffix) literalSuffix = ""
         return literalValue + literalSuffix
     }
 

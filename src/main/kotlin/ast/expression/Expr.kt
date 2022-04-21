@@ -67,15 +67,15 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
     ACOS("acos", 1),
 
     // temporarily commented due to lack of implementation in Tint and naga
-    //ACOSH("acosh", 1),
+    // ACOSH("acosh", 1),
     ASIN("asin", 1),
 
     // temporarily commented due to lack of implementation in Tint and naga
-    //ASINH("asinh", 1),
+    // ASINH("asinh", 1),
     ATAN("atan", 1),
 
     // temporarily commented due to lack of implementation in Tint and naga
-    //ATANH("atanh", 1),
+    // ATANH("atanh", 1),
     ATAN2("atan2", 2),
     CEIL("ceil", 1),
     COS("cos", 1),
@@ -116,11 +116,13 @@ internal enum class BuiltinFloatScalarExpr(override val operator: String, overri
 }
 
 internal enum class BuiltinFloatVectorExpr(override val operator: String, override val args: Int) : BuiltinExpr {
+    // temporarily commented due to lack of implementation in Tint and naga
+    // FACE_FORWARD("faceForward", 3),
     NORMALIZE("normalize", 1),
     REFLECT("reflect", 2);
 
     // temporarily commented out due to lack of implementation in naga
-    //REFRACT("refract", 3);
+    // REFRACT("refract", 3);
 }
 
 internal enum class BuiltinFloatVector3Expr(override val operator: String, override val args: Int) : BuiltinExpr {
