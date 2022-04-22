@@ -6,19 +6,16 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 import wgslsmith.wgslgenerator.utils.PRNG.getRandomBool
 
-internal class AccessExpression : Expression {
-    private lateinit var arg: Expression
+internal class AccessExpression(
+    symbolTable: SymbolTable, override val returnType: WGSLType, override var expr: Expr, depth: Int
+) : Expression {
+    private var arg: Expression
     private var convenienceLetters: String = ""
     private var subscriptExpressionString: String = ""
 
-    override lateinit var returnType: WGSLType
-    override lateinit var expr: Expr
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
-    override fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): AccessExpression {
-        this.returnType = returnType
-        this.expr = expr
-
+    init {
         when (expr) {
             is AccessConvenienceExpr -> {
                 val numberOfLetters: Int
@@ -58,11 +55,11 @@ internal class AccessExpression : Expression {
                 val argTypes: ArrayList<WGSLType> = when (returnType) {
                     is WGSLScalarType -> arrayListOf(
                         WGSLVectorType(returnType, 0),
-                        WGSLArrayType(returnType, IdentityLiteralExpression().generateIntLiteral(0), 0)
+                        WGSLArrayType(returnType, IdentityLiteralExpression(0), 0)
                     )
                     is WGSLVectorType -> {
                         val accessibleFrom: ArrayList<WGSLType> = arrayListOf(
-                            WGSLArrayType(returnType, IdentityLiteralExpression().generateIntLiteral(0), 0)
+                            WGSLArrayType(returnType, IdentityLiteralExpression(0), 0)
                         )
                         if (returnType.componentType == scalarFloatType) {
                             accessibleFrom.add(WGSLMatrixType(returnType.componentType, 0, returnType.length))
@@ -70,17 +67,18 @@ internal class AccessExpression : Expression {
                         accessibleFrom
                     }
                     is WGSLMatrixType -> arrayListOf(
-                        WGSLArrayType(returnType, IdentityLiteralExpression().generateIntLiteral(0), 0)
+                        WGSLArrayType(returnType, IdentityLiteralExpression(0), 0)
                     )
                     is WGSLArrayType  -> {
                         if (returnType.nestedDepth >= CNFG.maxArrayRecursion) {
-                            throw Exception("bruh")
+                            throw Exception(
+                                "Attempt to generate AccessExpression for WGSLArrayType of invalid nestedDepth " +
+                                        "${returnType.nestedDepth}!"
+                            )
                         }
                         arrayListOf(
                             WGSLArrayType(
-                                returnType,
-                                IdentityLiteralExpression().generateIntLiteral(0),
-                                returnType.nestedDepth - 1
+                                returnType, IdentityLiteralExpression(0), returnType.nestedDepth - 1
                             )
                         )
                     }
@@ -106,8 +104,6 @@ internal class AccessExpression : Expression {
                 "Attempt to generate AccessExpression of unknown Expr $this.expr!"
             )
         }
-
-        return this
     }
 
     override fun toString(): String {

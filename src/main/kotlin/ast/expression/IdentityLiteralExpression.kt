@@ -3,35 +3,20 @@ package wgslsmith.wgslgenerator.ast.expression
 import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.scalarIntType
-import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 import java.lang.Float.toHexString
 
-internal class IdentityLiteralExpression : Expression {
+internal class IdentityLiteralExpression(override val returnType: WGSLType, override var expr: Expr) : Expression {
     private var useHex: Boolean = false
     private var useSuffix: Boolean = false
     private var literalSuffix: String = ""
 
-    lateinit var literalValue: String
+    var literalValue: String
 
-    override lateinit var returnType: WGSLType
-    override lateinit var expr: Expr
     override var numberOfParentheses = 0
 
-    override fun generate(
-        symbolTable: SymbolTable,
-        returnType: WGSLType,
-        expr: Expr,
-        depth: Int
-    ): IdentityLiteralExpression {
-        return generateLiteral(returnType)
-    }
-
-    private fun generateLiteral(returnType: WGSLType): IdentityLiteralExpression {
-        this.returnType = returnType
-        this.expr = IdentityScalarExpr.LITERAL
-
+    init {
         // temporarily commented due to lack of implementation of AbstractInt in Tint and naga
         // u suffix appended above for now - i not supported in Tint or naga, f not supported in naga
         // see https://github.com/gfx-rs/naga/issues/1843
@@ -59,15 +44,11 @@ internal class IdentityLiteralExpression : Expression {
             }
             else       -> throw Exception("Attempt to generate literal of unknown type $returnType!")
         }
-
-        return this
     }
 
-    fun generateIntLiteral(value: Int): IdentityLiteralExpression {
-        this.generateLiteral(scalarIntType)
-        literalValue = if (useHex) "0x${value.toString(16)}" else "$value"
-
-        return this
+    // return a specific int value in expression form
+    constructor(value: Int) : this(scalarIntType, IdentityScalarExpr.LITERAL) {
+        this.literalValue = if (useHex) "0x${value.toString(16)}" else "$value"
     }
 
     override fun toString(): String {

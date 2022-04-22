@@ -9,26 +9,22 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class AssignmentStatement : Statement {
-    private lateinit var lhs: Symbol
-    private lateinit var rhs: Expression
-    private lateinit var type: WGSLType
+internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: Stat) : Statement {
+    private var lhs: Symbol
+    private var rhs: Expression
+    private var type: WGSLType
     private var declaredNewSymbol = false
     private var compoundBinaryOperator = ""
     private var accessString = ""
 
-    override lateinit var stat: Stat
-
-    override fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): AssignmentStatement {
-        this.stat = stat
-
+    init {
         if (stat is AssignCompoundStat) {
-            val exprEquivalent = when (stat) {
+            val exprEquivalent = when (stat as AssignCompoundStat) {
                 AssignCompoundStat.DECREMENT       -> BinaryArithmeticMatrixNumericExpr.MINUS
                 AssignCompoundStat.INCREMENT       -> BinaryArithmeticMatrixNumericExpr.ADD
                 AssignCompoundStat.BINARY_OPERATOR -> PRNG.getRandomExprFrom(compoundAssignableExprs)
             }
-            type = when (stat) {
+            type = when (stat as AssignCompoundStat) {
                 AssignCompoundStat.DECREMENT,
                 AssignCompoundStat.INCREMENT       -> PRNG.getRandomTypeFrom(
                     arrayListOf(scalarIntType, scalarUnIntType)
@@ -40,27 +36,22 @@ internal class AssignmentStatement : Statement {
                 }
             }
 
-            val binaryExpressionEquivalent = BinaryExpression().generate(
-                symbolTable, type, exprEquivalent, 0
-            )
+            val binaryExpressionEquivalent = BinaryExpression(symbolTable, type, exprEquivalent, 0)
 
             rhs = binaryExpressionEquivalent.getRHS()
 
             // temporary code to handle lack of implementation in naga of mixed operands during compound assignment
             if (rhs.returnType != type) {
-                rhs = IdentityZeroValExpression().generate(symbolTable, type, IdentityUniversalExpr.ZERO_VALUE, 0)
+                rhs = IdentityZeroValExpression(type, IdentityUniversalExpr.ZERO_VALUE)
             }
         } else {
             rhs = ExpressionGenerator.getExpressionWithoutReturnType(symbolTable, 0)
             type = rhs.returnType
         }
-
-        // check if the selected compound statement can be used, and revert to simple assignment if not
         if (stat is AssignCompoundStat && !symbolTable.hasWriteableOf(type)) {
             this.stat = AssignEqStat.ASSIGN_SIMPLE
             type = rhs.returnType
         }
-
         when (this.stat) {
             AssignEqStat.ASSIGN_DECLARE,
             AssignEqStat.ASSIGN_LET -> {
@@ -82,14 +73,13 @@ internal class AssignmentStatement : Statement {
                 "Attempt to generate AssignmentStat with unknown Stat ${this.stat}!"
             )
         }
-
-        return this
     }
 
     override fun getTabbedLines(): ArrayList<String> {
         if (stat == AssignEqStat.ASSIGN_DECLARE) {
-            return arrayListOf("var $lhs;")
+            return arrayListOf("var $lhs: $type;")
         }
+        
         val operator = if (stat == AssignCompoundStat.BINARY_OPERATOR) {
             compoundBinaryOperator
         } else {

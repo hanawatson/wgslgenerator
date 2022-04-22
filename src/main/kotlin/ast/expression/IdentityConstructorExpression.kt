@@ -5,19 +5,14 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class IdentityConstructorExpression : Expression {
+internal class IdentityConstructorExpression(
+    symbolTable: SymbolTable, override val returnType: WGSLType, override var expr: Expr, depth: Int
+) : Expression {
     private val components = ArrayList<Expression>()
 
-    override lateinit var returnType: WGSLType
-    override lateinit var expr: Expr
     override var numberOfParentheses = 0
 
-    override fun generate(
-        symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int
-    ): IdentityConstructorExpression {
-        this.returnType = returnType
-        this.expr = expr
-
+    init {
         fun addComponentWithWidthLengthType(width: Int, length: Int, type: WGSLScalarType) {
             val componentType = if (length == 1) {
                 type
@@ -30,7 +25,6 @@ internal class IdentityConstructorExpression : Expression {
                 ExpressionGenerator.getExpressionWithReturnType(symbolTable, componentType, depth + 1)
             )
         }
-
         when (returnType) {
             is WGSLVectorType -> {
                 fun addComponentWithLength(length: Int) {
@@ -128,8 +122,6 @@ internal class IdentityConstructorExpression : Expression {
             }
             else              -> throw Exception("Attempt to generate constructible of unknown type $returnType!")
         }
-
-        return this
     }
 
     override fun toString(): String {
@@ -164,7 +156,7 @@ internal class IdentityConstructorExpression : Expression {
                 var arrayString = "$returnType"
 
                 arrayString += "(${components[0]}"
-                for (i in 1 until (returnType as WGSLArrayType).elementCountValue) {
+                for (i in 1 until (returnType).elementCountValue) {
                     arrayString += ", ${components[i]}"
                 }
                 arrayString += ")"

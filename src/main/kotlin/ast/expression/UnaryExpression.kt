@@ -5,25 +5,20 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class UnaryExpression : Expression {
-    private lateinit var arg: Expression
+internal class UnaryExpression(
+    symbolTable: SymbolTable, override val returnType: WGSLType, override var expr: Expr, depth: Int
+) : Expression {
+    private var arg: Expression
 
-    override lateinit var returnType: WGSLType
-    override lateinit var expr: Expr
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
-    override fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): UnaryExpression {
-        this.returnType = returnType
-        this.expr = expr
-
+    init {
         arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, returnType, depth + 1)
-
-        return this
     }
 
     override fun toString(): String {
-        val argString = if (CNFG.useNecessaryExpressionParentheses && (arg !is IdentityExpression
-                    && arg !is AccessExpression && arg !is BuiltinExpression)) {
+        val argString = if (CNFG.useNecessaryExpressionParentheses && (arg is BinaryExpression
+                    || arg is ComparisonExpression || arg is UnaryExpression)) {
             "($arg)"
         } else if (CNFG.useUsefulExpressionParentheses && arg is AccessExpression) {
             "($arg)"

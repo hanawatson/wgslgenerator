@@ -5,23 +5,17 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class BinaryExpression : Expression {
-    private lateinit var lhs: Expression
-    private lateinit var rhs: Expression
-    private lateinit var lhsType: WGSLType
-    private lateinit var rhsType: WGSLType
+internal class BinaryExpression(
+    symbolTable: SymbolTable, override val returnType: WGSLType, override var expr: Expr, depth: Int
+) : Expression {
+    private var lhs: Expression
+    private var rhs: Expression
+    private var lhsType: WGSLType = returnType
+    private var rhsType: WGSLType = returnType
 
-    override lateinit var returnType: WGSLType
-    override lateinit var expr: Expr
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
-    override fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): BinaryExpression {
-        this.returnType = returnType
-        this.expr = expr
-
-        lhsType = returnType
-        rhsType = returnType
-
+    init {
         if (expr is BinaryArithmeticNumericExpr || expr is BinaryArithmeticMatrixNumericExpr) {
             var mixedType: WGSLType? = null
 
@@ -72,24 +66,18 @@ internal class BinaryExpression : Expression {
                 }
             }
         }
-
         lhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, lhsType, depth + 1)
         rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, rhsType, depth + 1)
-
-        return this
     }
 
-    fun generateModWithIntExpressions(symbolTable: SymbolTable, lhs: Expression, rhs: Expression): BinaryExpression {
-        this.generate(symbolTable, scalarIntType, BinaryArithmeticNumericExpr.MOD, CNFG.maxExpressionRecursion)
+    // generate "lhs modulo rhs" expression
+    constructor(symbolTable: SymbolTable, lhs: Expression, rhs: Expression) :
+            this(symbolTable, scalarIntType, BinaryArithmeticNumericExpr.MOD, CNFG.maxExpressionRecursion) {
         this.lhs = lhs
         this.rhs = rhs
-
-        return this
     }
 
-    fun getRHS(): Expression {
-        return rhs
-    }
+    fun getRHS(): Expression = rhs
 
     override fun toString(): String {
         val lhsString = ExpressionGenerator.getUsefulParenthesizedExpressionString(lhs)

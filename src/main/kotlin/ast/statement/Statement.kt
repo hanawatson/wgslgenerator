@@ -20,16 +20,11 @@ internal object StatementGenerator {
         }
 
         return when (val stat = PRNG.getRandomStatFrom(stats)) {
-            is AssignStat          -> AssignmentStatement().generate(symbolTable, stat, depth)
-            is ContextSpecificStat -> ContextSpecificStatement().generate(symbolTable, stat, depth)
-            is ControlFlowStat     -> ControlFlowStatement().generate(symbolTable, stat, depth)
+            is AssignStat          -> AssignmentStatement(symbolTable, stat)
+            is ContextSpecificStat -> ContextSpecificStatement(stat)
+            is ControlFlowStat     -> ControlFlowStatement(symbolTable, stat, depth)
             else                   -> throw Exception("Attempt to generate Statement with uncategorized Stat $stat!")
         }
-    }
-
-    fun getContextSpecificStatement(symbolTable: SymbolTable, contextSpecificStat: ContextSpecificStat, depth: Int):
-            Statement {
-        return ContextSpecificStatement().generate(symbolTable, contextSpecificStat, depth)
     }
 }
 
@@ -37,5 +32,4 @@ internal interface Statement {
     var stat: Stat
 
     fun getTabbedLines(): ArrayList<String>
-    fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): Statement
 }

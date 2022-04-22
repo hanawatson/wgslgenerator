@@ -144,9 +144,7 @@ internal object PRNG {
             // the current recursive depth of the array being generated - this is to prevent infinite
             // recursion of array elements being arrays of arrays etc. themselves
             val nestedArrayType = WGSLArrayType(
-                abstractWGSLScalarType,
-                IdentityLiteralExpression().generateIntLiteral(0),
-                type.nestedDepth + 1
+                abstractWGSLScalarType, IdentityLiteralExpression(0), type.nestedDepth + 1
             )
             if (nestedArrayType.nestedDepth < CNFG.maxArrayRecursion) {
                 possibleArrayElementTypes.add(nestedArrayType)
@@ -161,7 +159,7 @@ internal object PRNG {
             val arrayElementCount = if (type.elementCountValue == 0) {
                 // will include const generation here once implemented
                 val arrayElementCountValue = getRandomIntInRange(1, CNFG.maxArrayElementCount)
-                IdentityLiteralExpression().generateIntLiteral(arrayElementCountValue)
+                IdentityLiteralExpression(arrayElementCountValue)
             } else {
                 type.elementCount
             }
@@ -201,16 +199,14 @@ internal object PRNG {
     fun getSubscriptInBoundAtDepth(symbolTable: SymbolTable, subscriptBound: Int, depth: Int): String {
         val subscriptExpression = if (evaluateProbability(CNFG.probabilityGenerateSubscriptAccessInBounds)) {
             val subscript = getRandomIntInRange(0, subscriptBound)
-            IdentityLiteralExpression().generateIntLiteral(subscript)
+            IdentityLiteralExpression(subscript)
         } else {
             if (CNFG.ensureSubscriptAccessInBounds) {
                 val subscriptUnboundedExpression = ExpressionGenerator.getExpressionWithReturnType(
                     symbolTable, scalarIntType, depth + 1
                 )
-                BinaryExpression().generateModWithIntExpressions(
-                    symbolTable,
-                    subscriptUnboundedExpression,
-                    IdentityLiteralExpression().generateIntLiteral(subscriptBound)
+                BinaryExpression(
+                    symbolTable, subscriptUnboundedExpression, IdentityLiteralExpression(subscriptBound)
                 )
             } else {
                 ExpressionGenerator.getExpressionWithReturnType(symbolTable, scalarIntType, depth)

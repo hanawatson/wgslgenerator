@@ -5,20 +5,17 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class IdentityExpression : Expression {
-    private var symbol: Symbol? = null
+internal class IdentityExpression(
+    symbolTable: SymbolTable, override val returnType: WGSLType, override var expr: Expr, depth: Int
+) : Expression {
 
     // subExpression holds more complex code for non-symbol generation
     var subExpression: Expression? = null
+    private var symbol: Symbol? = null
 
-    override lateinit var returnType: WGSLType
-    override lateinit var expr: Expr
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
-    override fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): IdentityExpression {
-        this.returnType = returnType
-        this.expr = expr
-
+    init {
         if (expr == IdentityUniversalExpr.SYMBOL) {
             // indicates that no symbol of matching type yet exists
             // instead of continuing, find a new IdentityExpr (constructor, literal or zero value)
@@ -46,25 +43,22 @@ internal class IdentityExpression : Expression {
                 symbol = symbolTable.getRandomSymbol(returnType)
             }
         }
-
         when (this.expr) {
             is AccessExpr                     -> subExpression =
-                AccessExpression().generate(symbolTable, returnType, this.expr, depth)
+                AccessExpression(symbolTable, returnType, this.expr, depth)
             is ConversionExpr                 -> subExpression =
-                ConversionExpression().generate(symbolTable, returnType, this.expr, depth)
+                ConversionExpression(symbolTable, returnType, this.expr, depth)
             IdentityUniversalExpr.SYMBOL      -> {}
             IdentityCompositeExpr.CONSTRUCTOR -> subExpression =
-                IdentityConstructorExpression().generate(symbolTable, returnType, this.expr, depth)
+                IdentityConstructorExpression(symbolTable, returnType, this.expr, depth)
             IdentityScalarExpr.LITERAL        -> subExpression =
-                IdentityLiteralExpression().generate(symbolTable, returnType, this.expr, depth)
+                IdentityLiteralExpression(returnType, this.expr)
             IdentityUniversalExpr.ZERO_VALUE  -> subExpression =
-                IdentityZeroValExpression().generate(symbolTable, returnType, this.expr, depth)
+                IdentityZeroValExpression(returnType, this.expr)
             else                              -> throw Exception(
                 "Attempt to generate IdentityExpression of unknown Expr $this.expr!"
             )
         }
-
-        return this
     }
 
     override fun toString(): String {

@@ -45,23 +45,21 @@ internal object ExpressionGenerator {
         val returnType = givenReturnType ?: PRNG.getRandomTypeFrom(exprType.types)
 
         return when (expr) {
-            is AccessExpr     -> AccessExpression()
-            is BinaryExpr     -> BinaryExpression()
-            is ConversionExpr -> ConversionExpression()
-            is BuiltinExpr    -> BuiltinExpression()
-            is ComparisonExpr -> ComparisonExpression()
-            is DataExpr       -> DataExpression()
-            is IdentityExpr   -> IdentityExpression()
-            is UnaryExpr      -> UnaryExpression()
+            is AccessExpr     -> AccessExpression(symbolTable, returnType, expr, depth)
+            is BinaryExpr     -> BinaryExpression(symbolTable, returnType, expr, depth)
+            is ConversionExpr -> ConversionExpression(symbolTable, returnType, expr, depth)
+            is BuiltinExpr    -> BuiltinExpression(symbolTable, returnType, expr, depth)
+            is ComparisonExpr -> ComparisonExpression(symbolTable, returnType, expr, depth)
+            is DataExpr       -> DataExpression(symbolTable, returnType, expr, depth)
+            is IdentityExpr   -> IdentityExpression(symbolTable, returnType, expr, depth)
+            is UnaryExpr      -> UnaryExpression(symbolTable, returnType, expr, depth)
             else              -> throw Exception("Attempt to generate Expression with uncategorized Expr $expr!")
-        }.generate(symbolTable, returnType, expr, depth)
+        }
     }
 }
 
 internal interface Expression {
-    var returnType: WGSLType
+    val returnType: WGSLType
     var expr: Expr
     var numberOfParentheses: Int
-
-    fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): Expression
 }

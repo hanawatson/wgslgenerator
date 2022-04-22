@@ -30,7 +30,7 @@ internal object CNFG {
     // temporarily zeroed due to lack of implementation in naga
     const val probabilityOmitTypeFromComposite = 0.0
     const val probabilityParenthesesAroundExpression = 0.7
-    const val probabilityGenerateAnotherStatement = 1.0
+    const val probabilityGenerateAnotherStatement = 0.9
     const val probabilityAssignToNewSymbol = 0.4
     const val probabilityAssignToAccessExpression = 0.4
 

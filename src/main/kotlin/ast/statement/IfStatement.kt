@@ -10,21 +10,17 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class IfStatement : Statement {
-    override lateinit var stat: Stat
-    private lateinit var ifCond: Expression
-    private lateinit var ifBody: ScopeBody
+internal class IfStatement(symbolTable: SymbolTable, override var stat: Stat, depth: Int) : Statement {
+    private var ifCond: Expression
+    private var ifBody: ScopeBody
     private var elseIfConds = ArrayList<Expression>()
     private var elseIfBodies = ArrayList<ScopeBody>()
     private var currentIfElseBranches = 0
     private var elseBody: ScopeBody? = null
 
-    override fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): IfStatement {
-        this.stat = stat
-
+    init {
         ifCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
         ifBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
-
         while (PRNG.evaluateProbability(CNFG.probabilityIfElseBranch)
             && currentIfElseBranches < CNFG.maxIfElseBranches) {
             val elseIfCond =
@@ -34,12 +30,9 @@ internal class IfStatement : Statement {
             elseIfBodies.add(elseIfBody)
             currentIfElseBranches++
         }
-
         if (PRNG.evaluateProbability(CNFG.probabilityElseBranch)) {
             elseBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
         }
-
-        return this
     }
 
     override fun getTabbedLines(): ArrayList<String> {

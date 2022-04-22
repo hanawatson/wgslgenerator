@@ -206,9 +206,7 @@ internal val abstractWGSLScalarType = WGSLScalarType(Type.ANY)
 internal val abstractWGSLVectorType = WGSLVectorType(abstractWGSLScalarType, 0)
 internal val abstractWGSLMatrixType = WGSLMatrixType(abstractWGSLScalarType, 0, 0)
 internal val abstractWGSLArrayType = WGSLArrayType(
-    abstractWGSLScalarType,
-    IdentityLiteralExpression().generateIntLiteral(0),
-    0
+    abstractWGSLScalarType, IdentityLiteralExpression(0), 0
 )
 
 internal val allTypes: ArrayList<WGSLType> = arrayListOf(
@@ -246,6 +244,6 @@ internal val arrayElementTypes: ArrayList<WGSLType> = ArrayList(
     scalarTypes + arrayListOf(
         abstractWGSLVectorType,
         abstractWGSLMatrixType,
-        WGSLArrayType(abstractWGSLScalarType, IdentityLiteralExpression().generateIntLiteral(0), 1)
+        WGSLArrayType(abstractWGSLScalarType, IdentityLiteralExpression(0), 1)
     )
 )

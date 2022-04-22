@@ -4,26 +4,24 @@ import wgslsmith.wgslgenerator.ast.statement.ControlFlowStat.IF
 import wgslsmith.wgslgenerator.ast.statement.ControlFlowStat.SWITCH
 import wgslsmith.wgslgenerator.tables.SymbolTable
 
-internal class ControlFlowStatement : Statement {
-    override lateinit var stat: Stat
+internal class ControlFlowStatement(symbolTable: SymbolTable, override var stat: Stat, depth: Int) : Statement {
+    private val statement: Statement
 
-    override fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): Statement {
-        this.stat = stat
-
+    init {
         if (stat !is ControlFlowStat) {
             throw Exception("Failure to validate ControlFlowStat during ControlFlowStatement generation!")
         }
-
-        return when (stat) {
-            IF     -> IfStatement().generate(symbolTable, stat, depth)
-            SWITCH -> SwitchStatement().generate(symbolTable, stat, depth)
+        statement = when (stat as ControlFlowStat) {
+            IF     -> IfStatement(symbolTable, stat, depth)
+            SWITCH -> SwitchStatement(symbolTable, stat, depth)
         }
     }
 
     override fun getTabbedLines(): ArrayList<String> {
-        return when (stat as ControlFlowStat) {
+        /*return when (stat as ControlFlowStat) {
             IF     -> IfStatement().getTabbedLines()
             SWITCH -> SwitchStatement().getTabbedLines()
-        }
+        }*/
+        return statement.getTabbedLines()
     }
 }

@@ -1,7 +1,9 @@
 package wgslsmith.wgslgenerator.ast.statement
 
-import wgslsmith.wgslgenerator.ast.*
-import wgslsmith.wgslgenerator.ast.expression.Expression
+import wgslsmith.wgslgenerator.ast.ScopeBody
+import wgslsmith.wgslgenerator.ast.ScopeState
+import wgslsmith.wgslgenerator.ast.Type
+import wgslsmith.wgslgenerator.ast.WGSLScalarType
 import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
 import wgslsmith.wgslgenerator.ast.expression.IdentityLiteralExpression
 import wgslsmith.wgslgenerator.ast.expression.IdentityScalarExpr
@@ -9,21 +11,15 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class SwitchStatement : Statement {
-    override lateinit var stat: Stat
-    private lateinit var selector: Expression
-    private lateinit var selectorType: WGSLType
+internal class SwitchStatement(symbolTable: SymbolTable, override var stat: Stat, depth: Int) : Statement {
+    private var selectorType = PRNG.getRandomTypeFrom(arrayListOf(WGSLScalarType(Type.INT), WGSLScalarType(Type.UNINT)))
+    private var selector = ExpressionGenerator.getExpressionWithReturnType(symbolTable, selectorType, 0)
     private var switchCases = ArrayList<IdentityLiteralExpression?>()
     private var switchBodies = ArrayList<ScopeBody>()
     private var currentSwitchCases = 0
     private var defaultGenerated = false
 
-    override fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): SwitchStatement {
-        this.stat = stat
-
-        selectorType = PRNG.getRandomTypeFrom(arrayListOf(WGSLScalarType(Type.INT), WGSLScalarType(Type.UNINT)))
-        selector = ExpressionGenerator.getExpressionWithReturnType(symbolTable, selectorType, 0)
-
+    init {
         while (currentSwitchCases < 1 ||
             (PRNG.evaluateProbability(CNFG.probabilitySwitchCase)
                     && currentSwitchCases < CNFG.maxSwitchCases)) {
@@ -34,13 +30,9 @@ internal class SwitchStatement : Statement {
                 defaultGenerated = true
                 switchCases.add(null)
             } else {
-                var switchCase = IdentityLiteralExpression().generate(
-                    symbolTable, selectorType, IdentityScalarExpr.LITERAL, depth
-                )
+                var switchCase = IdentityLiteralExpression(selectorType, IdentityScalarExpr.LITERAL)
                 while (CNFG.ensureNoDuplicateSwitchCases && switchCases.contains(switchCase)) {
-                    switchCase = IdentityLiteralExpression().generate(
-                        symbolTable, selectorType, IdentityScalarExpr.LITERAL, depth
-                    )
+                    switchCase = IdentityLiteralExpression(selectorType, IdentityScalarExpr.LITERAL)
                 }
                 switchCases.add(switchCase)
             }
@@ -48,9 +40,6 @@ internal class SwitchStatement : Statement {
             switchBodies.add(switchBody)
             currentSwitchCases++
         }
-
-        // make sure there is a default case if not generated already, and make sure the final statement is not a
-        // fallthrough. substitute fallthrough for break if so to preserve supposed behaviour
         if (!defaultGenerated) {
             switchCases[currentSwitchCases - 1] = null
             defaultGenerated = true
@@ -58,12 +47,9 @@ internal class SwitchStatement : Statement {
         if (CNFG.ensureNoFallthroughLastSwitchCase && switchBodies[currentSwitchCases - 1]
                 .getLastStatement().stat == ContextSpecificStat.FALLTHROUGH) {
             switchBodies[currentSwitchCases - 1].replaceLastStatement(
-                StatementGenerator.getContextSpecificStatement
-                    (symbolTable, ContextSpecificStat.BREAK, depth)
+                ContextSpecificStatement(ContextSpecificStat.BREAK)
             )
         }
-
-        return this
     }
 
     override fun getTabbedLines(): ArrayList<String> {

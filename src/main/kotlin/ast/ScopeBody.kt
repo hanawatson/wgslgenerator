@@ -7,12 +7,16 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
+internal enum class ScopeState {
+    IF,
+    NONE,
+    SWITCH;
+}
+
 internal class ScopeBody(private val scopeState: ScopeState) {
     private val statements: ArrayList<Statement> = ArrayList()
 
-    fun getLastStatement(): Statement {
-        return statements.last()
-    }
+    fun getLastStatement() = statements.last()
 
     fun replaceLastStatement(statement: Statement) {
         statements.remove(statements.last())
