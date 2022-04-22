@@ -5,7 +5,7 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class UnaryExpression : Expression() {
+internal class UnaryExpression : Expression {
     private lateinit var arg: Expression
 
     override lateinit var returnType: WGSLType
@@ -22,10 +22,8 @@ internal class UnaryExpression : Expression() {
     }
 
     override fun toString(): String {
-        // handles special case of negative arg literal causing incorrect interpretation
-        // (should literals just be,,, positive and then can be negative if - is generated???)
-        val argString = if (CNFG.useNecessaryExpressionParentheses && ((arg !is IdentityExpression
-                    && arg !is AccessExpression && arg !is BuiltinExpression) || "$arg"[0] == '-')) {
+        val argString = if (CNFG.useNecessaryExpressionParentheses && (arg !is IdentityExpression
+                    && arg !is AccessExpression && arg !is BuiltinExpression)) {
             "($arg)"
         } else if (CNFG.useUsefulExpressionParentheses && arg is AccessExpression) {
             "($arg)"

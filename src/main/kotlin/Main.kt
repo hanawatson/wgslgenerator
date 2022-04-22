@@ -13,6 +13,6 @@ fun main(/*args: Array<String>*/) {
     File("../tint/out/Debug/test.wgsl").writeText("$shader")
 
     val processTint = ProcessBuilder("./tint", "test.wgsl").directory(File("../tint/out/Debug")).start()
-    processTint.inputStream.reader(Charset.defaultCharset()).use { println(it.readText()) }
+    processTint.inputStream.reader(Charset.defaultCharset()).use { it.readText() }
     processTint.errorStream.reader(Charset.defaultCharset()).use { println(it.readText()) }
 }

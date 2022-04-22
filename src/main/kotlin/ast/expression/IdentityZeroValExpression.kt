@@ -3,7 +3,7 @@ package wgslsmith.wgslgenerator.ast.expression
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 
-internal class IdentityZeroValExpression : Expression() {
+internal class IdentityZeroValExpression : Expression {
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
     override var numberOfParentheses = 0

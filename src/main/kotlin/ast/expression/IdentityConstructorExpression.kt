@@ -1,14 +1,11 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.WGSLMatrixType
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
-import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLVectorType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class IdentityConstructorExpression : Expression() {
+internal class IdentityConstructorExpression : Expression {
     private val components = ArrayList<Expression>()
 
     override lateinit var returnType: WGSLType
@@ -122,6 +119,13 @@ internal class IdentityConstructorExpression : Expression() {
                     )
                 }
             }
+            is WGSLArrayType  -> {
+                for (i in 1..returnType.elementCountValue) {
+                    components.add(
+                        ExpressionGenerator.getExpressionWithReturnType(symbolTable, returnType.elementType, depth + 1)
+                    )
+                }
+            }
             else              -> throw Exception("Attempt to generate constructible of unknown type $returnType!")
         }
 
@@ -155,6 +159,16 @@ internal class IdentityConstructorExpression : Expression() {
                 }
                 matrixString += ")"
                 return matrixString
+            }
+            is WGSLArrayType  -> {
+                var arrayString = "$returnType"
+
+                arrayString += "(${components[0]}"
+                for (i in 1 until (returnType as WGSLArrayType).elementCountValue) {
+                    arrayString += ", ${components[i]}"
+                }
+                arrayString += ")"
+                return arrayString
             }
             else              -> {
                 throw Exception(

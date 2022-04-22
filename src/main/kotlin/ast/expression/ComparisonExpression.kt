@@ -5,7 +5,7 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class ComparisonExpression : Expression() {
+internal class ComparisonExpression : Expression {
     private lateinit var lhs: Expression
     private lateinit var rhs: Expression
     private lateinit var argType: WGSLType

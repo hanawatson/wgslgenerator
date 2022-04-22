@@ -33,9 +33,9 @@ internal object StatementGenerator {
     }
 }
 
-internal abstract class Statement {
-    abstract var stat: Stat
+internal interface Statement {
+    var stat: Stat
 
-    abstract fun getTabbedLines(): ArrayList<String>
-    abstract fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): Statement
+    fun getTabbedLines(): ArrayList<String>
+    fun generate(symbolTable: SymbolTable, stat: Stat, depth: Int): Statement
 }

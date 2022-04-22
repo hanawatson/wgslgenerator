@@ -8,11 +8,12 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 import java.lang.Float.toHexString
 
-internal class IdentityLiteralExpression : Expression() {
+internal class IdentityLiteralExpression : Expression {
     private var useHex: Boolean = false
     private var useSuffix: Boolean = false
-    private lateinit var literalValue: String
     private var literalSuffix: String = ""
+
+    lateinit var literalValue: String
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
@@ -24,8 +25,12 @@ internal class IdentityLiteralExpression : Expression() {
         expr: Expr,
         depth: Int
     ): IdentityLiteralExpression {
+        return generateLiteral(returnType)
+    }
+
+    private fun generateLiteral(returnType: WGSLType): IdentityLiteralExpression {
         this.returnType = returnType
-        this.expr = expr
+        this.expr = IdentityScalarExpr.LITERAL
 
         // temporarily commented due to lack of implementation of AbstractInt in Tint and naga
         // u suffix appended above for now - i not supported in Tint or naga, f not supported in naga
@@ -58,10 +63,9 @@ internal class IdentityLiteralExpression : Expression() {
         return this
     }
 
-    fun generateIntLiteralInRange(symbolTable: SymbolTable, minValue: Int, maxValue: Int): IdentityLiteralExpression {
-        this.generate(symbolTable, scalarIntType, IdentityScalarExpr.LITERAL, 0)
-        val int = PRNG.getRandomIntInRange(minValue, maxValue)
-        literalValue = if (useHex) "0x${int.toString(16)}" else "$int"
+    fun generateIntLiteral(value: Int): IdentityLiteralExpression {
+        this.generateLiteral(scalarIntType)
+        literalValue = if (useHex) "0x${value.toString(16)}" else "$value"
 
         return this
     }

@@ -9,7 +9,7 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class SwitchStatement : Statement() {
+internal class SwitchStatement : Statement {
     override lateinit var stat: Stat
     private lateinit var selector: Expression
     private lateinit var selectorType: WGSLType

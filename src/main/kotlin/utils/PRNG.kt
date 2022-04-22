@@ -1,8 +1,12 @@
 package wgslsmith.wgslgenerator.utils
 
 import wgslsmith.wgslgenerator.ast.*
+import wgslsmith.wgslgenerator.ast.expression.BinaryExpression
 import wgslsmith.wgslgenerator.ast.expression.Expr
+import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
+import wgslsmith.wgslgenerator.ast.expression.IdentityLiteralExpression
 import wgslsmith.wgslgenerator.ast.statement.Stat
+import wgslsmith.wgslgenerator.tables.SymbolTable
 import kotlin.random.Random
 import kotlin.random.nextUInt
 
@@ -12,13 +16,13 @@ internal object PRNG {
 
     private lateinit var random: Random
 
-    fun initializeWithSeed(seed: Long) {
+    /*fun initializeWithSeed(seed: Long) {
         if (initialized) {
             throw Exception("Pseudorandom generator already initialized!")
         }
         random = Random(seed)
         initialized = true
-    }
+    }*/
 
     fun initializeWithoutSeed() {
         if (initialized) {
@@ -79,18 +83,23 @@ internal object PRNG {
         val typeIndex = getRandomIntInRange(0, types.size)
         var type = types[typeIndex]
 
+        val arrayIndex = types.indexOf(abstractWGSLArrayType)
+        if (arrayIndex != -1) {
+            type = types[arrayIndex]
+        }
+
         if (type is WGSLScalarType && type == abstractWGSLScalarType) {
             type = getRandomTypeFrom(scalarTypes)
         }
 
         if (type is WGSLVectorType) {
-            val vectorType = if (type.componentType == abstractWGSLScalarType) {
+            val vectorComponentType = if (type.componentType == abstractWGSLScalarType) {
                 getRandomTypeFrom(scalarTypes)
             } else {
                 type.componentType
             }
-            if (vectorType !is WGSLScalarType) {
-                throw Exception("Attempt to generate WGSLVectorType with unknown componentType $vectorType!")
+            if (vectorComponentType !is WGSLScalarType) {
+                throw Exception("Attempt to generate WGSLVectorType with unknown componentType $vectorComponentType!")
             }
 
             val vectorLength = if (type.length == 0) {
@@ -99,17 +108,17 @@ internal object PRNG {
                 type.length
             }
 
-            type = WGSLVectorType(vectorType, vectorLength)
+            type = WGSLVectorType(vectorComponentType, vectorLength)
         }
 
         if (type is WGSLMatrixType) {
-            val matrixType = if (type.componentType == abstractWGSLScalarType) {
+            val matrixComponentType = if (type.componentType == abstractWGSLScalarType) {
                 getRandomTypeFrom(matrixComponentTypes)
             } else {
                 type.componentType
             }
-            if (matrixType !is WGSLScalarType) {
-                throw Exception("Attempt to generate WGSLMatrixType with unknown componentType $matrixType!")
+            if (matrixComponentType !is WGSLScalarType) {
+                throw Exception("Attempt to generate WGSLMatrixType with unknown componentType $matrixComponentType!")
             }
 
             val matrixWidth = if (type.width == 0) {
@@ -124,7 +133,40 @@ internal object PRNG {
                 type.length
             }
 
-            type = WGSLMatrixType(matrixType, matrixWidth, matrixLength)
+            type = WGSLMatrixType(matrixComponentType, matrixWidth, matrixLength)
+        }
+
+        if (type is WGSLArrayType) {
+            val possibleArrayElementTypes = arrayElementTypes
+            possibleArrayElementTypes.remove(abstractWGSLArrayType)
+
+            // create an object similar to abstractWGSLArrayType but, importantly, one that tracks
+            // the current recursive depth of the array being generated - this is to prevent infinite
+            // recursion of array elements being arrays of arrays etc. themselves
+            val nestedArrayType = WGSLArrayType(
+                abstractWGSLScalarType,
+                IdentityLiteralExpression().generateIntLiteral(0),
+                type.nestedDepth + 1
+            )
+            if (nestedArrayType.nestedDepth < CNFG.maxArrayRecursion) {
+                possibleArrayElementTypes.add(nestedArrayType)
+            }
+
+            val arrayElementType = if (type.elementType == abstractWGSLScalarType) {
+                getRandomTypeFrom(possibleArrayElementTypes)
+            } else {
+                type.elementType
+            }
+
+            val arrayElementCount = if (type.elementCountValue == 0) {
+                // will include const generation here once implemented
+                val arrayElementCountValue = getRandomIntInRange(1, CNFG.maxArrayElementCount)
+                IdentityLiteralExpression().generateIntLiteral(arrayElementCountValue)
+            } else {
+                type.elementCount
+            }
+
+            type = WGSLArrayType(arrayElementType, arrayElementCount, type.nestedDepth)
         }
 
         return type
@@ -149,5 +191,37 @@ internal object PRNG {
         }
 
         return numberOfParentheses
+    }
+
+    fun getSubscriptInBound(symbolTable: SymbolTable, subscriptBound: Int) = getSubscriptInBoundAtDepth(
+        symbolTable,
+        subscriptBound, CNFG.maxExpressionRecursion - CNFG.maxSubscriptDepth
+    )
+
+    fun getSubscriptInBoundAtDepth(symbolTable: SymbolTable, subscriptBound: Int, depth: Int): String {
+        val subscriptExpression = if (evaluateProbability(CNFG.probabilityGenerateSubscriptAccessInBounds)) {
+            val subscript = getRandomIntInRange(0, subscriptBound)
+            IdentityLiteralExpression().generateIntLiteral(subscript)
+        } else {
+            if (CNFG.ensureSubscriptAccessInBounds) {
+                val subscriptUnboundedExpression = ExpressionGenerator.getExpressionWithReturnType(
+                    symbolTable, scalarIntType, depth + 1
+                )
+                BinaryExpression().generateModWithIntExpressions(
+                    symbolTable,
+                    subscriptUnboundedExpression,
+                    IdentityLiteralExpression().generateIntLiteral(subscriptBound)
+                )
+            } else {
+                ExpressionGenerator.getExpressionWithReturnType(symbolTable, scalarIntType, depth)
+            }
+        }
+        return "$subscriptExpression"
+    }
+
+    fun getConvenienceLetterInBound(subscriptBound: Int, useRGBA: Boolean): String {
+        val convenienceLettering = if (useRGBA) "rgba" else "xyzw"
+        val convenienceIndex = getRandomIntInRange(0, subscriptBound)
+        return "${convenienceLettering[convenienceIndex]}"
     }
 }

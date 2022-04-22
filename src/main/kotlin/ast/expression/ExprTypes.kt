@@ -7,13 +7,9 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
         arrayListOf(abstractWGSLScalarType, abstractWGSLVectorType),
         AccessConvenienceExpr.values().asList()
     ),
-    ACCESS_SUBSCRIPT_SCALAR(
-        arrayListOf(abstractWGSLScalarType),
-        AccessSubscriptScalarExpr.values().asList()
-    ),
-    ACCESS_SUBSCRIPT_VECTOR(
-        matrixColumnTypes,
-        AccessSubscriptVectorExpr.values().asList()
+    ACCESS_SUBSCRIPT(
+        arrayElementTypes,
+        AccessSubscriptExpr.values().asList()
     ),
     BINARY_ARITHMETIC_NUMERIC(
         numericTypes,

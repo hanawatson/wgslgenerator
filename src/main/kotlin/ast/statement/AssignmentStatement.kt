@@ -1,12 +1,15 @@
 package wgslsmith.wgslgenerator.ast.statement
 
-import wgslsmith.wgslgenerator.ast.*
+import wgslsmith.wgslgenerator.ast.Symbol
+import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.expression.*
+import wgslsmith.wgslgenerator.ast.scalarIntType
+import wgslsmith.wgslgenerator.ast.scalarUnIntType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class AssignmentStatement : Statement() {
+internal class AssignmentStatement : Statement {
     private lateinit var lhs: Symbol
     private lateinit var rhs: Expression
     private lateinit var type: WGSLType
@@ -67,82 +70,12 @@ internal class AssignmentStatement : Statement() {
             // AssignEqStat.ASSIGN_PHONY -> lhs = Symbol("_", type)
             AssignEqStat.ASSIGN_SIMPLE,
             is AssignCompoundStat   -> {
-                var accessFailed = true
-
-                // this probability evaluation should be changed in future so there are equal chances (e.g. not two
-                // probability evaluations), in the same style as randomType/Expr/Stats
-                if (PRNG.evaluateProbability(CNFG.probabilityAssignToAccessExpression)) {
-                    val lhsTypes = ArrayList<WGSLType>()
-
-                    if (type in matrixColumnTypes) {
-                        val vectorType = type as WGSLVectorType
-                        for (width in 2..4) {
-                            val matrixType = WGSLMatrixType(vectorType.componentType, width, vectorType.length)
-                            if (symbolTable.hasWriteableOf(matrixType)) {
-                                lhsTypes += matrixType
-                            }
-                        }
-                    }
-                    if (type in matrixComponentTypes) {
-                        val scalarType = type as WGSLScalarType
-                        for (width in 2..4) {
-                            for (length in 2..4) {
-                                val matrixType = WGSLMatrixType(scalarType, width, length)
-                                if (symbolTable.hasWriteableOf(matrixType)) {
-                                    lhsTypes += matrixType
-                                }
-                            }
-                        }
-                    }
-                    if (type in scalarTypes &&
-                        (this.stat !is AssignCompoundStat || this.stat == AssignCompoundStat.BINARY_OPERATOR)) {
-                        val scalarType = type as WGSLScalarType
-                        for (length in 2..4) {
-                            val vectorType = WGSLVectorType(scalarType, length)
-                            if (symbolTable.hasWriteableOf(vectorType)) {
-                                lhsTypes += vectorType
-                            }
-                        }
-                    }
-
-                    if (lhsTypes.isNotEmpty()) {
-                        accessFailed = false
-
-                        var lhsType = PRNG.getRandomTypeFrom(lhsTypes)
-                        lhs = symbolTable.getRandomWriteableSymbol(lhsType)
-
-                        if (lhsType is WGSLMatrixType) {
-                            val subscriptExpression = AccessExpression()
-                                .generateSubscriptWithUpperBound(symbolTable, lhsType.width, 0)
-                            accessString += "[$subscriptExpression]"
-                            // check if further access is needed
-                            if (type == lhsType.componentType) {
-                                lhsType = WGSLVectorType(lhsType.componentType, lhsType.length)
-                            }
-                        }
-                        if (lhsType is WGSLVectorType) {
-                            accessString += if (PRNG.getRandomBool()) {
-                                val convenienceLettering = if (PRNG.getRandomBool()) "rgba" else "xyzw"
-                                val convenienceIndex = PRNG.getRandomIntInRange(0, lhsType.length)
-                                ".${convenienceLettering[convenienceIndex]}"
-                            } else {
-                                val subscriptExpression = AccessExpression()
-                                    .generateSubscriptWithUpperBound(symbolTable, lhsType.length, 0)
-                                "[$subscriptExpression]"
-                            }
-                        }
-                    }
-                }
-
-                // accessFailed holds true if an access assignment has not been attempted, or has failed
-                if (accessFailed) {
-                    if ((PRNG.evaluateProbability(CNFG.probabilityAssignToNewSymbol)
-                                || !symbolTable.hasWriteableOf(type)) && this.stat !is AssignCompoundStat) {
-                        lhs = symbolTable.declareNewWriteableSymbol(type)
-                        declaredNewSymbol = true
-                    } else {
-                        lhs = symbolTable.getRandomWriteableSymbol(type)
-                    }
+                if ((PRNG.evaluateProbability(CNFG.probabilityAssignToNewSymbol) && this.stat is AssignEqStat)
+                    || (!symbolTable.hasWriteableOf(type) && this.stat !is AssignCompoundStat)) {
+                    lhs = symbolTable.declareNewWriteableSymbol(type)
+                    declaredNewSymbol = true
+                } else {
+                    lhs = symbolTable.getRandomWriteableSymbol(type)
                 }
             }
             else                    -> throw Exception(
@@ -154,6 +87,9 @@ internal class AssignmentStatement : Statement() {
     }
 
     override fun getTabbedLines(): ArrayList<String> {
+        if (stat == AssignEqStat.ASSIGN_DECLARE) {
+            return arrayListOf("var $lhs;")
+        }
         val operator = if (stat == AssignCompoundStat.BINARY_OPERATOR) {
             compoundBinaryOperator
         } else {

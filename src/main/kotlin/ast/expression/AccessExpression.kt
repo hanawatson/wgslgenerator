@@ -4,11 +4,12 @@ import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
+import wgslsmith.wgslgenerator.utils.PRNG.getRandomBool
 
-internal class AccessExpression : Expression() {
+internal class AccessExpression : Expression {
     private lateinit var arg: Expression
     private var convenienceLetters: String = ""
-    private var subscriptExpression: Expression? = null
+    private var subscriptExpressionString: String = ""
 
     override lateinit var returnType: WGSLType
     override lateinit var expr: Expr
@@ -19,9 +20,7 @@ internal class AccessExpression : Expression() {
         this.expr = expr
 
         when (expr) {
-            AccessConvenienceExpr.CONVENIENCE          -> {
-                val convenienceLettering = if (PRNG.getRandomBool()) "rgba" else "xyzw"
-
+            is AccessConvenienceExpr -> {
                 val numberOfLetters: Int
                 val returnInnerType: WGSLType
                 when (returnType) {
@@ -50,73 +49,65 @@ internal class AccessExpression : Expression() {
                 ) as WGSLVectorType
                 arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
 
+                val useRGBA = getRandomBool()
                 for (i in 1..numberOfLetters) {
-                    val convenienceIndex = PRNG.getRandomIntInRange(0, argType.length)
-                    convenienceLetters += convenienceLettering[convenienceIndex]
+                    convenienceLetters += PRNG.getConvenienceLetterInBound(argType.length, useRGBA)
                 }
             }
-            AccessSubscriptScalarExpr.SUBSCRIPT_SCALAR,
-            AccessSubscriptVectorExpr.SUBSCRIPT_VECTOR -> {
-                val argTypes = arrayListOf(
-                    when (expr) {
-                        is AccessSubscriptScalarExpr -> {
-                            if (returnType !is WGSLScalarType) {
-                                throw Exception("Attempt to generate subscript scalar access for unknown type $returnType!")
-                            } else {
-                                WGSLVectorType(returnType, 0)
-                            }
+            is AccessSubscriptExpr   -> {
+                val argTypes: ArrayList<WGSLType> = when (returnType) {
+                    is WGSLScalarType -> arrayListOf(
+                        WGSLVectorType(returnType, 0),
+                        WGSLArrayType(returnType, IdentityLiteralExpression().generateIntLiteral(0), 0)
+                    )
+                    is WGSLVectorType -> {
+                        val accessibleFrom: ArrayList<WGSLType> = arrayListOf(
+                            WGSLArrayType(returnType, IdentityLiteralExpression().generateIntLiteral(0), 0)
+                        )
+                        if (returnType.componentType == scalarFloatType) {
+                            accessibleFrom.add(WGSLMatrixType(returnType.componentType, 0, returnType.length))
                         }
-                        is AccessSubscriptVectorExpr -> {
-                            if (returnType !is WGSLVectorType) {
-                                throw Exception("Attempt to generate subscript vector access for unknown type $returnType!")
-                            } else {
-                                WGSLMatrixType(returnType.componentType, 0, returnType.length)
-                            }
+                        accessibleFrom
+                    }
+                    is WGSLMatrixType -> arrayListOf(
+                        WGSLArrayType(returnType, IdentityLiteralExpression().generateIntLiteral(0), 0)
+                    )
+                    is WGSLArrayType  -> {
+                        if (returnType.nestedDepth >= CNFG.maxArrayRecursion) {
+                            throw Exception("bruh")
                         }
-                        else                         -> throw Exception(
-                            "Attempt to generate subscript access for unknown Expr $expr!"
+                        arrayListOf(
+                            WGSLArrayType(
+                                returnType,
+                                IdentityLiteralExpression().generateIntLiteral(0),
+                                returnType.nestedDepth - 1
+                            )
                         )
                     }
-                )
+                    else              -> throw Exception(
+                        "Attempt to generate subscript access for unknown type $returnType!"
+                    )
+                }
 
                 val argType = PRNG.getRandomTypeFrom(argTypes)
                 arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
                 val subscriptBound = when (argType) {
                     is WGSLVectorType -> argType.length
                     is WGSLMatrixType -> argType.width
+                    is WGSLArrayType  -> argType.elementCountValue
                     else              -> throw Exception(
-                        "Unable to evaluate upperBound for access of unknown type $argType!"
+                        "Unable to evaluate subscriptBound for access of unknown type $argType!"
                     )
                 }
 
-                subscriptExpression = generateSubscriptWithUpperBound(symbolTable, subscriptBound, depth)
+                subscriptExpressionString = PRNG.getSubscriptInBoundAtDepth(symbolTable, subscriptBound, depth)
             }
-            else                                       -> throw Exception(
+            else                     -> throw Exception(
                 "Attempt to generate AccessExpression of unknown Expr $this.expr!"
             )
         }
 
         return this
-    }
-
-    fun generateSubscriptWithUpperBound(symbolTable: SymbolTable, subscriptBound: Int, depth: Int): Expression {
-        if (PRNG.evaluateProbability(CNFG.probabilityGenerateSubscriptAccessInBounds)) {
-            return IdentityLiteralExpression().generateIntLiteralInRange(
-                symbolTable, 0, subscriptBound
-            )
-        } else {
-            var subscriptExpression = ExpressionGenerator.getExpressionWithReturnType(
-                symbolTable, scalarIntType, depth + 1
-            )
-            if (CNFG.ensureSubscriptAccessInBounds) {
-                subscriptExpression = BinaryExpression().generateModWithIntExpressions(
-                    symbolTable, subscriptExpression, IdentityLiteralExpression().generateIntLiteralInRange(
-                        symbolTable, subscriptBound, subscriptBound + 1
-                    )
-                )
-            }
-            return subscriptExpression
-        }
     }
 
     override fun toString(): String {
@@ -135,8 +126,8 @@ internal class AccessExpression : Expression() {
 
         var accessExpressionString = if (convenienceLetters != "") {
             "$argString.$convenienceLetters"
-        } else if (subscriptExpression != null) {
-            "$argString[$subscriptExpression]"
+        } else if (subscriptExpressionString != "") {
+            "$argString[$subscriptExpressionString]"
         } else {
             throw Exception(
                 "Attempt to generate string representation of AccessExpression without convenienceLetters or subscript!"

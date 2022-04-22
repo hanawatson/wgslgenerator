@@ -5,7 +5,7 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class ConversionExpression : Expression() {
+internal class ConversionExpression : Expression {
     private lateinit var arg: Expression
 
     override lateinit var returnType: WGSLType

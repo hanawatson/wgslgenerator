@@ -10,7 +10,7 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class IfStatement : Statement() {
+internal class IfStatement : Statement {
     override lateinit var stat: Stat
     private lateinit var ifCond: Expression
     private lateinit var ifBody: ScopeBody

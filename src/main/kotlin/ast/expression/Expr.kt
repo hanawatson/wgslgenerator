@@ -5,18 +5,14 @@ internal interface Expr {
     // val probability: Int
 }
 
-internal interface AccessExpr : IdentityExpr
+internal interface AccessExpr : Expr
 
 internal enum class AccessConvenienceExpr(override val operator: String = "") : AccessExpr {
     CONVENIENCE;
 }
 
-internal enum class AccessSubscriptScalarExpr(override val operator: String = "") : AccessExpr {
-    SUBSCRIPT_SCALAR;
-}
-
-internal enum class AccessSubscriptVectorExpr(override val operator: String = "") : AccessExpr {
-    SUBSCRIPT_VECTOR;
+internal enum class AccessSubscriptExpr(override val operator: String = "") : AccessExpr {
+    SUBSCRIPT;
 }
 
 internal interface BinaryExpr : Expr
@@ -226,8 +222,7 @@ internal enum class UnaryLogicalExpr(override val operator: String) : UnaryExpr 
 
 internal val allExprs = ArrayList<Expr>(
     AccessConvenienceExpr.values().asList() +
-            AccessSubscriptScalarExpr.values().asList() +
-            AccessSubscriptVectorExpr.values().asList() +
+            AccessSubscriptExpr.values().asList() +
             BinaryArithmeticMatrixNumericExpr.values().asList() +
             BinaryArithmeticNumericExpr.values().asList() +
             BinaryBitExpr.values().asList() +

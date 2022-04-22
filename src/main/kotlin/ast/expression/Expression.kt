@@ -1,9 +1,6 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.WGSLMatrixType
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
-import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLVectorType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -18,25 +15,23 @@ internal object ExpressionGenerator {
         }
     }
 
-    fun getExpressionWithoutReturnType(symbolTable: SymbolTable, depth: Int): Expression {
-        return getExpressionFromList(symbolTable, null, allExprs, depth)
-    }
+    fun getExpressionWithoutReturnType(symbolTable: SymbolTable, depth: Int) =
+        getExpressionFromList(symbolTable, null, allExprs, depth)
 
-    fun getExpressionWithReturnType(symbolTable: SymbolTable, returnType: WGSLType, depth: Int): Expression {
-        val exprs = ExprTypes.getExprs(returnType)
-        return getExpressionFromList(symbolTable, returnType, exprs, depth)
-    }
+    fun getExpressionWithReturnType(symbolTable: SymbolTable, returnType: WGSLType, depth: Int) =
+        getExpressionFromList(symbolTable, returnType, ExprTypes.getExprs(returnType), depth)
 
     private fun getExpressionFromList(
         symbolTable: SymbolTable, givenReturnType: WGSLType?, exprs: ArrayList<Expr>, depth: Int
     ): Expression {
         val possibleExprs = ArrayList<Expr>()
-        if (depth >= CNFG.maxExpressionRecursion && givenReturnType != null) {
+        if (depth >= CNFG.maxExpressionRecursion - 1 && givenReturnType != null) {
             possibleExprs += IdentityUniversalExpr.values().asList()
             possibleExprs += when (givenReturnType) {
                 is WGSLScalarType -> IdentityScalarExpr.values().asList()
-                is WGSLVectorType -> IdentityCompositeExpr.values().asList()
-                is WGSLMatrixType -> IdentityCompositeExpr.values().asList()
+                is WGSLVectorType,
+                is WGSLMatrixType,
+                is WGSLArrayType  -> IdentityCompositeExpr.values().asList()
                 else              -> throw Exception(
                     "Unable to generate non-recursive Expression for unknown type $givenReturnType!"
                 )
@@ -63,10 +58,10 @@ internal object ExpressionGenerator {
     }
 }
 
-internal abstract class Expression {
-    abstract var returnType: WGSLType
-    abstract var expr: Expr
-    abstract var numberOfParentheses: Int
+internal interface Expression {
+    var returnType: WGSLType
+    var expr: Expr
+    var numberOfParentheses: Int
 
-    abstract fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): Expression
+    fun generate(symbolTable: SymbolTable, returnType: WGSLType, expr: Expr, depth: Int): Expression
 }

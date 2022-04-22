@@ -5,7 +5,7 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class DataExpression : Expression() {
+internal class DataExpression : Expression {
     private lateinit var arg: Expression
     private lateinit var sign: String
     private lateinit var size: String

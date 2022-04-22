@@ -5,7 +5,7 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class BinaryExpression : Expression() {
+internal class BinaryExpression : Expression {
     private lateinit var lhs: Expression
     private lateinit var rhs: Expression
     private lateinit var lhsType: WGSLType

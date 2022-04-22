@@ -1,5 +1,10 @@
 package wgslsmith.wgslgenerator.ast
 
+import wgslsmith.wgslgenerator.ast.expression.Expression
+import wgslsmith.wgslgenerator.ast.expression.IdentityLiteralExpression
+import wgslsmith.wgslgenerator.utils.CNFG
+import java.lang.Integer.decode
+
 enum class Type {
     // ANY type used only as a stand-in for generation purposes!
     ANY,
@@ -9,6 +14,7 @@ enum class Type {
     INT,
     UNINT,
 
+    ARRAY,
     MAT,
     VEC;
 }
@@ -42,6 +48,7 @@ internal class WGSLScalarType(override val type: Type) : WGSLType {
 
     override fun toString(): String {
         return when (type) {
+            Type.ANY   -> "ANY"
             Type.BOOL  -> "bool"
             Type.FLOAT -> "f32"
             Type.INT   -> "i32"
@@ -119,6 +126,67 @@ internal class WGSLMatrixType(val componentType: WGSLScalarType, val width: Int,
     }
 }
 
+internal class WGSLArrayType(val elementType: WGSLType, val elementCount: Expression, val nestedDepth: Int) : WGSLType {
+    override val type = Type.ARRAY
+
+    init {
+        if (nestedDepth > CNFG.maxArrayRecursion) {
+            throw Exception("Attempt to initialize WGSLArrayType of invalid nestedDepth $nestedDepth!")
+        }
+    }
+
+    val elementCountValue: Int = when (elementCount) {
+        is IdentityLiteralExpression -> {
+            if (elementCount.returnType == scalarIntType || elementCount.returnType == scalarUnIntType) {
+                decode(elementCount.literalValue)
+                /*if (elementCount.literalValue.startsWith("0x")) {
+                    decode(elementCount.literalValue)
+                } else {
+                    elementCount.literalValue.toInt()
+                }*/
+            } else {
+                throw Exception(
+                    "Attempt to construct WGSLArrayType with non-integral literal elementCount $elementCount!"
+                )
+            }
+        }
+        // is ConstExpression will go here once implemented (or something similar)
+        else                         -> {
+            throw Exception("Attempt to construct WGSLArrayType with unknown elementCount $elementCount!")
+        }
+    }
+
+    override fun isRepresentedBy(abstractType: WGSLType): Boolean {
+        if (abstractType is WGSLArrayType) {
+            val matchesElementType = abstractType.elementType == abstractWGSLScalarType
+                    || abstractType.elementType == elementType
+            val matchesElementCountValue = abstractType.elementCountValue == 0
+                    || abstractType.elementCountValue == elementCountValue
+            val canBeUsedAtDepth = abstractType.nestedDepth <= nestedDepth
+
+            return matchesElementType && matchesElementCountValue && canBeUsedAtDepth
+        }
+        return false
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other != null && other is WGSLArrayType) {
+            return elementType == other.elementType && elementCountValue == other.elementCountValue
+        }
+        return false
+    }
+
+    override fun hashCode(): Int {
+        var result = elementType.hashCode()
+        result = 31 * result + elementCountValue
+        return result
+    }
+
+    override fun toString(): String {
+        return "array<$elementType,$elementCount>"
+    }
+}
+
 internal val scalarBoolType = WGSLScalarType(Type.BOOL)
 internal val scalarFloatType = WGSLScalarType(Type.FLOAT)
 internal val scalarIntType = WGSLScalarType(Type.INT)
@@ -137,11 +205,17 @@ internal val vector3UnIntType = WGSLVectorType(scalarUnIntType, 3)
 internal val abstractWGSLScalarType = WGSLScalarType(Type.ANY)
 internal val abstractWGSLVectorType = WGSLVectorType(abstractWGSLScalarType, 0)
 internal val abstractWGSLMatrixType = WGSLMatrixType(abstractWGSLScalarType, 0, 0)
+internal val abstractWGSLArrayType = WGSLArrayType(
+    abstractWGSLScalarType,
+    IdentityLiteralExpression().generateIntLiteral(0),
+    0
+)
 
 internal val allTypes: ArrayList<WGSLType> = arrayListOf(
     abstractWGSLScalarType,
     abstractWGSLVectorType,
-    abstractWGSLMatrixType
+    abstractWGSLMatrixType,
+    abstractWGSLArrayType
 )
 internal val scalarTypes: ArrayList<WGSLType> = arrayListOf(
     scalarBoolType,
@@ -162,11 +236,16 @@ internal val numericVectorTypes: ArrayList<WGSLType> = arrayListOf(
 internal val numericTypes: ArrayList<WGSLType> = ArrayList(numericScalarTypes + numericVectorTypes)
 internal val compositeTypes: ArrayList<WGSLType> = arrayListOf(
     abstractWGSLVectorType,
-    abstractWGSLMatrixType
+    abstractWGSLMatrixType,
+    abstractWGSLArrayType
 )
 internal val matrixComponentTypes: ArrayList<WGSLType> = arrayListOf(
     scalarFloatType
 )
-internal val matrixColumnTypes: ArrayList<WGSLType> = arrayListOf(
-    vectorFloatType
+internal val arrayElementTypes: ArrayList<WGSLType> = ArrayList(
+    scalarTypes + arrayListOf(
+        abstractWGSLVectorType,
+        abstractWGSLMatrixType,
+        WGSLArrayType(abstractWGSLScalarType, IdentityLiteralExpression().generateIntLiteral(0), 1)
+    )
 )

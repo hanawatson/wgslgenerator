@@ -5,7 +5,7 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class BuiltinExpression : Expression() {
+internal class BuiltinExpression : Expression {
     private var argsLimit = 0
     private val args = ArrayList<Expression>()
     private val argTypes = ArrayList<WGSLType>()
