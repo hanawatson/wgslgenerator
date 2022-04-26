@@ -44,10 +44,6 @@ internal class IdentityExpression(
             }
         }
         when (this.expr) {
-            is AccessExpr                     -> subExpression =
-                AccessExpression(symbolTable, returnType, this.expr, depth)
-            is ConversionExpr                 -> subExpression =
-                ConversionExpression(symbolTable, returnType, this.expr, depth)
             IdentityUniversalExpr.SYMBOL      -> {}
             IdentityCompositeExpr.CONSTRUCTOR -> subExpression =
                 IdentityConstructorExpression(symbolTable, returnType, this.expr, depth)
@@ -72,12 +68,26 @@ internal class IdentityExpression(
             )
         }
 
-        if (CNFG.useExcessParentheses) {
-            for (i in 1..numberOfParentheses) {
+        if (CNFG.useExcessExpressionParentheses) {
+            for (i in 0 until numberOfParentheses) {
                 identityExpressionString = "($identityExpressionString)"
             }
         }
 
         return identityExpressionString
+    }
+
+    companion object : ExpressionCompanion {
+        override fun argsForExprType(
+            expr: Expr, returnType: WGSLType, configOption: Boolean
+        ): ArrayList<*> {
+            return when (expr) {
+                IdentityCompositeExpr.CONSTRUCTOR ->
+                    IdentityConstructorExpression.argsForExprType(expr, returnType, configOption)
+                IdentityScalarExpr.LITERAL        -> IdentityLiteralExpression.argsForExprType(expr, returnType)
+                IdentityUniversalExpr.ZERO_VALUE  -> IdentityZeroValExpression.argsForExprType(expr, returnType)
+                else                              -> arrayListOf(returnType)
+            }
+        }
     }
 }

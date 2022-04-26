@@ -13,7 +13,8 @@ internal class UnaryExpression(
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     init {
-        arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, returnType, depth + 1)
+        val argType = PRNG.getRandomTypeFrom(argsForExprType(expr, returnType))
+        arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
     }
 
     override fun toString(): String {
@@ -28,12 +29,20 @@ internal class UnaryExpression(
 
         var unaryExpressionString = "${expr.operator}$argString"
 
-        if (CNFG.useExcessParentheses) {
-            for (i in 1..numberOfParentheses) {
+        if (CNFG.useExcessExpressionParentheses) {
+            for (i in 0 until numberOfParentheses) {
                 unaryExpressionString = "($unaryExpressionString)"
             }
         }
 
         return unaryExpressionString
+    }
+
+    companion object : ExpressionCompanion {
+        override fun argsForExprType(
+            expr: Expr, returnType: WGSLType, configOption: Boolean
+        ): ArrayList<WGSLType> {
+            return arrayListOf(returnType)
+        }
     }
 }

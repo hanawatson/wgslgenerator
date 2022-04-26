@@ -38,12 +38,12 @@ internal class ScopeBody(private val scopeState: ScopeState) {
             currentStatements++
 
             generateAnotherStatement = if (
-                (statement.stat == ContextSpecificStat.BREAK && CNFG.preventCodeAfterBreak)
+                (statement.stat == ContextSpecificStat.BREAK && CNFG.preventCodeAfterBreakStatement)
                 || statement.stat == ContextSpecificStat.FALLTHROUGH
             ) {
                 false
             } else {
-                PRNG.evaluateProbability(CNFG.probabilityGenerateAnotherStatement)
+                PRNG.eval(CNFG.generateStatement)
             }
         }
 

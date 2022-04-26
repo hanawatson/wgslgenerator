@@ -8,4 +8,12 @@ internal class IdentityZeroValExpression(override val returnType: WGSLType, over
     override fun toString(): String {
         return "$returnType()"
     }
+
+    companion object : ExpressionCompanion {
+        override fun argsForExprType(
+            expr: Expr, returnType: WGSLType, configOption: Boolean
+        ): ArrayList<WGSLType> {
+            return arrayListOf(returnType)
+        }
+    }
 }

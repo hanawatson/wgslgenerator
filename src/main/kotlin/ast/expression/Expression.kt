@@ -25,7 +25,7 @@ internal object ExpressionGenerator {
         symbolTable: SymbolTable, givenReturnType: WGSLType?, exprs: ArrayList<Expr>, depth: Int
     ): Expression {
         val possibleExprs = ArrayList<Expr>()
-        if (depth >= CNFG.maxExpressionRecursion - 1 && givenReturnType != null) {
+        if (depth >= CNFG.maxExpressionNestDepth - 1 && givenReturnType != null) {
             possibleExprs += IdentityUniversalExpr.values().asList()
             possibleExprs += when (givenReturnType) {
                 is WGSLScalarType -> IdentityScalarExpr.values().asList()
@@ -62,4 +62,8 @@ internal interface Expression {
     val returnType: WGSLType
     var expr: Expr
     var numberOfParentheses: Int
+}
+
+internal interface ExpressionCompanion {
+    fun argsForExprType(expr: Expr, returnType: WGSLType, configOption: Boolean = false): ArrayList<*>
 }

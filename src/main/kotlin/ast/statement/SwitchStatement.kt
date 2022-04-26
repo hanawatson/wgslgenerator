@@ -21,12 +21,9 @@ internal class SwitchStatement(symbolTable: SymbolTable, override var stat: Stat
 
     init {
         while (currentSwitchCases < 1 ||
-            (PRNG.evaluateProbability(CNFG.probabilitySwitchCase)
-                    && currentSwitchCases < CNFG.maxSwitchCases)) {
+            (PRNG.eval(CNFG.generateSwitchCase) && currentSwitchCases < CNFG.maxSwitchCases)) {
 
-            if (!defaultGenerated && PRNG.evaluateProbability(
-                    CNFG.probabilitySwitchDefaultBeforeLast
-                )) {
+            if (!defaultGenerated && PRNG.eval(CNFG.generateDefaultSwitchCaseBeforeLast)) {
                 defaultGenerated = true
                 switchCases.add(null)
             } else {
@@ -44,7 +41,7 @@ internal class SwitchStatement(symbolTable: SymbolTable, override var stat: Stat
             switchCases[currentSwitchCases - 1] = null
             defaultGenerated = true
         }
-        if (CNFG.ensureNoFallthroughLastSwitchCase && switchBodies[currentSwitchCases - 1]
+        if (CNFG.preventFallthroughInLastSwitchCase && switchBodies[currentSwitchCases - 1]
                 .getLastStatement().stat == ContextSpecificStat.FALLTHROUGH) {
             switchBodies[currentSwitchCases - 1].replaceLastStatement(
                 ContextSpecificStatement(ContextSpecificStat.BREAK)

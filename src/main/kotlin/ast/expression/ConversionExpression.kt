@@ -13,15 +13,7 @@ internal class ConversionExpression(
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     init {
-        val innerTypes = if (expr is ConversionBitcastExpr) numericScalarTypes else scalarTypes
-        val argInnerType = PRNG.getRandomTypeFrom(innerTypes) as WGSLScalarType
-        val argType = when (returnType) {
-            is WGSLScalarType -> argInnerType
-            is WGSLVectorType -> WGSLVectorType(argInnerType, returnType.length)
-            else              -> throw Exception(
-                "Attempt to generate ConversionExpression of unknown returnType $returnType!"
-            )
-        }
+        val argType = PRNG.getRandomTypeFrom(argsForExprType(expr, returnType))
         arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
     }
 
@@ -31,12 +23,35 @@ internal class ConversionExpression(
         } else {
             "$returnType($arg)"
         }
-        if (CNFG.useExcessParentheses) {
-            for (i in 1..numberOfParentheses) {
+        if (CNFG.useExcessExpressionParentheses) {
+            for (i in 0 until numberOfParentheses) {
                 conversionExpressionString = "($conversionExpressionString)"
             }
         }
 
         return conversionExpressionString
+    }
+
+    companion object : ExpressionCompanion {
+        override fun argsForExprType(
+            expr: Expr, returnType: WGSLType, configOption: Boolean
+        ): ArrayList<WGSLType> {
+            val convertibleTypes = if (expr is ConversionBitcastExpr) numericScalarTypes else scalarTypes
+
+            val argTypes = ArrayList<WGSLType>()
+            for (convertibleType in convertibleTypes) {
+                argTypes.add(
+                    when (returnType) {
+                        is WGSLScalarType -> convertibleType
+                        is WGSLVectorType -> WGSLVectorType(convertibleType as WGSLScalarType, returnType.length)
+                        else              -> throw Exception(
+                            "Attempt to generate ConversionExpression argTypes of unknown returnType $returnType!"
+                        )
+                    }
+                )
+            }
+
+            return argTypes
+        }
     }
 }

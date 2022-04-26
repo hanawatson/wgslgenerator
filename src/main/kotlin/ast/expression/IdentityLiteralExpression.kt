@@ -20,10 +20,10 @@ internal class IdentityLiteralExpression(override val returnType: WGSLType, over
         // temporarily commented due to lack of implementation of AbstractInt in Tint and naga
         // u suffix appended above for now - i not supported in Tint or naga, f not supported in naga
         // see https://github.com/gfx-rs/naga/issues/1843
-        // useSuffix = PRNG.evaluateProbability(CNFG.probabilityUseLiteralSuffix)
+        // useSuffix = PRNG.eval(CNFG.probabilityUseLiteralSuffix)
 
         useSuffix = returnType.type == Type.UNINT
-        useHex = PRNG.evaluateProbability(CNFG.probabilityUseHexLiteral)
+        useHex = PRNG.eval(CNFG.useHexadecimalNumericLiteral)
 
         literalValue = when (returnType.type) {
             Type.BOOL  -> "${PRNG.getRandomBool()}"
@@ -67,5 +67,13 @@ internal class IdentityLiteralExpression(override val returnType: WGSLType, over
         var result = literalValue.hashCode()
         result = 31 * result + returnType.hashCode()
         return result
+    }
+
+    companion object : ExpressionCompanion {
+        override fun argsForExprType(
+            expr: Expr, returnType: WGSLType, configOption: Boolean
+        ): ArrayList<WGSLType> {
+            return arrayListOf(returnType)
+        }
     }
 }

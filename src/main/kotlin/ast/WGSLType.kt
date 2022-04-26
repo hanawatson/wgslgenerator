@@ -130,7 +130,7 @@ internal class WGSLArrayType(val elementType: WGSLType, val elementCount: Expres
     override val type = Type.ARRAY
 
     init {
-        if (nestedDepth > CNFG.maxArrayRecursion) {
+        if (nestedDepth > CNFG.maxArrayNestDepth) {
             throw Exception("Attempt to initialize WGSLArrayType of invalid nestedDepth $nestedDepth!")
         }
     }
@@ -139,11 +139,6 @@ internal class WGSLArrayType(val elementType: WGSLType, val elementCount: Expres
         is IdentityLiteralExpression -> {
             if (elementCount.returnType == scalarIntType || elementCount.returnType == scalarUnIntType) {
                 decode(elementCount.literalValue)
-                /*if (elementCount.literalValue.startsWith("0x")) {
-                    decode(elementCount.literalValue)
-                } else {
-                    elementCount.literalValue.toInt()
-                }*/
             } else {
                 throw Exception(
                     "Attempt to construct WGSLArrayType with non-integral literal elementCount $elementCount!"
@@ -241,9 +236,8 @@ internal val matrixComponentTypes: ArrayList<WGSLType> = arrayListOf(
     scalarFloatType
 )
 internal val arrayElementTypes: ArrayList<WGSLType> = ArrayList(
-    scalarTypes + arrayListOf(
-        abstractWGSLVectorType,
-        abstractWGSLMatrixType,
-        WGSLArrayType(abstractWGSLScalarType, IdentityLiteralExpression(0), 1)
-    )
+    scalarTypes +
+            arrayListOf(abstractWGSLVectorType, abstractWGSLMatrixType) +
+            (1 until CNFG.maxArrayNestDepth).map
+            { i -> WGSLArrayType(abstractWGSLScalarType, IdentityLiteralExpression(0), i) }
 )

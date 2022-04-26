@@ -8,95 +8,117 @@ import wgslsmith.wgslgenerator.utils.PRNG
 internal class BuiltinExpression(
     symbolTable: SymbolTable, override val returnType: WGSLType, override var expr: Expr, depth: Int
 ) : Expression {
-    private var argsLimit = 0
     private val args = ArrayList<Expression>()
-    private val argTypes = ArrayList<WGSLType>()
 
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     init {
-        if (expr !is BuiltinExpr) {
-            throw Exception("Failure to validate BuiltinExpr during BuiltinExpression generation!")
-        }
-        argsLimit = (expr as BuiltinExpr).args - 1
-        for (i in (0..argsLimit)) {
-            argTypes.add(returnType)
-        }
-        var matchingBoolType: WGSLType = WGSLScalarType(Type.BOOL)
-        if (returnType is WGSLVectorType) {
-            matchingBoolType = WGSLVectorType(matchingBoolType as WGSLScalarType, returnType.length)
-            // matchingIntType = WGSLVectorType(matchingIntType as WGSLScalarType, returnType.length)
-            // matchingUnIntType = WGSLVectorType(matchingUnIntType as WGSLScalarType, 0)
-        }
-        var matchingVectorType: WGSLType = abstractWGSLVectorType
-        if (returnType is WGSLScalarType) {
-            matchingVectorType = WGSLVectorType(returnType, 0)
-        }
-        when (expr) {
-            BuiltinArithmeticScalarExpr.DOT                -> {
-                argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(matchingVectorType))
-                argTypes[1] = argTypes[0]
+        val argTypeList = PRNG.getRandomTypeList(argsForExprType(expr, returnType))
+        val concreteArgTypeList = ArrayList<WGSLType>()
+        for (i in 0 until argTypeList.size) {
+            var concreteArgType = PRNG.getRandomTypeFrom(arrayListOf(argTypeList[i]))
+            for (j in 0 until i) {
+                if (argTypeList[j] == argTypeList[i]) {
+                    concreteArgType = concreteArgTypeList[j]
+                }
+                break
             }
-            /*BuiltinFloatExpr.LDEXP                         -> {
-                argTypes[1] = matchingIntType
-            }*/
-            BuiltinFloatExpr.MIX                           -> {
-                // cover both the linear and component versions of the mix function
-                argTypes[2] = PRNG.getRandomTypeFrom(arrayListOf(scalarFloatType, returnType))
-            }
-            BuiltinFloatScalarExpr.DISTANCE                -> {
-                argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(scalarFloatType, vectorFloatType))
-                argTypes[1] = argTypes[0]
-            }
-            BuiltinFloatScalarExpr.LENGTH                  -> {
-                argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(scalarFloatType, vectorFloatType))
-            }
-            /*BuiltinFloatVectorExpr.REFRACT                 -> {
-                argTypes[2] = scalarFloatType
-            }*/
-            BuiltinGeneralExpr.SELECT                      -> {
-                argTypes[2] = matchingBoolType
-            }
-            BuiltinIntegerExpr.EXTRACT_BITS                -> {
-                argTypes[1] = scalarUnIntType
-                argTypes[2] = scalarUnIntType
-            }
-            BuiltinIntegerExpr.INSERT_BITS                 -> {
-                argTypes[2] = scalarUnIntType
-                argTypes[3] = scalarUnIntType
-            }
-            /*BuiltinIntegerExpr.SHIFT_LEFT -> {
-                argTypes[1] = matchingUnIntType
-            }
-            BuiltinIntegerExpr.SHIFT_RIGHT -> {
-                argTypes[1] = matchingUnIntType
-            }*/
+            concreteArgTypeList.add(concreteArgType)
 
-            // temporarily restricted to vectorBools only due to nonfunctional implementation
-            // acting on scalarBools in naga
-            BuiltinLogicalExpr.ALL, BuiltinLogicalExpr.ANY -> {
-                argTypes[0] = PRNG.getRandomTypeFrom(arrayListOf(/*scalarBoolType, */vectorBoolType))
-            }
-        }
-        for (i in (0..argsLimit)) {
-            val argExpression = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argTypes[i], depth + 1)
+            val argExpression = ExpressionGenerator.getExpressionWithReturnType(symbolTable, concreteArgType, depth + 1)
             args.add(argExpression)
         }
     }
 
     override fun toString(): String {
         var builtinExpressionString = "${expr.operator}(${args[0]}"
-        for (i in 1..argsLimit) {
+        for (i in 1 until args.size) {
             builtinExpressionString += ", ${args[i]}"
         }
         builtinExpressionString += ")"
 
-        if (CNFG.useExcessParentheses) {
-            for (i in 1..numberOfParentheses) {
+        if (CNFG.useExcessExpressionParentheses) {
+            for (i in 0 until numberOfParentheses) {
                 builtinExpressionString = "($builtinExpressionString)"
             }
         }
 
         return builtinExpressionString
+    }
+
+    companion object : ExpressionCompanion {
+        override fun argsForExprType(
+            expr: Expr, returnType: WGSLType, configOption: Boolean
+        ): ArrayList<ArrayList<WGSLType>> {
+            if (expr !is BuiltinExpr) {
+                throw Exception("Failure to validate BuiltinExpr during BuiltinExpression argType generation!")
+            }
+
+            // return lists of combinations of possible arguments
+            val argTypeLists = ArrayList<ArrayList<WGSLType>>()
+
+            var matchingBoolType: WGSLType = WGSLScalarType(Type.BOOL)
+            if (returnType is WGSLVectorType) {
+                matchingBoolType = WGSLVectorType(matchingBoolType as WGSLScalarType, returnType.length)
+                // matchingIntType = WGSLVectorType(matchingIntType as WGSLScalarType, returnType.length)
+                // matchingUnIntType = WGSLVectorType(matchingUnIntType as WGSLScalarType, 0)
+            }
+            var matchingVectorType: WGSLType = abstractWGSLVectorType
+            if (returnType is WGSLScalarType) {
+                matchingVectorType = WGSLVectorType(returnType, 0)
+            }
+
+            when (expr) {
+                BuiltinArithmeticScalarExpr.DOT                -> {
+                    argTypeLists.add(arrayListOf(matchingVectorType, matchingVectorType))
+                }
+                /*BuiltinFloatExpr.LDEXP                         -> {
+                    argTypeLists.add(arrayListOf(returnType, matchingIntType))
+                }*/
+                BuiltinFloatExpr.MIX                           -> {
+                    // cover both the linear and component versions of the mix function
+                    argTypeLists.add(arrayListOf(returnType, returnType, scalarFloatType))
+                    argTypeLists.add(arrayListOf(returnType, returnType, returnType))
+                }
+                BuiltinFloatScalarExpr.DISTANCE                -> {
+                    argTypeLists.add(arrayListOf(scalarFloatType, scalarFloatType))
+                    argTypeLists.add(arrayListOf(vectorFloatType, vectorFloatType))
+                }
+                BuiltinFloatScalarExpr.LENGTH                  -> {
+                    argTypeLists.add(arrayListOf(scalarFloatType))
+                    argTypeLists.add(arrayListOf(vectorFloatType))
+                }
+                /*BuiltinFloatVectorExpr.REFRACT                 -> {
+                    argTypeLists.add(arrayListOf(returnType, returnType, scalarFloatType))
+                }*/
+                BuiltinGeneralExpr.SELECT                      -> {
+                    argTypeLists.add(arrayListOf(returnType, returnType, matchingBoolType))
+                }
+                BuiltinIntegerExpr.EXTRACT_BITS                -> {
+                    argTypeLists.add(arrayListOf(returnType, scalarUnIntType, scalarUnIntType))
+                }
+                BuiltinIntegerExpr.INSERT_BITS                 -> {
+                    argTypeLists.add(arrayListOf(returnType, returnType, scalarUnIntType, scalarUnIntType))
+                }
+                /*BuiltinIntegerExpr.SHIFT_LEFT -> {
+                    argTypeLists.add(arrayListOf(returnType, matchingUnIntType))
+                }
+                BuiltinIntegerExpr.SHIFT_RIGHT -> {
+                    argTypeLists.add(arrayListOf(returnType, matchingUnIntType))
+                }*/
+
+                // temporarily restricted to vectorBools only due to nonfunctional implementation
+                // acting on scalarBools in naga
+                BuiltinLogicalExpr.ALL, BuiltinLogicalExpr.ANY -> {
+                    // argTypeLists.add(arrayListOf(scalarBoolType))
+                    argTypeLists.add(arrayListOf(vectorBoolType))
+                }
+                else                                           -> {
+                    argTypeLists.add(ArrayList(generateSequence { returnType }.take(expr.args).toList()))
+                }
+            }
+
+            return argTypeLists
+        }
     }
 }

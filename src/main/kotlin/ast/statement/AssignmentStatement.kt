@@ -1,10 +1,8 @@
 package wgslsmith.wgslgenerator.ast.statement
 
-import wgslsmith.wgslgenerator.ast.Symbol
-import wgslsmith.wgslgenerator.ast.WGSLType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.ast.expression.*
-import wgslsmith.wgslgenerator.ast.scalarIntType
-import wgslsmith.wgslgenerator.ast.scalarUnIntType
+import wgslsmith.wgslgenerator.ast.expression.BinaryExpression.Companion.probEval
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -36,12 +34,13 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
                 }
             }
 
-            val binaryExpressionEquivalent = BinaryExpression(symbolTable, type, exprEquivalent, 0)
-
-            rhs = binaryExpressionEquivalent.getRHS()
+            val lhsRhsTypes = BinaryExpression.argsForExprType(exprEquivalent, type, probEval(exprEquivalent, type))
+                .filter { (lhsType, _) -> lhsType == type }
+            val rhsType = PRNG.getRandomTypeFrom(lhsRhsTypes.unzip().second as ArrayList<WGSLType>)
+            rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, rhsType, 0)
 
             // temporary code to handle lack of implementation in naga of mixed operands during compound assignment
-            if (rhs.returnType != type) {
+            if (!(type is WGSLMatrixType && rhs.returnType is WGSLMatrixType) && rhs.returnType != type) {
                 rhs = IdentityZeroValExpression(type, IdentityUniversalExpr.ZERO_VALUE)
             }
         } else {
@@ -61,7 +60,7 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
             // AssignEqStat.ASSIGN_PHONY -> lhs = Symbol("_", type)
             AssignEqStat.ASSIGN_SIMPLE,
             is AssignCompoundStat   -> {
-                if ((PRNG.evaluateProbability(CNFG.probabilityAssignToNewSymbol) && this.stat is AssignEqStat)
+                if ((PRNG.eval(CNFG.assignExpressionToNewVariable) && this.stat is AssignEqStat)
                     || (!symbolTable.hasWriteableOf(type) && this.stat !is AssignCompoundStat)) {
                     lhs = symbolTable.declareNewWriteableSymbol(type)
                     declaredNewSymbol = true
@@ -79,7 +78,7 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
         if (stat == AssignEqStat.ASSIGN_DECLARE) {
             return arrayListOf("var $lhs: $type;")
         }
-        
+
         val operator = if (stat == AssignCompoundStat.BINARY_OPERATOR) {
             compoundBinaryOperator
         } else {
@@ -93,7 +92,7 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
             if (stat == AssignEqStat.ASSIGN_LET) "let " else "var "
         } else ""
         val typeDeclaration = if (declaredNewSymbol &&
-            PRNG.evaluateProbability(CNFG.probabilityOmitTypeFromDeclaration)
+            PRNG.eval(CNFG.omitTypeFromDeclaration)
         ) {
             ": $type"
         } else ""

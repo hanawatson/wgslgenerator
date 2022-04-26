@@ -10,25 +10,11 @@ internal class ComparisonExpression(
 ) : Expression {
     private var lhs: Expression
     private var rhs: Expression
-    private var argType: WGSLType
 
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     init {
-        val comparableTypes: ArrayList<WGSLType> = arrayListOf(scalarFloatType, scalarIntType, scalarUnIntType)
-        if (expr is ComparisonEqExpr) {
-            comparableTypes.add(scalarBoolType)
-        }
-        val argInnerType = PRNG.getRandomTypeFrom(comparableTypes) as WGSLScalarType
-        argType = when {
-            returnType.isRepresentedBy(vectorBoolType) -> WGSLVectorType(
-                argInnerType, (returnType as WGSLVectorType).length
-            )
-            returnType.isRepresentedBy(scalarBoolType) -> argInnerType
-            else                                       -> throw Exception(
-                "Attempt to generate ComparisonExpression of unknown returnType $returnType!"
-            )
-        }
+        val argType = PRNG.getRandomTypeFrom(argsForExprType(expr, returnType))
         lhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
         rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
     }
@@ -39,12 +25,40 @@ internal class ComparisonExpression(
 
         var comparisonExpressionString = "$lhsString ${expr.operator} $rhsString"
 
-        if (CNFG.useExcessParentheses) {
-            for (i in 1..numberOfParentheses) {
+        if (CNFG.useExcessExpressionParentheses) {
+            for (i in 0 until numberOfParentheses) {
                 comparisonExpressionString = "($comparisonExpressionString)"
             }
         }
 
         return comparisonExpressionString
+    }
+
+    companion object : ExpressionCompanion {
+        override fun argsForExprType(
+            expr: Expr, returnType: WGSLType, configOption: Boolean
+        ): ArrayList<WGSLType> {
+            val comparableTypes: ArrayList<WGSLType> = arrayListOf(scalarFloatType, scalarIntType, scalarUnIntType)
+            if (expr is ComparisonEqExpr) {
+                comparableTypes.add(scalarBoolType)
+            }
+
+            val argTypes = ArrayList<WGSLType>()
+            for (comparableType in comparableTypes) {
+                argTypes.add(
+                    when {
+                        returnType.isRepresentedBy(vectorBoolType) -> WGSLVectorType(
+                            comparableType as WGSLScalarType, (returnType as WGSLVectorType).length
+                        )
+                        returnType.isRepresentedBy(scalarBoolType) -> comparableType
+                        else                                       -> throw Exception(
+                            "Attempt to generate ComparisonExpression argTypes of unknown returnType $returnType!"
+                        )
+                    }
+                )
+            }
+
+            return argTypes
+        }
     }
 }

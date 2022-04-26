@@ -21,7 +21,7 @@ internal class IfStatement(symbolTable: SymbolTable, override var stat: Stat, de
     init {
         ifCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
         ifBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
-        while (PRNG.evaluateProbability(CNFG.probabilityIfElseBranch)
+        while (PRNG.eval(CNFG.generateIfElseBranch)
             && currentIfElseBranches < CNFG.maxIfElseBranches) {
             val elseIfCond =
                 ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
@@ -30,7 +30,7 @@ internal class IfStatement(symbolTable: SymbolTable, override var stat: Stat, de
             elseIfBodies.add(elseIfBody)
             currentIfElseBranches++
         }
-        if (PRNG.evaluateProbability(CNFG.probabilityElseBranch)) {
+        if (PRNG.eval(CNFG.generateElseBranch)) {
             elseBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
         }
     }

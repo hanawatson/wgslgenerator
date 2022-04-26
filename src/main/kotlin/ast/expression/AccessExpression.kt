@@ -18,32 +18,19 @@ internal class AccessExpression(
     init {
         when (expr) {
             is AccessConvenienceExpr -> {
-                val numberOfLetters: Int
-                val returnInnerType: WGSLType
-                when (returnType) {
+                val numberOfLetters = when (returnType) {
                     is WGSLScalarType -> {
-                        numberOfLetters = 1
-                        returnInnerType = returnType
+                        1
                     }
                     is WGSLVectorType -> {
-                        numberOfLetters = returnType.length
-                        returnInnerType = returnType.componentType
+                        returnType.length
                     }
                     else              -> throw Exception(
                         "Attempt to generate convenienceLetters for unknown type $returnType!"
                     )
                 }
 
-                val argType = PRNG.getRandomTypeFrom(
-                    when (numberOfLetters) {
-                        1, 2 -> arrayListOf(WGSLVectorType(returnInnerType, 0))
-                        3    -> arrayListOf(WGSLVectorType(returnInnerType, 3), WGSLVectorType(returnInnerType, 4))
-                        4    -> arrayListOf(WGSLVectorType(returnInnerType, 4))
-                        else -> throw Exception(
-                            "Attempt to access too many components ($numberOfLetters) in AccessExpression!"
-                        )
-                    }
-                ) as WGSLVectorType
+                val argType = PRNG.getRandomTypeFrom(argsForExprType(expr, returnType)) as WGSLVectorType
                 arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
 
                 val useRGBA = getRandomBool()
@@ -52,42 +39,7 @@ internal class AccessExpression(
                 }
             }
             is AccessSubscriptExpr   -> {
-                val argTypes: ArrayList<WGSLType> = when (returnType) {
-                    is WGSLScalarType -> arrayListOf(
-                        WGSLVectorType(returnType, 0),
-                        WGSLArrayType(returnType, IdentityLiteralExpression(0), 0)
-                    )
-                    is WGSLVectorType -> {
-                        val accessibleFrom: ArrayList<WGSLType> = arrayListOf(
-                            WGSLArrayType(returnType, IdentityLiteralExpression(0), 0)
-                        )
-                        if (returnType.componentType == scalarFloatType) {
-                            accessibleFrom.add(WGSLMatrixType(returnType.componentType, 0, returnType.length))
-                        }
-                        accessibleFrom
-                    }
-                    is WGSLMatrixType -> arrayListOf(
-                        WGSLArrayType(returnType, IdentityLiteralExpression(0), 0)
-                    )
-                    is WGSLArrayType  -> {
-                        if (returnType.nestedDepth >= CNFG.maxArrayRecursion) {
-                            throw Exception(
-                                "Attempt to generate AccessExpression for WGSLArrayType of invalid nestedDepth " +
-                                        "${returnType.nestedDepth}!"
-                            )
-                        }
-                        arrayListOf(
-                            WGSLArrayType(
-                                returnType, IdentityLiteralExpression(0), returnType.nestedDepth - 1
-                            )
-                        )
-                    }
-                    else              -> throw Exception(
-                        "Attempt to generate subscript access for unknown type $returnType!"
-                    )
-                }
-
-                val argType = PRNG.getRandomTypeFrom(argTypes)
+                val argType = PRNG.getRandomTypeFrom(argsForExprType(expr, returnType))
                 arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
                 val subscriptBound = when (argType) {
                     is WGSLVectorType -> argType.length
@@ -130,12 +82,83 @@ internal class AccessExpression(
             )
         }
 
-        if (CNFG.useExcessParentheses) {
-            for (i in 1..numberOfParentheses) {
+        if (CNFG.useExcessExpressionParentheses) {
+            for (i in 0 until numberOfParentheses) {
                 accessExpressionString = "($accessExpressionString)"
             }
         }
 
         return accessExpressionString
+    }
+
+    companion object : ExpressionCompanion {
+        override fun argsForExprType(
+            expr: Expr, returnType: WGSLType, configOption: Boolean
+        ): ArrayList<WGSLType> {
+            val argTypes = ArrayList<WGSLType>()
+
+            when (expr) {
+                is AccessConvenienceExpr -> {
+                    val length: Int
+                    val returnInnerType: WGSLType
+                    when (returnType) {
+                        is WGSLScalarType -> {
+                            length = 1
+                            returnInnerType = returnType
+                        }
+                        is WGSLVectorType -> {
+                            length = returnType.length
+                            returnInnerType = returnType.componentType
+                        }
+                        else              -> throw Exception(
+                            "Attempt to generate argTypes for unknown type $returnType!"
+                        )
+                    }
+
+                    when (length) {
+                        1, 2 -> argTypes.add(WGSLVectorType(returnInnerType, 0))
+                        3    -> {
+                            argTypes.add(WGSLVectorType(returnInnerType, 3))
+                            argTypes.add(WGSLVectorType(returnInnerType, 4))
+                        }
+                        4    -> argTypes.add(WGSLVectorType(returnInnerType, 4))
+                    }
+                }
+                is AccessSubscriptExpr   -> {
+                    when (returnType) {
+                        is WGSLScalarType -> argTypes.addAll(
+                            arrayListOf(
+                                WGSLVectorType(returnType, 0),
+                                WGSLArrayType(returnType, IdentityLiteralExpression(0), 0)
+                            )
+                        )
+                        is WGSLVectorType -> {
+                            argTypes.add(WGSLArrayType(returnType, IdentityLiteralExpression(0), 0))
+                            if (returnType.componentType == scalarFloatType) {
+                                argTypes.add(WGSLMatrixType(returnType.componentType, 0, returnType.length))
+                            }
+                        }
+                        is WGSLMatrixType -> argTypes.add(
+                            WGSLArrayType(returnType, IdentityLiteralExpression(0), 0)
+                        )
+                        is WGSLArrayType  -> {
+                            if (returnType.nestedDepth >= CNFG.maxArrayNestDepth) {
+                                throw Exception(
+                                    "Attempt to generate argTypes for WGSLArrayType of invalid nestedDepth " +
+                                            "${returnType.nestedDepth}!"
+                                )
+                            }
+                            argTypes.add(
+                                WGSLArrayType(
+                                    returnType, IdentityLiteralExpression(0), returnType.nestedDepth - 1
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            return argTypes
+        }
     }
 }

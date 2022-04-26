@@ -16,23 +16,14 @@ internal class DataExpression(
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     init {
-        val argType: WGSLType
-        val sizeType: WGSLVectorType
-        when (expr) {
-            is DataPackExpr   -> {
-                argType = PRNG.getRandomTypeFrom(arrayListOf(vector2FloatType, vector4FloatType))
-                sizeType = argType as WGSLVectorType
-            }
-            is DataUnpackExpr -> {
-                argType = scalarUnIntType
-                sizeType = returnType as WGSLVectorType
-            }
-            else              -> throw Exception(
-                "Attempt to generate DataExpression of unknown returnType $returnType!"
-            )
+        val argType = PRNG.getRandomTypeFrom(argsForExprType(expr, returnType))
+        val length = if (argType is WGSLVectorType) {
+            argType.length
+        } else {
+            (returnType as WGSLVectorType).length
         }
         sign = if (PRNG.getRandomBool()) "s" else "u"
-        if (sizeType.length == 2) {
+        if (length == 2) {
             size = "2x16"
             if (PRNG.getRandomBool()) {
                 sign = ""
@@ -50,12 +41,34 @@ internal class DataExpression(
     override fun toString(): String {
         var dataExpressionString = "${expr.operator}$size$sign$norm($arg)"
 
-        if (CNFG.useExcessParentheses) {
-            for (i in 1..numberOfParentheses) {
+        if (CNFG.useExcessExpressionParentheses) {
+            for (i in 0 until numberOfParentheses) {
                 dataExpressionString = "($dataExpressionString)"
             }
         }
 
         return dataExpressionString
+    }
+
+    companion object : ExpressionCompanion {
+        override fun argsForExprType(
+            expr: Expr, returnType: WGSLType, configOption: Boolean
+        ): ArrayList<WGSLType> {
+            val argTypes = ArrayList<WGSLType>()
+            when (expr) {
+                is DataPackExpr   -> {
+                    argTypes.add(vector2FloatType)
+                    argTypes.add(vector4FloatType)
+                }
+                is DataUnpackExpr -> {
+                    argTypes.add(scalarUnIntType)
+                }
+                else              -> throw Exception(
+                    "Attempt to generate DataExpression argType of unknown returnType $returnType!"
+                )
+            }
+
+            return argTypes
+        }
     }
 }

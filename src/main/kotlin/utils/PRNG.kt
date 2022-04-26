@@ -7,6 +7,7 @@ import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
 import wgslsmith.wgslgenerator.ast.expression.IdentityLiteralExpression
 import wgslsmith.wgslgenerator.ast.statement.Stat
 import wgslsmith.wgslgenerator.tables.SymbolTable
+import wgslsmith.wgslgenerator.utils.CNFG.prob
 import kotlin.random.Random
 import kotlin.random.nextUInt
 
@@ -32,7 +33,7 @@ internal object PRNG {
         initialized = true
     }
 
-    fun evaluateProbability(probabilityThreshold: Double): Boolean {
+    fun eval(probabilityThreshold: Double): Boolean {
         val generatedProbability = getRandomDoubleInRange(0.0, 1.0)
         if (generatedProbability > probabilityThreshold) {
             return false
@@ -44,7 +45,7 @@ internal object PRNG {
         return getRandomIntInRange(0, 2) != 0
     }
 
-    fun getRandomDoubleInRange(startDouble: Double, endDouble: Double): Double {
+    private fun getRandomDoubleInRange(startDouble: Double, endDouble: Double): Double {
         if (!initialized) {
             throw Exception("Pseudorandom generator must be initialized before use!")
         }
@@ -79,13 +80,22 @@ internal object PRNG {
         return random.nextUInt(startIndex, endIndex)
     }
 
-    fun getRandomTypeFrom(types: ArrayList<WGSLType>): WGSLType {
-        val typeIndex = getRandomIntInRange(0, types.size)
-        var type = types[typeIndex]
+    fun getRandomTypeFrom(givenTypes: ArrayList<WGSLType>): WGSLType {
+        var type: WGSLType? = null
 
-        val arrayIndex = types.indexOf(abstractWGSLArrayType)
-        if (arrayIndex != -1) {
-            type = types[arrayIndex]
+        val totalProb = givenTypes.fold(0.0) { acc, givenType -> acc + prob(givenType) }
+        val randomDouble = getRandomDoubleInRange(0.0, totalProb)
+        var intervalProb = 0.0
+        for (givenType in givenTypes) {
+            intervalProb += prob(givenType)
+            if (randomDouble <= intervalProb) {
+                type = givenType
+                break
+            }
+        }
+
+        if (type == null) {
+            throw Exception("Failure to select random type from $givenTypes!")
         }
 
         if (type is WGSLScalarType && type == abstractWGSLScalarType) {
@@ -146,7 +156,7 @@ internal object PRNG {
             val nestedArrayType = WGSLArrayType(
                 abstractWGSLScalarType, IdentityLiteralExpression(0), type.nestedDepth + 1
             )
-            if (nestedArrayType.nestedDepth < CNFG.maxArrayRecursion) {
+            if (nestedArrayType.nestedDepth < CNFG.maxArrayNestDepth) {
                 possibleArrayElementTypes.add(nestedArrayType)
             }
 
@@ -170,9 +180,41 @@ internal object PRNG {
         return type
     }
 
-    fun getRandomExprFrom(exprs: ArrayList<Expr>): Expr {
-        val exprIndex = getRandomIntInRange(0, exprs.size)
-        return exprs[exprIndex]
+    fun getRandomTypeList(typeLists: ArrayList<ArrayList<WGSLType>>): ArrayList<WGSLType> {
+        val typeListProbabilities = ArrayList(typeLists.map { typeList -> prob(typeList) })
+
+        val totalProb = typeListProbabilities.fold(0.0) { acc, prob -> acc + prob }
+        val randomDouble = getRandomDoubleInRange(0.0, totalProb)
+        var intervalProb = 0.0
+        for (i in 0 until typeListProbabilities.size) {
+            intervalProb += typeListProbabilities[i]
+            if (randomDouble <= intervalProb) {
+                return typeLists[i]
+            }
+        }
+
+        throw Exception("Failure to select random typeList from $typeLists!")
+    }
+
+    fun getRandomExprFrom(givenExprs: ArrayList<Expr>): Expr {
+        var expr: Expr? = null
+
+        val totalProb = givenExprs.fold(0.0) { acc, givenExpr -> acc + prob(givenExpr) }
+        val randomDouble = getRandomDoubleInRange(0.0, totalProb)
+        var intervalProb = 0.0
+        for (givenExpr in givenExprs) {
+            intervalProb += prob(givenExpr)
+            if (randomDouble <= intervalProb) {
+                expr = givenExpr
+                break
+            }
+        }
+
+        if (expr == null) {
+            throw Exception("Failure to select random Expr from $givenExprs!")
+        }
+
+        return expr
     }
 
     fun getRandomStatFrom(stats: ArrayList<Stat>): Stat {
@@ -183,8 +225,8 @@ internal object PRNG {
     fun getNumberOfParentheses(): Int {
         var numberOfParentheses = 0
 
-        while (evaluateProbability(CNFG.probabilityParenthesesAroundExpression)
-            && numberOfParentheses < CNFG.maxParentheses) {
+        while (eval(CNFG.generateParenthesesAroundExpression)
+            && numberOfParentheses < CNFG.maxExcessExpressionParentheses) {
             numberOfParentheses++
         }
 
@@ -193,15 +235,15 @@ internal object PRNG {
 
     fun getSubscriptInBound(symbolTable: SymbolTable, subscriptBound: Int) = getSubscriptInBoundAtDepth(
         symbolTable,
-        subscriptBound, CNFG.maxExpressionRecursion - CNFG.maxSubscriptDepth
+        subscriptBound, CNFG.maxExpressionNestDepth - CNFG.maxSubscriptAccessExpressionNestDepth
     )
 
     fun getSubscriptInBoundAtDepth(symbolTable: SymbolTable, subscriptBound: Int, depth: Int): String {
-        val subscriptExpression = if (evaluateProbability(CNFG.probabilityGenerateSubscriptAccessInBounds)) {
+        val subscriptExpression = if (eval(CNFG.generateSimpleSubscriptAccess)) {
             val subscript = getRandomIntInRange(0, subscriptBound)
             IdentityLiteralExpression(subscript)
         } else {
-            if (CNFG.ensureSubscriptAccessInBounds) {
+            if (CNFG.ensureComplexSubscriptAccessInBounds) {
                 val subscriptUnboundedExpression = ExpressionGenerator.getExpressionWithReturnType(
                     symbolTable, scalarIntType, depth + 1
                 )

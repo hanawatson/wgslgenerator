@@ -1,0 +1,76 @@
+{
+  "typeConfig": {
+    "typeBounds": {
+      "max_array_element_count": 5,
+      "max_array_nest_depth": 3
+    },
+    "typeChanceOptions": {
+      "omit_type_from_declaration": 0.2,
+      "omit_type_from_composite_construction": 0.0,
+      "use_hexadecimal_numeric_literal": 0.3,
+      "use_suffix_with_numeric_literal": 0.5,
+      "construct_vector_with_single_value": 0.2
+    },
+    "typeProbabilities": {
+      "bool": 1.0,
+      "float32": 0.0,
+      "int32": 0.0,
+      "uint32": 1.0,
+      "array": 1000.0,
+      "matrix": 0.0,
+      "vector": 0.0
+    }
+  },
+  "exprConfig": {
+    "exprBounds": {
+      "max_expression_nest_depth": 10,
+      "max_subscript_access_expression_nest_depth": 3,
+      "max_excess_expression_parentheses": 4
+    },
+    "exprChanceOptions": {
+      "generate_parentheses_around_expression": 0.7,
+      "replace_vector_non_mult_operand_with_scalar": 0.5,
+      "replace_vector_mult_operand_with_other": 0.5,
+      "replace_matrix_mult_operand_with_other": 0.5
+    },
+    "exprOptions": {
+      "use_necessary_expression_parentheses": true,
+      "use_useful_expression_parentheses": true,
+      "use_excess_expression_parentheses": true,
+      "ensure_subscript_access_in_bounds": true
+    },
+    "exprProbabilities": {
+      "binaryOperation": 1.0,
+      "unaryOperation": 1.0,
+      "comparison": 1.0,
+      "identity": 1.0,
+      "typeConversion": 1.0,
+      "builtinFunction": 1.0,
+      "dataPackUnpack": 1.0,
+      "swizzleSubscriptAccess": 1.0
+    }
+  },
+  "statConfig": {
+    "statBounds": {
+      "max_statement_nest_depth": 5,
+      "max_statements_in_body": 20,
+      "max_statements_in_if_body": 5,
+      "max_statements_in_switch_body": 5,
+      "max_if_else_branches": 5,
+      "max_switch_cases": 10
+    },
+    "statChanceOptions": {
+      "generate_statement": 0.9,
+      "generate_if_else_branch": 0.3,
+      "generate_else_branch": 0.6,
+      "generate_switch_case": 0.4,
+      "generate_default_switch_case_before_last": 0.1,
+      "assign_expression_to_new_variable": 0.4
+    },
+    "statOptions": {
+      "prevent_code_after_break_statement": true,
+      "prevent_fallthrough_in_last_switch_case": true,
+      "ensure_no_duplicate_switch_cases": true
+    }
+  }
+}

@@ -1,6 +1,9 @@
 package wgslsmith.wgslgenerator.tables
 
 import wgslsmith.wgslgenerator.ast.*
+import wgslsmith.wgslgenerator.ast.expression.AccessConvenienceExpr
+import wgslsmith.wgslgenerator.ast.expression.AccessSubscriptExpr
+import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 import wgslsmith.wgslgenerator.utils.PRNG.getRandomBool
 
@@ -52,7 +55,8 @@ internal class SymbolTable {
         getSubtable(rootSymbol.type).addSymbol(rootSymbol.type, rootSymbol, writeable)
         if (declared) newVarLabelIndex++
 
-        while (symbol.type is WGSLVectorType || symbol.type is WGSLMatrixType || symbol.type is WGSLArrayType) {
+        while ((symbol.type is WGSLVectorType || symbol.type is WGSLMatrixType || symbol.type is WGSLArrayType)
+            && (CNFG.prob(AccessConvenienceExpr.CONVENIENCE) > 0.0 && CNFG.prob(AccessSubscriptExpr.SUBSCRIPT) > 0.0)) {
             val componentSymbol = when (val symbolType = symbol.type) {
                 is WGSLVectorType -> Symbol("${symbol.name}[${symbolType.length}v]", symbolType.componentType)
                 is WGSLMatrixType -> Symbol(
@@ -114,6 +118,7 @@ internal class SymbolTable {
         symbolTable.scalarSubtable = this.scalarSubtable.copy()
         symbolTable.vectorSubtable = this.vectorSubtable.copy()
         symbolTable.matrixSubtable = this.matrixSubtable.copy()
+        symbolTable.arraySubtable = this.arraySubtable.copy()
 
         return symbolTable
     }

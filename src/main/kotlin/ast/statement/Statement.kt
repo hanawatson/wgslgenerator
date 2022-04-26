@@ -15,7 +15,7 @@ internal object StatementGenerator {
             stats.add(ContextSpecificStat.FALLTHROUGH)
         }
 
-        if (depth >= CNFG.maxStatementRecursion) {
+        if (depth >= CNFG.maxStatementNestDepth) {
             stats = assignStats
         }
 

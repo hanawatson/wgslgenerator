@@ -8,7 +8,7 @@ internal class ArraySubtable(private val recursionDepth: Int) : ComplexSubtable(
         val subtablesListInitializer = ArrayList<ArrayList<Subtable>>()
         for (i in 1..CNFG.maxArrayElementCount) {
             val subtables: ArrayList<Subtable> = arrayListOf(ScalarSubtable(), VectorSubtable(), MatrixSubtable())
-            if (recursionDepth < CNFG.maxArrayRecursion) {
+            if (recursionDepth < CNFG.maxArrayNestDepth) {
                 subtables.add(ArraySubtable(recursionDepth + 1))
             }
             subtablesListInitializer.add(subtables)
@@ -52,7 +52,7 @@ internal class ArraySubtable(private val recursionDepth: Int) : ComplexSubtable(
     }
 
     override fun copy(): ArraySubtable {
-        val arraySubtable = ArraySubtable(recursionDepth + 1)
+        val arraySubtable = ArraySubtable(recursionDepth)
 
         val subtablesListCopy = ArrayList<ArrayList<Subtable>>()
         for (subtableList in subtablesList) {
@@ -62,6 +62,8 @@ internal class ArraySubtable(private val recursionDepth: Int) : ComplexSubtable(
             }
             subtablesListCopy.add(subtableListCopy)
         }
+
+        arraySubtable.subtablesList = subtablesListCopy
 
         return arraySubtable
     }
