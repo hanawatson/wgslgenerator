@@ -14,23 +14,24 @@ import kotlin.random.nextUInt
 // PseudoRandomNumberGenerator
 internal object PRNG {
     private var initialized = false
+    var seed: Long = 0
 
     private lateinit var random: Random
 
-    /*fun initializeWithSeed(seed: Long) {
+    fun initializeWithSeed(seed: Long) {
         if (initialized) {
             throw Exception("Pseudorandom generator already initialized!")
         }
+        this.seed = seed
         random = Random(seed)
         initialized = true
-    }*/
+    }
 
     fun initializeWithoutSeed() {
         if (initialized) {
             throw Exception("Pseudorandom generator already initialized!")
         }
-        random = Random.Default
-        initialized = true
+        initializeWithSeed(Random.Default.nextLong())
     }
 
     fun eval(probabilityThreshold: Double): Boolean {
@@ -153,11 +154,12 @@ internal object PRNG {
             // create an object similar to abstractWGSLArrayType but, importantly, one that tracks
             // the current recursive depth of the array being generated - this is to prevent infinite
             // recursion of array elements being arrays of arrays etc. themselves
-            val nestedArrayType = WGSLArrayType(
-                abstractWGSLScalarType, IdentityLiteralExpression(0), type.nestedDepth + 1
-            )
-            if (nestedArrayType.nestedDepth < CNFG.maxArrayNestDepth) {
-                possibleArrayElementTypes.add(nestedArrayType)
+            if (type.nestedDepth + 1 < CNFG.maxArrayNestDepth) {
+                possibleArrayElementTypes.add(
+                    WGSLArrayType(
+                        abstractWGSLScalarType, IdentityLiteralExpression(0), type.nestedDepth + 1
+                    )
+                )
             }
 
             val arrayElementType = if (type.elementType == abstractWGSLScalarType) {
@@ -168,7 +170,7 @@ internal object PRNG {
 
             val arrayElementCount = if (type.elementCountValue == 0) {
                 // will include const generation here once implemented
-                val arrayElementCountValue = getRandomIntInRange(1, CNFG.maxArrayElementCount)
+                val arrayElementCountValue = 1//getRandomIntInRange(1, CNFG.maxArrayElementCount)
                 IdentityLiteralExpression(arrayElementCountValue)
             } else {
                 type.elementCount

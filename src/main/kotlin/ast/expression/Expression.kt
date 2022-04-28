@@ -16,35 +16,33 @@ internal object ExpressionGenerator {
     }
 
     fun getExpressionWithoutReturnType(symbolTable: SymbolTable, depth: Int) =
-        getExpressionFromList(symbolTable, null, allExprs, depth)
+        getExpressionFromList(symbolTable, PRNG.getRandomTypeFrom(allTypes), null, depth)
 
     fun getExpressionWithReturnType(symbolTable: SymbolTable, returnType: WGSLType, depth: Int) =
         getExpressionFromList(symbolTable, returnType, ExprTypes.getExprs(returnType), depth)
 
     private fun getExpressionFromList(
-        symbolTable: SymbolTable, givenReturnType: WGSLType?, exprs: ArrayList<Expr>, depth: Int
+        symbolTable: SymbolTable, returnType: WGSLType, exprs: ArrayList<Expr>?, depth: Int
     ): Expression {
         val possibleExprs = ArrayList<Expr>()
-        if (depth >= CNFG.maxExpressionNestDepth - 1 && givenReturnType != null) {
+        if (depth >= CNFG.maxExpressionNestDepth - 1) {
             possibleExprs += IdentityUniversalExpr.values().asList()
-            possibleExprs += when (givenReturnType) {
+            possibleExprs += when (returnType) {
                 is WGSLScalarType -> IdentityScalarExpr.values().asList()
                 is WGSLVectorType,
                 is WGSLMatrixType,
                 is WGSLArrayType  -> IdentityCompositeExpr.values().asList()
                 else              -> throw Exception(
-                    "Unable to generate non-recursive Expression for unknown type $givenReturnType!"
+                    "Unable to generate non-recursive Expression for unknown type $returnType!"
                 )
             }
-        } else {
+        } else if (exprs != null) {
             possibleExprs += exprs
+        } else {
+            possibleExprs += ExprTypes.getExprs(returnType)
         }
 
-        val expr = PRNG.getRandomExprFrom(possibleExprs)
-        val exprType = ExprTypes.typeOf(expr)
-        val returnType = givenReturnType ?: PRNG.getRandomTypeFrom(exprType.types)
-
-        return when (expr) {
+        return when (val expr = PRNG.getRandomExprFrom(possibleExprs)) {
             is AccessExpr     -> AccessExpression(symbolTable, returnType, expr, depth)
             is BinaryExpr     -> BinaryExpression(symbolTable, returnType, expr, depth)
             is ConversionExpr -> ConversionExpression(symbolTable, returnType, expr, depth)

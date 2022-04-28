@@ -7,11 +7,17 @@ import java.io.File
 import java.nio.charset.Charset
 
 fun main(/*args: Array<String>*/) {
-    PRNG.initializeWithoutSeed()
+    val seed: Long? = null
+    if (seed != null) {
+        PRNG.initializeWithSeed(seed)
+    } else {
+        PRNG.initializeWithoutSeed()
+    }
     ConfigParser()
 
     val shader = Shader().generate()
     println(shader)
+    println("Random seed: ${PRNG.seed}")
     File("../tint/out/Debug/test.wgsl").writeText("$shader")
 
     val processTint = ProcessBuilder("./tint", "test.wgsl").directory(File("../tint/out/Debug")).start()

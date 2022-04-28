@@ -6,7 +6,7 @@ import wgslsmith.wgslgenerator.utils.CNFG
 internal class ArraySubtable(private val recursionDepth: Int) : ComplexSubtable() {
     private var subtablesList: ArrayList<ArrayList<Subtable>> = run {
         val subtablesListInitializer = ArrayList<ArrayList<Subtable>>()
-        for (i in 1..CNFG.maxArrayElementCount) {
+        for (i in 1 until CNFG.maxArrayElementCount) {
             val subtables: ArrayList<Subtable> = arrayListOf(ScalarSubtable(), VectorSubtable(), MatrixSubtable())
             if (recursionDepth < CNFG.maxArrayNestDepth) {
                 subtables.add(ArraySubtable(recursionDepth + 1))
@@ -15,10 +15,6 @@ internal class ArraySubtable(private val recursionDepth: Int) : ComplexSubtable(
         }
         subtablesListInitializer
     }
-    private val scalarSubtableIndex = 0
-    private val vectorSubtableIndex = 1
-    private val matrixSubtableIndex = 2
-    private val arraySubtableIndex = 3
 
     override fun getSubtable(type: WGSLType): Subtable {
         val typeElementCountValue = if (type !is WGSLArrayType) {
@@ -29,10 +25,10 @@ internal class ArraySubtable(private val recursionDepth: Int) : ComplexSubtable(
         }
         if (typeElementCountValue > 0) {
             return when (val typeElementType = (type as WGSLArrayType).elementType) {
-                is WGSLScalarType -> subtablesList[typeElementCountValue - 1][scalarSubtableIndex]
-                is WGSLVectorType -> subtablesList[typeElementCountValue - 1][vectorSubtableIndex]
-                is WGSLMatrixType -> subtablesList[typeElementCountValue - 1][matrixSubtableIndex]
-                is WGSLArrayType  -> subtablesList[typeElementCountValue - 1][arraySubtableIndex]
+                is WGSLScalarType -> subtablesList[typeElementCountValue - 1][0]
+                is WGSLVectorType -> subtablesList[typeElementCountValue - 1][1]
+                is WGSLMatrixType -> subtablesList[typeElementCountValue - 1][2]
+                is WGSLArrayType  -> subtablesList[typeElementCountValue - 1][3]
                 else              -> throw Exception(
                     "Attempt to access Subtable in ArraySubtable of unknown elementType $typeElementType!"
                 )

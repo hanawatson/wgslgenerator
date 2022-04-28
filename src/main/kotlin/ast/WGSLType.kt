@@ -130,7 +130,7 @@ internal class WGSLArrayType(val elementType: WGSLType, val elementCount: Expres
     override val type = Type.ARRAY
 
     init {
-        if (nestedDepth > CNFG.maxArrayNestDepth) {
+        if (nestedDepth >= CNFG.maxArrayNestDepth) {
             throw Exception("Attempt to initialize WGSLArrayType of invalid nestedDepth $nestedDepth!")
         }
     }
@@ -236,8 +236,130 @@ internal val matrixComponentTypes: ArrayList<WGSLType> = arrayListOf(
     scalarFloatType
 )
 internal val arrayElementTypes: ArrayList<WGSLType> = ArrayList(
-    scalarTypes +
-            arrayListOf(abstractWGSLVectorType, abstractWGSLMatrixType) +
-            (1 until CNFG.maxArrayNestDepth).map
-            { i -> WGSLArrayType(abstractWGSLScalarType, IdentityLiteralExpression(0), i) }
+    scalarTypes + arrayListOf(abstractWGSLVectorType, abstractWGSLMatrixType, abstractWGSLArrayType)
 )
+
+private val concreteTypesMap = HashMap<WGSLType, ArrayList<WGSLType>>()
+internal fun getConcreteTypes(givenAbstractType: WGSLType): ArrayList<WGSLType> {
+    val hashedConcreteTypes = concreteTypesMap[givenAbstractType]
+    if (hashedConcreteTypes != null) {
+        if (givenAbstractType is WGSLArrayType && givenAbstractType.nestedDepth + 1 >= CNFG.maxArrayNestDepth) {
+            hashedConcreteTypes.removeAll { type -> type is WGSLArrayType }
+        }
+        return hashedConcreteTypes
+    }
+
+    val concreteTypes = when (givenAbstractType) {
+        abstractWGSLScalarType -> scalarTypes
+        is WGSLVectorType      -> {
+            val concreteTypes = ArrayList<WGSLType>()
+            val abstractTypes = arrayListOf(givenAbstractType)
+            if (givenAbstractType.componentType == abstractWGSLScalarType) {
+                for (abstractType in abstractTypes) {
+                    for (type in scalarTypes) {
+                        concreteTypes.add(WGSLVectorType(type as WGSLScalarType, abstractType.length))
+                    }
+                }
+                abstractTypes.clear()
+                abstractTypes.addAll(concreteTypes.map { concreteType -> concreteType as WGSLVectorType })
+                concreteTypes.clear()
+            }
+            if (givenAbstractType.length == 0) {
+                for (abstractType in abstractTypes) {
+                    for (i in 2..4) {
+                        concreteTypes.add(WGSLVectorType(abstractType.componentType, i))
+                    }
+                }
+            }
+            concreteTypes
+        }
+        is WGSLMatrixType      -> {
+            val concreteTypes = ArrayList<WGSLType>()
+            val abstractTypes = arrayListOf(givenAbstractType)
+            if (givenAbstractType.componentType == abstractWGSLScalarType) {
+                for (abstractType in abstractTypes) {
+                    for (type in matrixComponentTypes) {
+                        concreteTypes.add(
+                            WGSLMatrixType(
+                                type as WGSLScalarType, abstractType.width, abstractType.length
+                            )
+                        )
+                    }
+                }
+                abstractTypes.clear()
+                abstractTypes.addAll(concreteTypes.map { concreteType -> concreteType as WGSLMatrixType })
+                concreteTypes.clear()
+            }
+            if (givenAbstractType.width == 0) {
+                for (abstractType in abstractTypes) {
+                    for (i in 2..4) {
+                        concreteTypes.add(
+                            WGSLMatrixType(
+                                abstractType.componentType, i, abstractType.length
+                            )
+                        )
+                    }
+                }
+                abstractTypes.clear()
+                abstractTypes.addAll(concreteTypes.map { concreteType -> concreteType as WGSLMatrixType })
+                concreteTypes.clear()
+            }
+            if (givenAbstractType.length == 0) {
+                for (abstractType in abstractTypes) {
+                    for (i in 2..4) {
+                        concreteTypes.add(
+                            WGSLMatrixType(
+                                abstractType.componentType, abstractType.width, i
+                            )
+                        )
+                    }
+                }
+            }
+            concreteTypes
+        }
+        is WGSLArrayType       -> {
+            val concreteTypes = ArrayList<WGSLType>()
+            val abstractTypes = arrayListOf(givenAbstractType)
+            if (givenAbstractType.elementType == abstractWGSLScalarType) {
+                for (abstractType in abstractTypes) {
+                    for (type in arrayElementTypes) {
+                        val nestedDepth = givenAbstractType.nestedDepth + 1
+                        if (nestedDepth in 1 until CNFG.maxArrayNestDepth) {
+                            val nestedDepthType = if (type is WGSLArrayType) {
+                                WGSLArrayType(type.elementType, type.elementCount, nestedDepth)
+                            } else {
+                                type
+                            }
+                            for (concreteNestedDepthType in getConcreteTypes(nestedDepthType)) {
+                                concreteTypes.add(
+                                    WGSLArrayType(
+                                        concreteNestedDepthType, abstractType.elementCount, nestedDepth - 1
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+                abstractTypes.clear()
+                abstractTypes.addAll(concreteTypes.map { concreteType -> concreteType as WGSLArrayType })
+                concreteTypes.clear()
+            }
+            if (givenAbstractType.elementCountValue == 0) {
+                for (abstractType in abstractTypes) {
+                    for (i in 2..4) {
+                        concreteTypes.add(
+                            WGSLArrayType(
+                                abstractType.elementType, IdentityLiteralExpression(i), givenAbstractType.nestedDepth
+                            )
+                        )
+                    }
+                }
+            }
+            concreteTypes
+        }
+        else                   -> arrayListOf(givenAbstractType)
+    }
+
+    concreteTypesMap[givenAbstractType] = concreteTypes
+    return concreteTypes
+}

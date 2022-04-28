@@ -40,8 +40,22 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
             rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, rhsType, 0)
 
             // temporary code to handle lack of implementation in naga of mixed operands during compound assignment
-            if (!(type is WGSLMatrixType && rhs.returnType is WGSLMatrixType) && rhs.returnType != type) {
-                rhs = IdentityZeroValExpression(type, IdentityUniversalExpr.ZERO_VALUE)
+            if (rhs.returnType != type) {
+                val rhsNonMixedType =
+                    if (exprEquivalent == BinaryArithmeticMatrixNumericExpr.MULT && type is WGSLMatrixType) {
+                        if (rhs.returnType is WGSLMatrixType) {
+                            rhs.returnType
+                        } else {
+                            WGSLMatrixType(
+                                (type as WGSLMatrixType).componentType,
+                                (type as WGSLMatrixType).width,
+                                (type as WGSLMatrixType).width
+                            )
+                        }
+                    } else {
+                        type
+                    }
+                rhs = IdentityZeroValExpression(rhsNonMixedType, IdentityUniversalExpr.ZERO_VALUE)
             }
         } else {
             rhs = ExpressionGenerator.getExpressionWithoutReturnType(symbolTable, 0)

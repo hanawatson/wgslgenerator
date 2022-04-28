@@ -13,12 +13,12 @@
     },
     "typeProbabilities": {
       "bool": 1.0,
-      "float32": 0.0,
-      "int32": 0.0,
+      "float32": 1.0,
+      "int32": 1.0,
       "uint32": 1.0,
-      "array": 1000.0,
-      "matrix": 0.0,
-      "vector": 0.0
+      "array": 1.0,
+      "matrix": 1.0,
+      "vector": 1.0
     }
   },
   "exprConfig": {
@@ -31,7 +31,8 @@
       "generate_parentheses_around_expression": 0.7,
       "replace_vector_non_mult_operand_with_scalar": 0.5,
       "replace_vector_mult_operand_with_other": 0.5,
-      "replace_matrix_mult_operand_with_other": 0.5
+      "replace_matrix_mult_operand_with_other": 0.5,
+      "ratio_symbol_selection_to_zero_value": 0.2
     },
     "exprOptions": {
       "use_necessary_expression_parentheses": true,
@@ -53,14 +54,14 @@
   "statConfig": {
     "statBounds": {
       "max_statement_nest_depth": 5,
-      "max_statements_in_body": 20,
+      "max_statements_in_body": 40,
       "max_statements_in_if_body": 5,
       "max_statements_in_switch_body": 5,
       "max_if_else_branches": 5,
       "max_switch_cases": 10
     },
     "statChanceOptions": {
-      "generate_statement": 0.9,
+      "generate_statement": 1.0,
       "generate_if_else_branch": 0.3,
       "generate_else_branch": 0.6,
       "generate_switch_case": 0.4,

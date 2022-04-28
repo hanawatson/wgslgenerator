@@ -48,7 +48,8 @@ data class ExprBounds(
 @Serializable
 data class ExprChanceOptions(
     val generate_parentheses_around_expression: Double, val replace_vector_non_mult_operand_with_scalar: Double,
-    val replace_vector_mult_operand_with_other: Double, val replace_matrix_mult_operand_with_other: Double
+    val replace_vector_mult_operand_with_other: Double, val replace_matrix_mult_operand_with_other: Double,
+    val ratio_symbol_selection_to_zero_value: Double
 )
 
 @Serializable

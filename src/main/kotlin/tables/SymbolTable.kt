@@ -91,8 +91,8 @@ internal class SymbolTable {
         val endIndex = subtable.getNextIndexOf(type)
 
         val randomIndex = PRNG.getRandomIntInRange(startIndex, endIndex)
-        if (subtable.getSymbolAtIndex(type, randomIndex) != null) {
-            val symbol = subtable.getSymbolAtIndex(type, randomIndex)!!
+        val symbol = subtable.getSymbolAtIndex(type, randomIndex)
+        if (symbol != null) {
             val subscriptRegex = "\\[(\\d+v?)]".toRegex()
             val subscriptString = subscriptRegex.replace(symbol.name) { matchResult ->
                 var subscriptBoundString = matchResult.groupValues[1]

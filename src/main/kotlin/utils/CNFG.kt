@@ -56,6 +56,7 @@ internal object CNFG {
         chanceOptions[exprChanceOptionsStartIndex + 4]
     }
     var replaceVectorNonMultOperandWithScalar = 0.0
+    private val ratioSymbolSelectionToZeroValue: Double by lazy { chanceOptions[exprChanceOptionsStartIndex + 5] }
 
     private var statChanceOptionsStartIndex = 0
     val assignExpressionToNewVariable: Double by lazy { chanceOptions[statChanceOptionsStartIndex] }
@@ -268,114 +269,7 @@ internal object CNFG {
 
         var probForAllExprTypes = 0.0
         for (exprType in exprTypes) {
-            val concreteExprTypes = when (exprType) {
-                abstractWGSLScalarType -> scalarTypes
-                is WGSLVectorType      -> {
-                    val concreteExprTypes = ArrayList<WGSLVectorType>()
-                    val abstractExprTypes = arrayListOf(exprType)
-                    if (exprType.componentType == abstractWGSLScalarType) {
-                        for (abstractExprType in abstractExprTypes) {
-                            for (type in scalarTypes) {
-                                concreteExprTypes.add(WGSLVectorType(type as WGSLScalarType, abstractExprType.length))
-                            }
-                        }
-                        abstractExprTypes.clear()
-                        abstractExprTypes.addAll(concreteExprTypes)
-                        concreteExprTypes.clear()
-                    }
-                    if (exprType.length == 0) {
-                        for (abstractExprType in abstractExprTypes) {
-                            for (i in 2..4) {
-                                concreteExprTypes.add(WGSLVectorType(abstractExprType.componentType, i))
-                            }
-                        }
-                    }
-                    concreteExprTypes
-                }
-                is WGSLMatrixType      -> {
-                    val concreteExprTypes = ArrayList<WGSLMatrixType>()
-                    val abstractExprTypes = arrayListOf(exprType)
-                    if (exprType.componentType == abstractWGSLScalarType) {
-                        for (abstractExprType in abstractExprTypes) {
-                            for (type in matrixComponentTypes) {
-                                concreteExprTypes.add(
-                                    WGSLMatrixType(
-                                        type as WGSLScalarType, abstractExprType.width, abstractExprType.length
-                                    )
-                                )
-                            }
-                        }
-                        abstractExprTypes.clear()
-                        abstractExprTypes.addAll(concreteExprTypes)
-                        concreteExprTypes.clear()
-                    }
-                    if (exprType.width == 0) {
-                        for (abstractExprType in abstractExprTypes) {
-                            for (i in 2..4) {
-                                concreteExprTypes.add(
-                                    WGSLMatrixType(
-                                        abstractExprType.componentType, i, abstractExprType.length
-                                    )
-                                )
-                            }
-                        }
-                        abstractExprTypes.clear()
-                        abstractExprTypes.addAll(concreteExprTypes)
-                        concreteExprTypes.clear()
-                    }
-                    if (exprType.length == 0) {
-                        for (abstractExprType in abstractExprTypes) {
-                            for (i in 2..4) {
-                                concreteExprTypes.add(
-                                    WGSLMatrixType(
-                                        abstractExprType.componentType, abstractExprType.width, i
-                                    )
-                                )
-                            }
-                        }
-                    }
-                    concreteExprTypes
-                }
-                is WGSLArrayType       -> {
-                    val concreteExprTypes = ArrayList<WGSLArrayType>()
-                    val abstractExprTypes = arrayListOf(exprType)
-                    if (exprType.elementType == abstractWGSLScalarType) {
-                        for (abstractExprType in abstractExprTypes) {
-                            for (type in arrayElementTypes) {
-                                val nestedDepth = exprType.nestedDepth
-                                val nestedDepthType = if (type is WGSLArrayType) {
-                                    WGSLArrayType(type.elementType, type.elementCount, nestedDepth)
-                                } else {
-                                    type
-                                }
-                                if (type !is WGSLArrayType || (nestedDepth in 1 until maxArrayNestDepth)) {
-                                    concreteExprTypes.add(
-                                        WGSLArrayType(
-                                            nestedDepthType, abstractExprType.elementCount, nestedDepth - 1
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                        abstractExprTypes.clear()
-                        abstractExprTypes.addAll(concreteExprTypes)
-                        concreteExprTypes.clear()
-                    }
-                    if (exprType.elementCountValue == 0) {
-                        for (abstractExprType in abstractExprTypes) {
-                            for (i in 2..4) {
-                                concreteExprTypes.add(
-                                    WGSLArrayType(
-                                        abstractExprType.elementType, IdentityLiteralExpression(i), exprType.nestedDepth
-                                    )
-                                )
-                            }
-                        }
-                    }
-                    concreteExprTypes
-                }
-                else                   -> arrayListOf(exprType)
-            }
+            val concreteExprTypes = getConcreteTypes(exprType)
 
             for (concreteExprType in concreteExprTypes) {
                 val probForExprType = when {
@@ -428,11 +322,14 @@ internal object CNFG {
                 probForAllExprTypes += (probForExprType * prob(concreteExprType))
             }
         }
-        probForAllExprTypes /= prob(exprTypes)
 
         if (probForAllExprTypes == 0.0 || !probForAllExprTypes.isFinite()) {
             exprProbMap[expr] = 0.0
             return 0.0
+        }
+
+        if (expr == IdentityUniversalExpr.ZERO_VALUE) {
+            probForAllExprTypes *= ratioSymbolSelectionToZeroValue
         }
 
         val parentExpressionProb = expressionProbMap[when (expr) {
@@ -446,7 +343,10 @@ internal object CNFG {
             is UnaryExpr      -> UnaryExpression
             else              -> throw Exception("Attempt to evaluate parent probability of unknown Expr $expr!")
         }]!!
-        return parentExpressionProb * probForAllExprTypes
+
+        val exprProb = parentExpressionProb * probForAllExprTypes
+        exprProbMap[expr] = exprProb
+        return exprProb
     }
 
     private fun getConfigValidity(
