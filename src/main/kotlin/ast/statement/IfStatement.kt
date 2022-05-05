@@ -2,10 +2,10 @@ package wgslsmith.wgslgenerator.ast.statement
 
 import wgslsmith.wgslgenerator.ast.ScopeBody
 import wgslsmith.wgslgenerator.ast.ScopeState
-import wgslsmith.wgslgenerator.ast.Type
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
+import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.expression.Expression
 import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
+import wgslsmith.wgslgenerator.ast.scalarBoolType
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -19,12 +19,12 @@ internal class IfStatement(symbolTable: SymbolTable, override var stat: Stat, de
     private var elseBody: ScopeBody? = null
 
     init {
-        ifCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
+        var condType = PRNG.getRandomTypeFrom(usedTypes(stat))
+        ifCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, condType, 0)
         ifBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
-        while (PRNG.eval(CNFG.generateIfElseBranch)
-            && currentIfElseBranches < CNFG.maxIfElseBranches) {
-            val elseIfCond =
-                ExpressionGenerator.getExpressionWithReturnType(symbolTable, WGSLScalarType(Type.BOOL), 0)
+        while (PRNG.eval(CNFG.generateIfElseBranch) && currentIfElseBranches < CNFG.maxIfElseBranches) {
+            condType = PRNG.getRandomTypeFrom(usedTypes(stat))
+            val elseIfCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, condType, 0)
             val elseIfBody = ScopeBody(ScopeState.IF).generate(symbolTable.copy(), depth + 1)
             elseIfConds.add(elseIfCond)
             elseIfBodies.add(elseIfBody)
@@ -53,5 +53,11 @@ internal class IfStatement(symbolTable: SymbolTable, override var stat: Stat, de
 
         ifLines.add("}")
         return ifLines
+    }
+
+    companion object : StatementCompanion {
+        override fun usedTypes(stat: Stat): ArrayList<WGSLType> {
+            return arrayListOf(scalarBoolType)
+        }
     }
 }

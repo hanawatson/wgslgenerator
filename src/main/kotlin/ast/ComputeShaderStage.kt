@@ -23,7 +23,8 @@ internal class ComputeShaderStage {
 
     override fun toString(): String {
         val stringBuilder = StringBuilder()
-        stringBuilder.append("@stage(compute) @workgroup_size(1)\n")
+        // temporary workaround for Tint and naga recognising opposite ways of declaring compute stage
+        stringBuilder.append("@COMPUTE_STAGE @workgroup_size(1)\n")
         stringBuilder.append("fn compute_main(\n")
         if (CNFG.prob(scalarUnIntType) > 0.0) {
             stringBuilder.append("\t@builtin(local_invocation_index) local_index: u32,\n")

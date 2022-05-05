@@ -113,9 +113,9 @@ internal enum class BuiltinFloatScalarExpr(override val operator: String, overri
 
 internal enum class BuiltinFloatVectorExpr(override val operator: String, override val args: Int) : BuiltinExpr {
     // temporarily commented due to lack of implementation in Tint and naga
-    // FACE_FORWARD("faceForward", 3),
+    FACE_FORWARD("faceForward", 3),
     NORMALIZE("normalize", 1),
-    REFLECT("reflect", 2);
+    REFLECT("reflect", 2),
 
     // temporarily commented out due to lack of implementation in naga
     // REFRACT("refract", 3);
@@ -131,23 +131,18 @@ internal enum class BuiltinGeneralExpr(override val operator: String, override v
 
 internal enum class BuiltinIntegerExpr(override val operator: String, override val args: Int) : BuiltinExpr {
     // temporarily commented out due to lack of implementation in naga
-    // see https://github.com/gfx-rs/naga/issues/1824
     // COUNT_LEADING_ZEROS("countLeadingZeros", 1),
     COUNT_ONE_BITS("countOneBits", 1),
 
     // temporarily commented out due to lack of implementation in naga
-    // see https://github.com/gfx-rs/naga/issues/1824
     // COUNT_TRAILING_ZEROS("countTrailingZeros", 1),
-
-    // temporarily commented out due to issues with implementation in naga
-    // see https://github.com/gfx-rs/naga/issues/1844
-    // FIRST_LEADING_BIT("firstLeadingBit", 1),
-    // FIRST_TRAILING_BIT("firstTrailingBit", 1),
+    FIRST_LEADING_BIT("firstLeadingBit", 1),
+    FIRST_TRAILING_BIT("firstTrailingBit", 1),
     EXTRACT_BITS("extractBits", 3),
     INSERT_BITS("insertBits", 4),
-    REVERSE_BITS("reverseBits", 1);
+    REVERSE_BITS("reverseBits", 1),
 
-    // temporarily commented out until implementation of vectors is concrete
+    // temporarily commented out due to lack of implementation in Tint and naga
     // SHIFT_LEFT("shiftLeft", 2),
     // SHIFT_RIGHT("shiftRight", 2);
 }

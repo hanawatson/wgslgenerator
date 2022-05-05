@@ -38,8 +38,8 @@ internal class ScopeBody(private val scopeState: ScopeState) {
             currentStatements++
 
             generateAnotherStatement = if (
-                (statement.stat == ContextSpecificStat.BREAK && CNFG.preventCodeAfterBreakStatement)
-                || statement.stat == ContextSpecificStat.FALLTHROUGH
+                (statement.stat == ContextSpecificStat.SWITCH_BREAK && CNFG.preventCodeAfterBreakStatement)
+                || statement.stat == ContextSpecificStat.SWITCH_FALLTHROUGH
             ) {
                 false
             } else {

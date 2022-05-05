@@ -117,7 +117,7 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
     );
 
     companion object {
-        fun typeOf(expr: Expr): ExprTypes {
+        fun exprTypeOf(expr: Expr): ExprTypes {
             for (exprType in ExprTypes.values()) {
                 if (exprType.exprs.contains(expr)) {
                     return exprType

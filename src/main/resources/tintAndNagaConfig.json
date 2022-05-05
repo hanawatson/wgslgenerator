@@ -30,9 +30,9 @@
     "exprChanceOptions": {
       "generate_simple_subscript_access": 0.6,
       "generate_parentheses_around_expression": 0.7,
-      "replace_vector_non_mult_operand_with_scalar": 0.5,
-      "replace_vector_mult_operand_with_other": 0.5,
-      "replace_matrix_mult_operand_with_other": 0.5,
+      "replace_vector_non_mult_operand_with_scalar": 0.0,
+      "replace_vector_mult_operand_with_other": 0.0,
+      "replace_matrix_mult_operand_with_other": 0.0,
       "ratio_symbol_selection_to_zero_value": 0.2
     },
     "exprOptions": {
@@ -55,19 +55,19 @@
   "statConfig": {
     "statBounds": {
       "max_statement_nest_depth": 5,
-      "max_statements_in_body": 40,
-      "max_statements_in_if_body": 5,
-      "max_statements_in_switch_body": 5,
+      "max_statements_in_body": 20,
+      "max_statements_in_if_body": 3,
+      "max_statements_in_switch_body": 3,
       "max_if_else_branches": 5,
-      "max_switch_cases": 10
+      "max_switch_cases": 5
     },
     "statChanceOptions": {
       "generate_statement": 1.0,
       "generate_if_else_branch": 0.3,
       "generate_else_branch": 0.6,
       "generate_switch_case": 0.4,
-      "generate_default_switch_case_before_last": 0.1,
-      "assign_expression_to_new_variable": 0.4
+      "generate_default_switch_case_before_last": 0.5,
+      "assign_expression_to_new_variable": 0.6
     },
     "statOptions": {
       "prevent_code_after_break_statement": true,
@@ -89,7 +89,7 @@
         "switch_break": 1.0,
         "switch_fallthrough": 1.0
       },
-      "control_flow": 1.0,
+      "control_flow": 0.3,
       "sub_control_flow": {
         "if_else": 1.0,
         "switch": 1.0

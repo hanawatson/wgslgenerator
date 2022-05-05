@@ -11,8 +11,8 @@ internal object StatementGenerator {
         stats.addAll(allStats)
 
         if (scopeState == ScopeState.SWITCH) {
-            stats.add(ContextSpecificStat.BREAK)
-            stats.add(ContextSpecificStat.FALLTHROUGH)
+            stats.add(ContextSpecificStat.SWITCH_BREAK)
+            stats.add(ContextSpecificStat.SWITCH_FALLTHROUGH)
         }
 
         if (depth >= CNFG.maxStatementNestDepth) {
@@ -20,7 +20,7 @@ internal object StatementGenerator {
         }
 
         return when (val stat = PRNG.getRandomStatFrom(stats)) {
-            is AssignStat          -> AssignmentStatement(symbolTable, stat)
+            is AssignmentStat      -> AssignmentStatement(symbolTable, stat)
             is ContextSpecificStat -> ContextSpecificStatement(stat)
             is ControlFlowStat     -> ControlFlowStatement(symbolTable, stat, depth)
             else                   -> throw Exception("Attempt to generate Statement with uncategorized Stat $stat!")
@@ -32,4 +32,8 @@ internal interface Statement {
     var stat: Stat
 
     fun getTabbedLines(): ArrayList<String>
+}
+
+internal interface StatementCompanion {
+    fun usedTypes(stat: Stat): ArrayList<*>
 }

@@ -1,9 +1,6 @@
 package wgslsmith.wgslgenerator.ast.statement
 
-import wgslsmith.wgslgenerator.ast.ScopeBody
-import wgslsmith.wgslgenerator.ast.ScopeState
-import wgslsmith.wgslgenerator.ast.Type
-import wgslsmith.wgslgenerator.ast.WGSLScalarType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
 import wgslsmith.wgslgenerator.ast.expression.IdentityLiteralExpression
 import wgslsmith.wgslgenerator.ast.expression.IdentityScalarExpr
@@ -12,16 +9,17 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class SwitchStatement(symbolTable: SymbolTable, override var stat: Stat, depth: Int) : Statement {
-    private var selectorType = PRNG.getRandomTypeFrom(arrayListOf(WGSLScalarType(Type.INT), WGSLScalarType(Type.UNINT)))
-    private var selector = ExpressionGenerator.getExpressionWithReturnType(symbolTable, selectorType, 0)
-    private var switchCases = ArrayList<IdentityLiteralExpression?>()
-    private var switchBodies = ArrayList<ScopeBody>()
+    private val selectorType = PRNG.getRandomTypeFrom(usedTypes(stat))
+    private val selector = ExpressionGenerator.getExpressionWithReturnType(symbolTable, selectorType, 0)
+    private val switchCases = ArrayList<IdentityLiteralExpression?>()
+    private val switchBodies = ArrayList<ScopeBody>()
     private var currentSwitchCases = 0
     private var defaultGenerated = false
 
     init {
-        while (currentSwitchCases < 1 ||
-            (PRNG.eval(CNFG.generateSwitchCase) && currentSwitchCases < CNFG.maxSwitchCases)) {
+        while (
+            currentSwitchCases < 1 || (PRNG.eval(CNFG.generateSwitchCase) && currentSwitchCases < CNFG.maxSwitchCases)
+        ) {
 
             if (!defaultGenerated && PRNG.eval(CNFG.generateDefaultSwitchCaseBeforeLast)) {
                 defaultGenerated = true
@@ -42,9 +40,9 @@ internal class SwitchStatement(symbolTable: SymbolTable, override var stat: Stat
             defaultGenerated = true
         }
         if (CNFG.preventFallthroughInLastSwitchCase && switchBodies[currentSwitchCases - 1]
-                .getLastStatement().stat == ContextSpecificStat.FALLTHROUGH) {
+                .getLastStatement().stat == ContextSpecificStat.SWITCH_FALLTHROUGH) {
             switchBodies[currentSwitchCases - 1].replaceLastStatement(
-                ContextSpecificStatement(ContextSpecificStat.BREAK)
+                ContextSpecificStatement(ContextSpecificStat.SWITCH_BREAK)
             )
         }
     }
@@ -71,5 +69,11 @@ internal class SwitchStatement(symbolTable: SymbolTable, override var stat: Stat
 
         switchLines.add("}")
         return switchLines
+    }
+
+    companion object : StatementCompanion {
+        override fun usedTypes(stat: Stat): ArrayList<WGSLType> {
+            return arrayListOf(scalarIntType, scalarUnIntType)
+        }
     }
 }

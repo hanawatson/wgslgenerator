@@ -13,7 +13,7 @@ internal class BuiltinExpression(
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     init {
-        val argTypeList = PRNG.getRandomTypeList(argsForExprType(expr, returnType))
+        val argTypeList = PRNG.getRandomTypeListFrom(argsForExprType(expr, returnType))
         val concreteArgTypeList = ArrayList<WGSLType>()
         for (i in 0 until argTypeList.size) {
             var concreteArgType = PRNG.getRandomTypeFrom(arrayListOf(argTypeList[i]))
@@ -58,6 +58,8 @@ internal class BuiltinExpression(
             val argTypeLists = ArrayList<ArrayList<WGSLType>>()
 
             var matchingBoolType: WGSLType = WGSLScalarType(Type.BOOL)
+            // var matchingIntType: WGSLType = WGSLScalarType(Type.INT)
+            // var matchingUnIntType: WGSLType = WGSLScalarType(Type.UNINT)
             if (returnType is WGSLVectorType) {
                 matchingBoolType = WGSLVectorType(matchingBoolType as WGSLScalarType, returnType.length)
                 // matchingIntType = WGSLVectorType(matchingIntType as WGSLScalarType, returnType.length)
@@ -100,10 +102,10 @@ internal class BuiltinExpression(
                 BuiltinIntegerExpr.INSERT_BITS                 -> {
                     argTypeLists.add(arrayListOf(returnType, returnType, scalarUnIntType, scalarUnIntType))
                 }
-                /*BuiltinIntegerExpr.SHIFT_LEFT -> {
+                /*BuiltinIntegerExpr.SHIFT_LEFT                  -> {
                     argTypeLists.add(arrayListOf(returnType, matchingUnIntType))
                 }
-                BuiltinIntegerExpr.SHIFT_RIGHT -> {
+                BuiltinIntegerExpr.SHIFT_RIGHT                 -> {
                     argTypeLists.add(arrayListOf(returnType, matchingUnIntType))
                 }*/
 

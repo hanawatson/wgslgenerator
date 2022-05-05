@@ -11,30 +11,24 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
     private var lhs: Symbol
     private var rhs: Expression
     private var type: WGSLType
+    private var exprEquivalent: Expr? = null
     private var declaredNewSymbol = false
-    private var compoundBinaryOperator = ""
     private var accessString = ""
 
     init {
-        if (stat is AssignCompoundStat) {
-            val exprEquivalent = when (stat as AssignCompoundStat) {
-                AssignCompoundStat.DECREMENT       -> BinaryArithmeticMatrixNumericExpr.MINUS
-                AssignCompoundStat.INCREMENT       -> BinaryArithmeticMatrixNumericExpr.ADD
-                AssignCompoundStat.BINARY_OPERATOR -> PRNG.getRandomExprFrom(compoundAssignableExprs)
+        type = if (stat == AssignmentCompoundStat.BINARY_OPERATOR) {
+            exprEquivalent = PRNG.getRandomExprFrom(compoundAssignableExprs)
+            PRNG.getRandomTypeFrom(ExprTypes.exprTypeOf(exprEquivalent!!).types)
+        } else {
+            when (stat) {
+                AssignmentCompoundStat.DECREMENT -> exprEquivalent = BinaryArithmeticMatrixNumericExpr.MINUS
+                AssignmentCompoundStat.INCREMENT -> exprEquivalent = BinaryArithmeticMatrixNumericExpr.ADD
             }
-            type = when (stat as AssignCompoundStat) {
-                AssignCompoundStat.DECREMENT,
-                AssignCompoundStat.INCREMENT       -> PRNG.getRandomTypeFrom(
-                    arrayListOf(scalarIntType, scalarUnIntType)
-                )
-                AssignCompoundStat.BINARY_OPERATOR -> {
-                    compoundBinaryOperator = "${exprEquivalent.operator}="
-                    val exprType = ExprTypes.typeOf(exprEquivalent)
-                    PRNG.getRandomTypeFrom(exprType.types)
-                }
-            }
+            PRNG.getRandomTypeFrom(usedTypes(stat))
+        }
 
-            val lhsRhsTypes = BinaryExpression.argsForExprType(exprEquivalent, type, probEval(exprEquivalent, type))
+        if (stat is AssignmentCompoundStat) {
+            val lhsRhsTypes = BinaryExpression.argsForExprType(exprEquivalent!!, type, probEval(exprEquivalent!!, type))
                 .filter { (lhsType, _) -> lhsType == type }
             val rhsType = PRNG.getRandomTypeFrom(lhsRhsTypes.unzip().second as ArrayList<WGSLType>)
             rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, rhsType, 0)
@@ -61,49 +55,49 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
             rhs = ExpressionGenerator.getExpressionWithoutReturnType(symbolTable, 0)
             type = rhs.returnType
         }
-        if (stat is AssignCompoundStat && !symbolTable.hasWriteableOf(type)) {
-            this.stat = AssignEqStat.ASSIGN_SIMPLE
+        if (stat is AssignmentCompoundStat && !symbolTable.hasWriteableOf(type)) {
+            this.stat = AssignmentEqStat.ASSIGN_SIMPLE
             type = rhs.returnType
         }
         when (this.stat) {
-            AssignEqStat.ASSIGN_DECLARE,
-            AssignEqStat.ASSIGN_LET -> {
+            AssignmentEqStat.ASSIGN_DECLARE,
+            AssignmentEqStat.ASSIGN_LET   -> {
                 lhs = symbolTable.declareNewNonWriteableSymbol(type)
                 declaredNewSymbol = true
             }
-            // AssignEqStat.ASSIGN_PHONY -> lhs = Symbol("_", type)
-            AssignEqStat.ASSIGN_SIMPLE,
-            is AssignCompoundStat   -> {
-                if ((PRNG.eval(CNFG.assignExpressionToNewVariable) && this.stat is AssignEqStat)
-                    || (!symbolTable.hasWriteableOf(type) && this.stat !is AssignCompoundStat)) {
+            AssignmentEqStat.ASSIGN_PHONY -> lhs = Symbol("_", type)
+            AssignmentEqStat.ASSIGN_SIMPLE,
+            is AssignmentCompoundStat     -> {
+                if ((PRNG.eval(CNFG.assignExpressionToNewVariable) && this.stat is AssignmentEqStat)
+                    || (!symbolTable.hasWriteableOf(type) && this.stat !is AssignmentCompoundStat)) {
                     lhs = symbolTable.declareNewWriteableSymbol(type)
                     declaredNewSymbol = true
                 } else {
                     lhs = symbolTable.getRandomWriteableSymbol(type)
                 }
             }
-            else                    -> throw Exception(
+            else                          -> throw Exception(
                 "Attempt to generate AssignmentStat with unknown Stat ${this.stat}!"
             )
         }
     }
 
     override fun getTabbedLines(): ArrayList<String> {
-        if (stat == AssignEqStat.ASSIGN_DECLARE) {
+        if (stat == AssignmentEqStat.ASSIGN_DECLARE) {
             return arrayListOf("var $lhs: $type;")
         }
 
-        val operator = if (stat == AssignCompoundStat.BINARY_OPERATOR) {
-            compoundBinaryOperator
+        val operator = if (stat == AssignmentCompoundStat.BINARY_OPERATOR) {
+            "${exprEquivalent!!.operator}="
         } else {
-            (stat as AssignStat).operator
+            (stat as AssignmentStat).operator
         }
-        if (stat == AssignCompoundStat.DECREMENT || stat == AssignCompoundStat.INCREMENT) {
+        if (stat == AssignmentCompoundStat.DECREMENT || stat == AssignmentCompoundStat.INCREMENT) {
             return arrayListOf("$lhs$operator;")
         }
 
         val varDeclaration = if (declaredNewSymbol) {
-            if (stat == AssignEqStat.ASSIGN_LET) "let " else "var "
+            if (stat == AssignmentEqStat.ASSIGN_LET) "let " else "var "
         } else ""
         val typeDeclaration = if (declaredNewSymbol &&
             PRNG.eval(CNFG.omitTypeFromDeclaration)
@@ -112,5 +106,21 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
         } else ""
 
         return arrayListOf("$varDeclaration$lhs$accessString$typeDeclaration $operator $rhs;")
+    }
+
+    companion object : StatementCompanion {
+        override fun usedTypes(stat: Stat): ArrayList<WGSLType> {
+            if (stat is AssignmentCompoundStat) {
+                return when (stat) {
+                    AssignmentCompoundStat.DECREMENT,
+                    AssignmentCompoundStat.INCREMENT       -> arrayListOf(scalarIntType, scalarUnIntType)
+                    AssignmentCompoundStat.BINARY_OPERATOR -> compoundAssignableExprs.fold(ArrayList()) { acc, expr ->
+                        ArrayList(acc + ExprTypes.exprTypeOf(expr).types)
+                    }
+                }
+            }
+
+            return allTypes
+        }
     }
 }

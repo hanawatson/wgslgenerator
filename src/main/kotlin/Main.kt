@@ -18,9 +18,27 @@ fun main(/*args: Array<String>*/) {
     val shader = Shader().generate()
     println(shader)
     println("Random seed: ${PRNG.seed}")
-    File("../tint/out/Debug/test.wgsl").writeText("$shader")
 
-    val processTint = ProcessBuilder("./tint", "test.wgsl").directory(File("../tint/out/Debug")).start()
+    File("../test.wgsl").writeText(shader.toString().replaceFirst("COMPUTE_STAGE", "stage(compute)"))
+    val processTint =
+        ProcessBuilder("./tint", "../../../test.wgsl"/*, "--validate"*/).directory(File("../tint/out/Debug")).start()
     processTint.inputStream.reader(Charset.defaultCharset()).use { it.readText() }
-    processTint.errorStream.reader(Charset.defaultCharset()).use { println(it.readText()) }
+    processTint.errorStream.reader(Charset.defaultCharset()).use {
+        val errorText = it.readText()
+        if (errorText.isEmpty()) {
+            println("Tint: OK")
+        } else {
+            println(errorText)
+        }
+    }
+
+
+    File("../test.wgsl").writeText(shader.toString().replaceFirst("COMPUTE_STAGE", "compute"))
+    try {
+        val processNaga = ProcessBuilder("cargo", "run", "../test.wgsl").directory(File("../naga")).start()
+        processNaga.inputStream.reader(Charset.defaultCharset()).use { it.readText() }
+        println("naga: OK")
+    } catch (e: Error) {
+        println(e)
+    }
 }

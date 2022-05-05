@@ -2,6 +2,7 @@ package wgslsmith.wgslgenerator.utils
 
 import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.ast.expression.*
+import wgslsmith.wgslgenerator.ast.statement.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
@@ -102,17 +103,49 @@ internal object CNFG {
     private val expressionProbMap = HashMap<ExpressionCompanion, Double>()
     private val expressionParameterMap: HashMap<String, ExpressionCompanion> by lazy {
         hashMapOf(
-            Pair("swizzleSubscriptAccess", AccessExpression),
-            Pair("binaryOperation", BinaryExpression),
-            Pair("builtinFunction", BuiltinExpression),
+            Pair("swizzle_subscript_access", AccessExpression),
+            Pair("binary_operation", BinaryExpression),
+            Pair("builtin_function", BuiltinExpression),
             Pair("comparison", ComparisonExpression),
-            Pair("typeConversion", ConversionExpression),
-            Pair("dataPackUnpack", DataExpression),
+            Pair("type_conversion", ConversionExpression),
+            Pair("data_pack_unpack", DataExpression),
             Pair("identity", IdentityExpression),
-            Pair("unaryOperation", UnaryExpression)
+            Pair("unary_operation", UnaryExpression)
         )
     }
     private val exprProbMap = HashMap<Expr, Double>()
+
+    private val statementProbMap = HashMap<StatementCompanion, Double>()
+    private val statementParameterMap: HashMap<String, StatementCompanion> by lazy {
+        hashMapOf(
+            Pair("assignment", AssignmentStatement),
+            Pair("context_specific", ContextSpecificStatement),
+            Pair("control_flow", ControlFlowStatement)
+        )
+    }
+    private val subStatSizeMap: HashMap<StatementCompanion, Int> by lazy {
+        hashMapOf(
+            Pair(AssignmentStatement, SubAssignmentStatProbabilities::class.memberProperties.size),
+            Pair(ContextSpecificStatement, SubContextSpecificStatProbabilities::class.memberProperties.size),
+            Pair(ControlFlowStatement, SubControlFlowStatProbabilities::class.memberProperties.size)
+        )
+    }
+    private val subStatProbMap = HashMap<Stat, Double>()
+    private val subStatParameterMap: HashMap<String, Stat> by lazy {
+        hashMapOf(
+            Pair("compound_assignment", AssignmentCompoundStat.BINARY_OPERATOR),
+            Pair("declaration", AssignmentEqStat.ASSIGN_DECLARE),
+            Pair("decrement", AssignmentCompoundStat.DECREMENT),
+            Pair("increment", AssignmentCompoundStat.INCREMENT),
+            Pair("phony_assignment", AssignmentEqStat.ASSIGN_PHONY),
+            Pair("simple_assignment", AssignmentEqStat.ASSIGN_SIMPLE),
+            Pair("switch_break", ContextSpecificStat.SWITCH_BREAK),
+            Pair("switch_fallthrough", ContextSpecificStat.SWITCH_FALLTHROUGH),
+            Pair("if_else", ControlFlowStat.IF),
+            Pair("switch", ControlFlowStat.SWITCH)
+        )
+    }
+    private val statProbMap = HashMap<Stat, Double>()
 
     private inline fun <reified T : Any> getParameterValues(
         propertiedClass: KClass<T>,
@@ -178,9 +211,83 @@ internal object CNFG {
         if (expressionProbMap[IdentityExpression] == 0.0) {
             throw Exception("Identity expressions may not be completely disabled!")
         }
+
+        for (parameter in StatProbabilities::class.memberProperties) {
+            val parameterValue = parameter.get(config.statConfig.statProbabilities)
+            if (parameterValue is Double) {
+                if (parameterValue < 0.0 || !parameterValue.isFinite()) {
+                    throw Exception("Invalid value passed in config file for parameter ${parameter.name}!")
+                }
+                statementProbMap[statementParameterMap[parameter.name]!!] = parameterValue
+            } else if (parameterValue is SubStatProbabilities) {
+                when (parameterValue) {
+                    // MUST FIND A WAY TO ABSTRACT THIS (AND PREVIOUS ONES)!!
+                    is SubAssignmentStatProbabilities      -> {
+                        for (subParameter in SubAssignmentStatProbabilities::class.memberProperties) {
+                            val subParameterValue = subParameter.get(
+                                config.statConfig.statProbabilities.sub_assignment
+                            )
+                            if (subParameterValue is Double) {
+                                if (subParameterValue < 0.0 || !subParameterValue.isFinite()) {
+                                    throw Exception("Invalid value passed in config file for parameter ${subParameter.name}!")
+                                }
+                                // remove "sub_" prefix for sub stat size retrieval
+                                val parentStatement = statementParameterMap[parameter.name.removeRange(0..3)]!!
+                                subStatProbMap[subStatParameterMap[subParameter.name]!!] =
+                                    subParameterValue / subStatSizeMap[parentStatement]!!
+                            }
+                        }
+                    }
+                    is SubContextSpecificStatProbabilities -> {
+                        for (subParameter in SubContextSpecificStatProbabilities::class.memberProperties) {
+                            val subParameterValue = subParameter.get(
+                                config.statConfig.statProbabilities.sub_context_specific
+                            )
+                            if (subParameterValue is Double) {
+                                if (subParameterValue < 0.0 || !subParameterValue.isFinite()) {
+                                    throw Exception("Invalid value passed in config file for parameter ${subParameter.name}!")
+                                }
+                                // remove "sub_" prefix for sub stat size retrieval
+                                val parentStatement = statementParameterMap[parameter.name.removeRange(0..3)]!!
+                                subStatProbMap[subStatParameterMap[subParameter.name]!!] =
+                                    subParameterValue / subStatSizeMap[parentStatement]!!
+                            }
+                        }
+                    }
+                    is SubControlFlowStatProbabilities     -> {
+                        for (subParameter in SubControlFlowStatProbabilities::class.memberProperties) {
+                            val subParameterValue = subParameter.get(
+                                config.statConfig.statProbabilities.sub_control_flow
+                            )
+                            if (subParameterValue is Double) {
+                                if (subParameterValue < 0.0 || !subParameterValue.isFinite()) {
+                                    throw Exception("Invalid value passed in config file for parameter ${subParameter.name}!")
+                                }
+                                // remove "sub_" prefix for sub stat size retrieval
+                                val parentStatement = statementParameterMap[parameter.name.removeRange(0..3)]!!
+                                subStatProbMap[subStatParameterMap[subParameter.name]!!] =
+                                    subParameterValue / subStatSizeMap[parentStatement]!!
+                            }
+                        }
+                    }
+                    else                                   -> throw Exception("Attempt to access SubStat data for unknown Stat $parameterValue!")
+                }
+            }
+        }
     }
 
-    fun prob(type: WGSLType): Double {
+    fun prob(given: Any): Double {
+        return when (given) {
+            is Double       -> given
+            is WGSLType     -> typeProb(given)
+            is Expr         -> exprProb(given)
+            is Stat         -> statProb(given)
+            is ArrayList<*> -> listProb(given)
+            else            -> throw Exception("Attempt to retrieve probability for given of unknown type $given!")
+        }
+    }
+
+    private fun typeProb(type: WGSLType): Double {
         val hashedProb = typeProbMap[type]
         if (hashedProb != null) {
             return hashedProb
@@ -224,44 +331,13 @@ internal object CNFG {
         throw Exception("Attempt to retrieve probability of unknown type $type!")
     }
 
-    fun prob(list: ArrayList<*>): Double {
-        if (list.size == 0) {
-            return 0.0
-        }
-
-        var listProb = 0.0
-        for (item in list) {
-            val prob = if (item is WGSLType) {
-                prob(item)
-            } else if (item is ArrayList<*> && item[0] is WGSLType) {
-                var itemProb = 0.0
-                for (itemItem in item) {
-                    // if one argument type cannot be generated, the whole list of argTypes cannot be generated
-                    val itemItemProb = prob(itemItem as WGSLType)
-                    if (itemItemProb == 0.0) {
-                        itemProb = 0.0
-                        break
-                    } else {
-                        itemProb += itemItemProb
-                    }
-                }
-                itemProb / item.size
-            } else {
-                throw Exception("Attempt to evaluate probability of list of unknown type $list!")
-            }
-            listProb += prob
-        }
-
-        return listProb / list.size
-    }
-
-    fun prob(expr: Expr): Double {
+    private fun exprProb(expr: Expr): Double {
         val hashedProb = exprProbMap[expr]
         if (hashedProb != null) {
             return hashedProb
         }
 
-        val exprTypes = ExprTypes.typeOf(expr).types
+        val exprTypes = ExprTypes.exprTypeOf(expr).types
         if (exprTypes.size == 0 || prob(exprTypes) == 0.0) {
             exprProbMap[expr] = 0.0
             return 0.0
@@ -332,7 +408,7 @@ internal object CNFG {
             probForAllExprTypes *= ratioSymbolSelectionToZeroValue
         }
 
-        val parentExpressionProb = expressionProbMap[when (expr) {
+        val parentExpression = when (expr) {
             is AccessExpr     -> AccessExpression
             is BinaryExpr     -> BinaryExpression
             is BuiltinExpr    -> BuiltinExpression
@@ -341,12 +417,69 @@ internal object CNFG {
             is DataExpr       -> DataExpression
             is IdentityExpr   -> IdentityExpression
             is UnaryExpr      -> UnaryExpression
-            else              -> throw Exception("Attempt to evaluate parent probability of unknown Expr $expr!")
-        }]!!
+            else              -> throw Exception("Attempt to evaluate parent expression of unknown Expr $expr!")
+        }
 
-        val exprProb = parentExpressionProb * probForAllExprTypes
+        val exprProb = expressionProbMap[parentExpression]!! * probForAllExprTypes
         exprProbMap[expr] = exprProb
         return exprProb
+    }
+
+    private fun statProb(stat: Stat): Double {
+        val hashedProb = statProbMap[stat]
+        if (hashedProb != null) {
+            return hashedProb
+        }
+
+        val parentStatement = when (stat) {
+            is AssignmentStat      -> AssignmentStatement
+            is ContextSpecificStat -> ContextSpecificStatement
+            is ControlFlowStat     -> ControlFlowStatement
+            else                   -> throw Exception("Attempt to evaluate parent statement of unknown Stat $stat!")
+        }
+
+        val statUsedTypes = parentStatement.usedTypes(stat)
+        if (statUsedTypes.isNotEmpty() && prob(statUsedTypes) == 0.0) {
+            statProbMap[stat] = 0.0
+            return 0.0
+        }
+
+        val subStatProb = subStatProbMap.getOrDefault(stat, 1.0 / subStatSizeMap[parentStatement]!!)
+
+        val statProb = statementProbMap[parentStatement]!! * subStatProb
+        statProbMap[stat] = statProb
+        return statProb
+    }
+
+    private fun listProb(list: ArrayList<*>): Double {
+        if (list.size == 0) {
+            return 0.0
+        }
+
+        var listProb = 0.0
+        for (item in list) {
+            val prob = if (item is WGSLType) {
+                prob(item)
+            } else if (item is ArrayList<*> && item[0] is WGSLType) {
+                var itemProb = 0.0
+                for (itemItem in item) {
+                    // if one argument type cannot be generated, the whole list of argTypes cannot be generated
+                    val itemItemProb = prob(itemItem as WGSLType)
+                    if (itemItemProb == 0.0) {
+                        itemProb = 0.0
+                        break
+                    } else {
+                        itemProb += itemItemProb
+                    }
+                }
+                itemProb / item.size
+            } else {
+                throw Exception("Attempt to evaluate probability of list of unknown type $list!")
+            }
+            listProb += prob
+        }
+
+        return listProb / list.size
     }
 
     private fun getConfigValidity(

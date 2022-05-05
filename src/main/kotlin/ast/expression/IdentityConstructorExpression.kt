@@ -20,7 +20,7 @@ internal class IdentityConstructorExpression(
             is WGSLVectorType -> PRNG.eval(CNFG.constructVectorWithSingleValue)
             else              -> false
         }
-        val argTypeList = PRNG.getRandomTypeList(argsForExprType(expr, returnType, probEval))
+        val argTypeList = PRNG.getRandomTypeListFrom(argsForExprType(expr, returnType, probEval))
         for (argType in argTypeList) {
             components.add(ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1))
         }

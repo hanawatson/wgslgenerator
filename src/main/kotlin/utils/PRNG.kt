@@ -81,23 +81,22 @@ internal object PRNG {
         return random.nextUInt(startIndex, endIndex)
     }
 
-    fun getRandomTypeFrom(givenTypes: ArrayList<WGSLType>): WGSLType {
-        var type: WGSLType? = null
-
-        val totalProb = givenTypes.fold(0.0) { acc, givenType -> acc + prob(givenType) }
+    private inline fun <reified T : Any> getRandomFrom(givens: ArrayList<T>): T {
+        val totalProb = givens.fold(0.0) { acc, given -> acc + prob(given) }
         val randomDouble = getRandomDoubleInRange(0.0, totalProb)
         var intervalProb = 0.0
-        for (givenType in givenTypes) {
-            intervalProb += prob(givenType)
+        for (given in givens) {
+            intervalProb += prob(given)
             if (randomDouble <= intervalProb) {
-                type = givenType
-                break
+                return given
             }
         }
 
-        if (type == null) {
-            throw Exception("Failure to select random type from $givenTypes!")
-        }
+        throw Exception("Failure to select random element from $givens!")
+    }
+
+    fun getRandomTypeFrom(types: ArrayList<WGSLType>): WGSLType {
+        var type = getRandomFrom(types)
 
         if (type is WGSLScalarType && type == abstractWGSLScalarType) {
             type = getRandomTypeFrom(scalarTypes)
@@ -170,7 +169,8 @@ internal object PRNG {
 
             val arrayElementCount = if (type.elementCountValue == 0) {
                 // will include const generation here once implemented
-                val arrayElementCountValue = 1//getRandomIntInRange(1, CNFG.maxArrayElementCount)
+                //val arrayElementCountValue = 1
+                val arrayElementCountValue = getRandomIntInRange(1, CNFG.maxArrayElementCount)
                 IdentityLiteralExpression(arrayElementCountValue)
             } else {
                 type.elementCount
@@ -182,7 +182,11 @@ internal object PRNG {
         return type
     }
 
-    fun getRandomTypeList(typeLists: ArrayList<ArrayList<WGSLType>>): ArrayList<WGSLType> {
+    fun getRandomTypeListFrom(typeLists: ArrayList<ArrayList<WGSLType>>) = getRandomFrom(typeLists)
+    fun getRandomExprFrom(exprs: ArrayList<Expr>) = getRandomFrom(exprs)
+    fun getRandomStatFrom(stats: ArrayList<Stat>) = getRandomFrom(stats)
+
+    /*fun getRandomTypeListFrom(typeLists: ArrayList<ArrayList<WGSLType>>): ArrayList<WGSLType> {
         val typeListProbabilities = ArrayList(typeLists.map { typeList -> prob(typeList) })
 
         val totalProb = typeListProbabilities.fold(0.0) { acc, prob -> acc + prob }
@@ -195,10 +199,10 @@ internal object PRNG {
             }
         }
 
-        throw Exception("Failure to select random typeList from $typeLists!")
-    }
+        return getRandomFrom(typeLists)
+    }*/
 
-    fun getRandomExprFrom(givenExprs: ArrayList<Expr>): Expr {
+    /*fun getRandomExprFrom(givenExprs: ArrayList<Expr>): Expr {
         var expr: Expr? = null
 
         val totalProb = givenExprs.fold(0.0) { acc, givenExpr -> acc + prob(givenExpr) }
@@ -217,12 +221,12 @@ internal object PRNG {
         }
 
         return expr
-    }
+    }*/
 
-    fun getRandomStatFrom(stats: ArrayList<Stat>): Stat {
+    /*fun getRandomStatFrom(stats: ArrayList<Stat>): Stat {
         val statIndex = getRandomIntInRange(0, stats.size)
         return stats[statIndex]
-    }
+    }*/
 
     fun getNumberOfParentheses(): Int {
         var numberOfParentheses = 0

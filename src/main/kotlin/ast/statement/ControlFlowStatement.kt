@@ -1,5 +1,6 @@
 package wgslsmith.wgslgenerator.ast.statement
 
+import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.statement.ControlFlowStat.IF
 import wgslsmith.wgslgenerator.ast.statement.ControlFlowStat.SWITCH
 import wgslsmith.wgslgenerator.tables.SymbolTable
@@ -18,10 +19,16 @@ internal class ControlFlowStatement(symbolTable: SymbolTable, override var stat:
     }
 
     override fun getTabbedLines(): ArrayList<String> {
-        /*return when (stat as ControlFlowStat) {
-            IF     -> IfStatement().getTabbedLines()
-            SWITCH -> SwitchStatement().getTabbedLines()
-        }*/
         return statement.getTabbedLines()
+    }
+
+    companion object : StatementCompanion {
+        override fun usedTypes(stat: Stat): ArrayList<WGSLType> {
+            return when (stat) {
+                IF     -> IfStatement.usedTypes(stat)
+                SWITCH -> SwitchStatement.usedTypes(stat)
+                else   -> arrayListOf()
+            }
+        }
     }
 }
