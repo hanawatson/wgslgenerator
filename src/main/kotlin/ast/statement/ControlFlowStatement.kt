@@ -1,11 +1,12 @@
 package wgslsmith.wgslgenerator.ast.statement
 
 import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.statement.ControlFlowStat.IF
-import wgslsmith.wgslgenerator.ast.statement.ControlFlowStat.SWITCH
+import wgslsmith.wgslgenerator.ast.statement.ControlFlowStat.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 
-internal class ControlFlowStatement(symbolTable: SymbolTable, override var stat: Stat, depth: Int) : Statement {
+internal class ControlFlowStatement(
+    symbolTable: SymbolTable, override var stat: Stat, depth: Int, inLoop: Boolean = false
+) : Statement {
     private val statement: Statement
 
     init {
@@ -13,8 +14,11 @@ internal class ControlFlowStatement(symbolTable: SymbolTable, override var stat:
             throw Exception("Failure to validate ControlFlowStat during ControlFlowStatement generation!")
         }
         statement = when (stat as ControlFlowStat) {
-            IF     -> IfStatement(symbolTable, stat, depth)
-            SWITCH -> SwitchStatement(symbolTable, stat, depth)
+            FOR    -> ForStatement(symbolTable, stat, depth)
+            IF     -> IfStatement(symbolTable, stat, depth, inLoop)
+            LOOP   -> LoopStatement(symbolTable, stat, depth, inLoop)
+            SWITCH -> SwitchStatement(symbolTable, stat, depth, inLoop)
+            WHILE  -> WhileStatement(symbolTable, stat, depth)
         }
     }
 
@@ -26,6 +30,7 @@ internal class ControlFlowStatement(symbolTable: SymbolTable, override var stat:
         override fun usedTypes(stat: Stat): ArrayList<WGSLType> {
             return when (stat) {
                 IF     -> IfStatement.usedTypes(stat)
+                LOOP   -> LoopStatement.usedTypes(stat)
                 SWITCH -> SwitchStatement.usedTypes(stat)
                 else   -> arrayListOf()
             }

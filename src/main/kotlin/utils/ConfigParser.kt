@@ -48,8 +48,8 @@ internal data class ExprBounds(
 @Serializable
 internal data class ExprChanceOptions(
     val generate_simple_subscript_access: Double, val generate_parentheses_around_expression: Double,
-    val replace_vector_non_mult_operand_with_scalar: Double, val replace_vector_mult_operand_with_other: Double,
-    val replace_matrix_mult_operand_with_other: Double, val ratio_symbol_selection_to_zero_value: Double
+    val replace_vector_binary_operand_with_other_type: Double,
+    val replace_matrix_binary_operand_with_other_type: Double, val ratio_symbol_selection_to_zero_value: Double
 )
 
 @Serializable
@@ -74,20 +74,25 @@ internal data class StatConfig(
 @Serializable
 internal data class StatBounds(
     val max_statement_nest_depth: Int, val max_statements_in_body: Int, val max_statements_in_if_body: Int,
-    val max_statements_in_switch_body: Int, val max_if_else_branches: Int, val max_switch_cases: Int
+    val max_statements_in_loop_body: Int, val max_statements_in_switch_body: Int, val max_if_else_branches: Int,
+    val max_switch_cases: Int
 )
 
 @Serializable
 internal data class StatChanceOptions(
     val generate_statement: Double, val generate_if_else_branch: Double, val generate_else_branch: Double,
     val generate_switch_case: Double, val generate_default_switch_case_before_last: Double,
-    val assign_expression_to_new_variable: Double
+    val generate_continuing_block: Double, val generate_continuing_break_if_statement: Double,
+    val assign_expression_to_new_variable: Double, val omit_for_loop_initializer: Double,
+    val omit_for_loop_condition: Double, val omit_for_loop_update: Double,
 )
 
 @Serializable
 internal data class StatOptions(
-    val prevent_code_after_break_statement: Boolean, val prevent_fallthrough_in_last_switch_case: Boolean,
-    val ensure_no_duplicate_switch_cases: Boolean
+    val prevent_code_after_control_flow_interruption: Boolean, val prevent_fallthrough_in_last_switch_case: Boolean,
+    val ensure_no_duplicate_switch_cases: Boolean, val ensure_for_loop_termination: Boolean,
+    val ensure_loop_termination: Boolean, val ensure_while_loop_termination: Boolean,
+    val ensure_continue_is_valid: Boolean
 )
 
 @Serializable
@@ -107,12 +112,13 @@ internal data class SubAssignmentStatProbabilities(
 
 @Serializable
 internal data class SubContextSpecificStatProbabilities(
-    val switch_break: Double, val switch_fallthrough: Double
+    val loop_break: Double, val loop_continue: Double, val loop_return: Double, val switch_break: Double,
+    val switch_fallthrough: Double
 ) : SubStatProbabilities
 
 @Serializable
 internal data class SubControlFlowStatProbabilities(
-    val if_else: Double, val switch: Double
+    val for_loop: Double, val if_else: Double, val loop: Double, val switch: Double, val while_loop: Double
 ) : SubStatProbabilities
 
 internal class ConfigParser(configPath: String) {

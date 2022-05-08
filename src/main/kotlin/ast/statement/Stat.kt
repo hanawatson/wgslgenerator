@@ -9,10 +9,7 @@ internal interface AssignmentStat : Stat {
 internal enum class AssignmentEqStat(override val operator: String = "=") : AssignmentStat {
     ASSIGN_DECLARE,
     ASSIGN_LET,
-
-    // temporarily commented due to lack of implementation in naga
     ASSIGN_PHONY,
-
     ASSIGN_SIMPLE;
 }
 
@@ -23,21 +20,24 @@ internal enum class AssignmentCompoundStat(override val operator: String) : Assi
 }
 
 internal enum class ControlFlowStat : Stat {
+    FOR,
     IF,
-    SWITCH;
+    LOOP,
+    SWITCH,
+    WHILE;
 }
 
 // holds statements that can only be used in certain contexts e.g. fallthrough in a switch case
-internal enum class ContextSpecificStat : Stat {
-    SWITCH_BREAK,
-    SWITCH_FALLTHROUGH;
+internal enum class ContextSpecificStat(val keyword: String) : Stat {
+    LOOP_BREAK("break"),
+    LOOP_CONTINUE("continue"),
+    LOOP_RETURN("return"),
+    SWITCH_BREAK("break"),
+    SWITCH_FALLTHROUGH("fallthrough");
 }
 
-// temporary disabling of DECREMENT, INCREMENT due to nonfunctional implementation with subscripts/swizzles in naga
 internal val assignStats =
-    ArrayList<Stat>(/*AssignmentCompoundStat.values().asList()*/
-        arrayListOf(AssignmentCompoundStat.BINARY_OPERATOR) + AssignmentEqStat.values().asList()
-    )
+    ArrayList<Stat>(AssignmentCompoundStat.values().asList() + AssignmentEqStat.values().asList())
 
 // allStats excludes ContextSpecificStat members as these cannot be used normally!
 internal val allStats = ArrayList<Stat>(assignStats + ControlFlowStat.values().asList())

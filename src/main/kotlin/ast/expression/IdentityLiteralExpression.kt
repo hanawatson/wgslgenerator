@@ -3,6 +3,7 @@ package wgslsmith.wgslgenerator.ast.expression
 import wgslsmith.wgslgenerator.ast.Type
 import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.scalarIntType
+import wgslsmith.wgslgenerator.ast.scalarUnIntType
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 import java.lang.Float.toHexString
@@ -17,12 +18,9 @@ internal class IdentityLiteralExpression(override val returnType: WGSLType, over
     override var numberOfParentheses = 0
 
     init {
-        // temporarily commented due to lack of implementation of AbstractInt in Tint and naga
-        // u suffix appended above for now - i not supported in Tint or naga, f not supported in naga
-        // see https://github.com/gfx-rs/naga/issues/1843
-        // useSuffix = PRNG.eval(CNFG.probabilityUseLiteralSuffix)
-
-        useSuffix = returnType.type == Type.UNINT
+        useSuffix = PRNG.eval(CNFG.useSuffixWithNumericLiteral)
+        // temporary mandating of numeric suffixes due to unsupported status in naga
+        useSuffix = returnType == scalarUnIntType
         useHex = PRNG.eval(CNFG.useHexadecimalNumericLiteral)
 
         literalValue = when (returnType.type) {

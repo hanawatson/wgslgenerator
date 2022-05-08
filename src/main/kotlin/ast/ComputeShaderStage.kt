@@ -17,7 +17,7 @@ internal class ComputeShaderStage {
             symbolTable.addNewNonWriteableSymbol("num_workgroups", vector3UnIntType)
         }
 
-        body = ScopeBody(ScopeState.NONE).generate(symbolTable, 0)
+        body = ScopeBody(symbolTable, ScopeState.NONE, 0)
         return this
     }
 

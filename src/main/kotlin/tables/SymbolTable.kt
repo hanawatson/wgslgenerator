@@ -24,7 +24,7 @@ internal class SymbolTable {
     private var matrixSubtable = MatrixSubtable()
     private var arraySubtable = ArraySubtable(0)
 
-    private var newVarLabelIndex: Int = 0
+    var newVarLabelIndex: Int = 0
 
     private fun getSubtable(type: WGSLType): Subtable {
         return when (type) {
@@ -34,6 +34,15 @@ internal class SymbolTable {
             is WGSLArrayType  -> arraySubtable
             else              -> throw Exception("Attempt to access symbol subtable of unknown type $type!")
         }
+    }
+
+    fun hasWriteableOfAny(types: ArrayList<WGSLType>): Boolean {
+        for (type in types) {
+            if (hasWriteableOf(type)) {
+                return true
+            }
+        }
+        return false
     }
 
     fun hasWriteableOf(type: WGSLType) = !getSubtable(type).isEmpty(type, ofWriteable = true)
@@ -50,28 +59,29 @@ internal class SymbolTable {
         addSymbol(name, type, writeable = false, declared = false)
 
     private fun addSymbol(name: String, type: WGSLType, writeable: Boolean, declared: Boolean): Symbol {
-        val rootSymbol = Symbol(name, type)
-        var symbol = rootSymbol
-        getSubtable(rootSymbol.type).addSymbol(rootSymbol.type, rootSymbol, writeable)
+        val symbol = Symbol(name, type)
+        getSubtable(type).addSymbol(type, symbol, writeable)
         if (declared) newVarLabelIndex++
 
-        while ((symbol.type is WGSLVectorType || symbol.type is WGSLMatrixType || symbol.type is WGSLArrayType)
-            && (CNFG.prob(AccessConvenienceExpr.CONVENIENCE) > 0.0 && CNFG.prob(AccessSubscriptExpr.SUBSCRIPT) > 0.0)) {
-            val componentSymbol = when (val symbolType = symbol.type) {
-                is WGSLVectorType -> Symbol("${symbol.name}[${symbolType.length}v]", symbolType.componentType)
-                is WGSLMatrixType -> Symbol(
-                    "${symbol.name}[${symbolType.width}]", WGSLVectorType(symbolType.componentType, symbolType.length)
-                )
-                is WGSLArrayType  -> Symbol("${symbol.name}[${symbolType.elementCountValue}]", symbolType.elementType)
+        if ((type is WGSLVectorType || type is WGSLMatrixType || type is WGSLArrayType)
+            && CNFG.prob(AccessSubscriptExpr.SUBSCRIPT) > 0.0) {
+            val componentSymbol = when (type) {
+                is WGSLVectorType -> Symbol("$name[${type.length}]", type.componentType)
+                is WGSLMatrixType -> Symbol("$name[${type.width}]", WGSLVectorType(type.componentType, type.length))
+                is WGSLArrayType  -> Symbol("$name[${type.elementCountValue}]", type.elementType)
                 else              -> throw Exception(
-                    "Attempt to add recursive component symbols to SymbolTable of unknown type ${symbol.type}!"
+                    "Attempt to add recursive component symbols to SymbolTable of unknown type $type!"
                 )
             }
-            getSubtable(componentSymbol.type).addSymbol(componentSymbol.type, componentSymbol, writeable)
-            symbol = componentSymbol
+            addSymbol(componentSymbol.name, componentSymbol.type, writeable, false)
         }
 
-        return rootSymbol
+        if (type is WGSLVectorType && CNFG.prob(AccessConvenienceExpr.CONVENIENCE) > 0.0) {
+            val componentSymbol = Symbol("$name.${type.length}v", type.componentType)
+            addSymbol(componentSymbol.name, componentSymbol.type, writeable, false)
+        }
+
+        return symbol
     }
 
     fun getRandomSymbol(type: WGSLType): Symbol = getRandomSymbolFrom(type, mustBeWriteable = false)
@@ -93,18 +103,17 @@ internal class SymbolTable {
         val randomIndex = PRNG.getRandomIntInRange(startIndex, endIndex)
         val symbol = subtable.getSymbolAtIndex(type, randomIndex)
         if (symbol != null) {
-            val subscriptRegex = "\\[(\\d+v?)]".toRegex()
+            val subscriptRegex = "\\[(\\d+)]".toRegex()
             val subscriptString = subscriptRegex.replace(symbol.name) { matchResult ->
-                var subscriptBoundString = matchResult.groupValues[1]
-                val useConvenienceLetter = subscriptBoundString.contains("v")
-                if (useConvenienceLetter) subscriptBoundString = subscriptBoundString.replace("v", "")
-                if (useConvenienceLetter && getRandomBool()) {
-                    ".${PRNG.getConvenienceLetterInBound(subscriptBoundString.toInt(), getRandomBool())}"
-                } else {
-                    "[${PRNG.getSubscriptInBound(this, subscriptBoundString.toInt())}]"
-                }
+                "[${PRNG.getSubscriptInBound(this, matchResult.groupValues[1].toInt())}]"
             }
-            return Symbol(subscriptString, symbol.type)
+
+            val convenienceRegex = "\\.(\\d+)v".toRegex()
+            val convenienceString = convenienceRegex.replace(subscriptString) { matchResult ->
+                ".${PRNG.getConvenienceLetterInBound(matchResult.groupValues[1].toInt(), getRandomBool())}"
+            }
+
+            return Symbol(convenienceString, symbol.type)
         }
 
         throw Exception("Out-of-bounds symbol index generated!")

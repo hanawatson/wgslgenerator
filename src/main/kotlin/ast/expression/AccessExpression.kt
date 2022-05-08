@@ -34,7 +34,7 @@ internal class AccessExpression(
                 arg = ExpressionGenerator.getExpressionWithReturnType(symbolTable, argType, depth + 1)
 
                 val useRGBA = getRandomBool()
-                for (i in 1..numberOfLetters) {
+                for (i in 0 until numberOfLetters) {
                     convenienceLetters += PRNG.getConvenienceLetterInBound(argType.length, useRGBA)
                 }
             }

@@ -30,9 +30,8 @@
     "exprChanceOptions": {
       "generate_simple_subscript_access": 0.6,
       "generate_parentheses_around_expression": 0.7,
-      "replace_vector_non_mult_operand_with_scalar": 0.5,
-      "replace_vector_mult_operand_with_other": 0.5,
-      "replace_matrix_mult_operand_with_other": 0.5,
+      "replace_vector_binary_operand_with_other_type": 0.5,
+      "replace_matrix_binary_operand_with_other_type": 0.5,
       "ratio_symbol_selection_to_zero_value": 0.2
     },
     "exprOptions": {
@@ -57,21 +56,31 @@
       "max_statement_nest_depth": 5,
       "max_statements_in_body": 40,
       "max_statements_in_if_body": 5,
+      "max_statements_in_loop_body": 5,
       "max_statements_in_switch_body": 5,
       "max_if_else_branches": 5,
       "max_switch_cases": 10
     },
     "statChanceOptions": {
       "generate_statement": 1.0,
+      "generate_continuing_block": 0.8,
+      "generate_continuing_break_if_statement": 0.5,
       "generate_if_else_branch": 0.3,
       "generate_else_branch": 0.6,
       "generate_switch_case": 0.4,
       "generate_default_switch_case_before_last": 0.1,
-      "assign_expression_to_new_variable": 0.4
+      "assign_expression_to_new_variable": 0.4,
+      "omit_for_loop_initializer": 0.2,
+      "omit_for_loop_condition": 0.2,
+      "omit_for_loop_update": 0.2
     },
     "statOptions": {
-      "prevent_code_after_break_statement": true,
+      "prevent_code_after_control_flow_interruption": true,
       "prevent_fallthrough_in_last_switch_case": true,
+      "ensure_continue_is_valid": true,
+      "ensure_for_loop_termination": true,
+      "ensure_loop_termination": true,
+      "ensure_while_loop_termination": true,
       "ensure_no_duplicate_switch_cases": true
     },
     "statProbabilities": {
@@ -86,13 +95,19 @@
       },
       "context_specific": 1.0,
       "sub_context_specific": {
+        "loop_break": 1.0,
+        "loop_continue": 1.0,
+        "loop_return": 1.0,
         "switch_break": 1.0,
         "switch_fallthrough": 1.0
       },
       "control_flow": 1.0,
       "sub_control_flow": {
+        "for_loop": 1.0,
         "if_else": 1.0,
-        "switch": 1.0
+        "loop": 1.0,
+        "switch": 1.0,
+        "while_loop": 1.0
       }
     }
   }

@@ -7,28 +7,72 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: Stat) : Statement {
+internal class AssignmentStatement(
+    symbolTable: SymbolTable, override var stat: Stat,
+    mustBeNewSymbol: Boolean = false, mustBeExistingSymbol: Boolean = false
+) : Statement {
     private var lhs: Symbol
     private var rhs: Expression
-    private var type: WGSLType
     private var exprEquivalent: Expr? = null
     private var declaredNewSymbol = false
     private var accessString = ""
 
     init {
-        type = if (stat == AssignmentCompoundStat.BINARY_OPERATOR) {
-            exprEquivalent = PRNG.getRandomExprFrom(compoundAssignableExprs)
-            PRNG.getRandomTypeFrom(ExprTypes.exprTypeOf(exprEquivalent!!).types)
-        } else {
-            when (stat) {
-                AssignmentCompoundStat.DECREMENT -> exprEquivalent = BinaryArithmeticMatrixNumericExpr.MINUS
-                AssignmentCompoundStat.INCREMENT -> exprEquivalent = BinaryArithmeticMatrixNumericExpr.ADD
+        val possibleTypes = ArrayList<WGSLType>()
+
+        for (possibleType in usedTypes(stat)) {
+            if (!mustBeExistingSymbol || symbolTable.hasWriteableOf(possibleType)) {
+                possibleTypes.add(possibleType)
             }
-            PRNG.getRandomTypeFrom(usedTypes(stat))
         }
 
+        val type = PRNG.getRandomTypeFrom(possibleTypes)
+
+        if (stat == AssignmentCompoundStat.BINARY_OPERATOR) {
+            val possibleExprEquivalents = ArrayList<Expr>()
+            possibleExprEquivalents.addAll(compoundAssignableExprs)
+            for (expr in compoundAssignableExprs) {
+                if (type !in ExprTypes.exprTypeOf(expr).types.fold(ArrayList<WGSLType>()) { acc, accType ->
+                        ArrayList(acc + getConcreteTypes(accType))
+                    }) {
+                    possibleExprEquivalents.remove(expr)
+                }
+            }
+            exprEquivalent = PRNG.getRandomExprFrom(possibleExprEquivalents)
+        }
+
+        if (stat is AssignmentCompoundStat && !symbolTable.hasWriteableOf(type)) {
+            stat = AssignmentEqStat.ASSIGN_SIMPLE
+        }
+
+        rhs = generateRHS(symbolTable, stat, type)
+
+        when (stat) {
+            is AssignmentCompoundStat      -> lhs = symbolTable.getRandomWriteableSymbol(type)
+            AssignmentEqStat.ASSIGN_DECLARE,
+            AssignmentEqStat.ASSIGN_LET    -> {
+                lhs = symbolTable.declareNewNonWriteableSymbol(type)
+                declaredNewSymbol = true
+            }
+            AssignmentEqStat.ASSIGN_PHONY  -> lhs = Symbol("_", type)
+            AssignmentEqStat.ASSIGN_SIMPLE -> {
+                if (mustBeNewSymbol || (!mustBeExistingSymbol &&
+                            (PRNG.eval(CNFG.assignExpressionToNewVariable) || !symbolTable.hasWriteableOf(type)))) {
+                    lhs = symbolTable.declareNewWriteableSymbol(type)
+                    declaredNewSymbol = true
+                } else {
+                    lhs = symbolTable.getRandomWriteableSymbol(type)
+                }
+            }
+            else                           -> throw Exception(
+                "Attempt to generate AssignmentStat with unknown Stat ${stat}!"
+            )
+        }
+    }
+
+    private fun generateRHS(symbolTable: SymbolTable, stat: Stat, type: WGSLType): Expression {
         if (stat is AssignmentCompoundStat) {
-            val lhsRhsTypes = BinaryExpression.argsForExprType(exprEquivalent!!, type, probEval(exprEquivalent!!, type))
+            val lhsRhsTypes = BinaryExpression.argsForExprType(exprEquivalent!!, type, probEval(type))
                 .filter { (lhsType, _) -> lhsType == type }
             val rhsType = PRNG.getRandomTypeFrom(lhsRhsTypes.unzip().second as ArrayList<WGSLType>)
             rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, rhsType, 0)
@@ -40,51 +84,22 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
                         if (rhs.returnType is WGSLMatrixType) {
                             rhs.returnType
                         } else {
-                            WGSLMatrixType(
-                                (type as WGSLMatrixType).componentType,
-                                (type as WGSLMatrixType).width,
-                                (type as WGSLMatrixType).width
-                            )
+                            WGSLMatrixType(type.componentType, type.width, type.width)
                         }
                     } else {
                         type
                     }
-                rhs = IdentityZeroValExpression(rhsNonMixedType, IdentityUniversalExpr.ZERO_VALUE)
+                return IdentityZeroValExpression(rhsNonMixedType, IdentityUniversalExpr.ZERO_VALUE)
             }
+            return rhs
         } else {
-            rhs = ExpressionGenerator.getExpressionWithoutReturnType(symbolTable, 0)
-            type = rhs.returnType
-        }
-        if (stat is AssignmentCompoundStat && !symbolTable.hasWriteableOf(type)) {
-            this.stat = AssignmentEqStat.ASSIGN_SIMPLE
-            type = rhs.returnType
-        }
-        when (this.stat) {
-            AssignmentEqStat.ASSIGN_DECLARE,
-            AssignmentEqStat.ASSIGN_LET   -> {
-                lhs = symbolTable.declareNewNonWriteableSymbol(type)
-                declaredNewSymbol = true
-            }
-            AssignmentEqStat.ASSIGN_PHONY -> lhs = Symbol("_", type)
-            AssignmentEqStat.ASSIGN_SIMPLE,
-            is AssignmentCompoundStat     -> {
-                if ((PRNG.eval(CNFG.assignExpressionToNewVariable) && this.stat is AssignmentEqStat)
-                    || (!symbolTable.hasWriteableOf(type) && this.stat !is AssignmentCompoundStat)) {
-                    lhs = symbolTable.declareNewWriteableSymbol(type)
-                    declaredNewSymbol = true
-                } else {
-                    lhs = symbolTable.getRandomWriteableSymbol(type)
-                }
-            }
-            else                          -> throw Exception(
-                "Attempt to generate AssignmentStat with unknown Stat ${this.stat}!"
-            )
+            return ExpressionGenerator.getExpressionWithReturnType(symbolTable, type, 0)
         }
     }
 
     override fun getTabbedLines(): ArrayList<String> {
         if (stat == AssignmentEqStat.ASSIGN_DECLARE) {
-            return arrayListOf("var $lhs: $type;")
+            return arrayListOf("var $lhs: ${lhs.type};")
         }
 
         val operator = if (stat == AssignmentCompoundStat.BINARY_OPERATOR) {
@@ -99,10 +114,9 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
         val varDeclaration = if (declaredNewSymbol) {
             if (stat == AssignmentEqStat.ASSIGN_LET) "let " else "var "
         } else ""
-        val typeDeclaration = if (declaredNewSymbol &&
-            PRNG.eval(CNFG.omitTypeFromDeclaration)
-        ) {
-            ": $type"
+
+        val typeDeclaration = if (declaredNewSymbol && !PRNG.eval(CNFG.omitTypeFromDeclaration)) {
+            ": ${lhs.type}"
         } else ""
 
         return arrayListOf("$varDeclaration$lhs$accessString$typeDeclaration $operator $rhs;")
@@ -114,13 +128,11 @@ internal class AssignmentStatement(symbolTable: SymbolTable, override var stat: 
                 return when (stat) {
                     AssignmentCompoundStat.DECREMENT,
                     AssignmentCompoundStat.INCREMENT       -> arrayListOf(scalarIntType, scalarUnIntType)
-                    AssignmentCompoundStat.BINARY_OPERATOR -> compoundAssignableExprs.fold(ArrayList()) { acc, expr ->
-                        ArrayList(acc + ExprTypes.exprTypeOf(expr).types)
-                    }
+                    AssignmentCompoundStat.BINARY_OPERATOR -> compoundAssignableConcreteTypes
                 }
             }
 
-            return allTypes
+            return allConcreteTypes
         }
     }
 }

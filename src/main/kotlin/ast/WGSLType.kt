@@ -1,7 +1,9 @@
 package wgslsmith.wgslgenerator.ast
 
+import wgslsmith.wgslgenerator.ast.expression.ExprTypes
 import wgslsmith.wgslgenerator.ast.expression.Expression
 import wgslsmith.wgslgenerator.ast.expression.IdentityLiteralExpression
+import wgslsmith.wgslgenerator.ast.expression.compoundAssignableExprs
 import wgslsmith.wgslgenerator.utils.CNFG
 import java.lang.Integer.decode
 
@@ -239,6 +241,18 @@ internal val arrayElementTypes: ArrayList<WGSLType> = ArrayList(
     scalarTypes + arrayListOf(abstractWGSLVectorType, abstractWGSLMatrixType, abstractWGSLArrayType)
 )
 
+internal val compoundAssignableTypes: ArrayList<WGSLType> by lazy {
+    val types: ArrayList<WGSLType> = compoundAssignableExprs.fold(ArrayList()) { acc, expr ->
+        ArrayList(acc + ExprTypes.exprTypeOf(expr).types)
+    }
+    ArrayList(types.distinct())
+}
+internal val compoundAssignableConcreteTypes: ArrayList<WGSLType> by lazy {
+    compoundAssignableTypes.fold(ArrayList()) { acc, type ->
+        ArrayList(acc + getConcreteTypes(type))
+    }
+}
+
 private val concreteTypesMap = HashMap<WGSLType, ArrayList<WGSLType>>()
 internal fun getConcreteTypes(givenAbstractType: WGSLType): ArrayList<WGSLType> {
     val hashedConcreteTypes = concreteTypesMap[givenAbstractType]
@@ -362,4 +376,8 @@ internal fun getConcreteTypes(givenAbstractType: WGSLType): ArrayList<WGSLType> 
 
     concreteTypesMap[givenAbstractType] = concreteTypes
     return concreteTypes
+}
+
+internal val allConcreteTypes = allTypes.fold(ArrayList<WGSLType>()) { acc, type ->
+    ArrayList(acc + getConcreteTypes(type))
 }

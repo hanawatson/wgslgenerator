@@ -1,6 +1,7 @@
 package wgslsmith.wgslgenerator.ast
 
 import wgslsmith.wgslgenerator.ast.statement.ContextSpecificStat
+import wgslsmith.wgslgenerator.ast.statement.ContextSpecificStatement
 import wgslsmith.wgslgenerator.ast.statement.Statement
 import wgslsmith.wgslgenerator.ast.statement.StatementGenerator
 import wgslsmith.wgslgenerator.tables.SymbolTable
@@ -9,11 +10,12 @@ import wgslsmith.wgslgenerator.utils.PRNG
 
 internal enum class ScopeState {
     IF,
+    LOOP,
     NONE,
     SWITCH;
 }
 
-internal class ScopeBody(private val scopeState: ScopeState) {
+internal class ScopeBody(symbolTable: SymbolTable, scopeState: ScopeState, depth: Int, var inLoop: Boolean = false) {
     private val statements: ArrayList<Statement> = ArrayList()
 
     fun getLastStatement() = statements.last()
@@ -23,31 +25,30 @@ internal class ScopeBody(private val scopeState: ScopeState) {
         statements.add(statement)
     }
 
-    fun generate(symbolTable: SymbolTable, depth: Int): ScopeBody {
+    init {
         var currentStatements = 0
         var generateAnotherStatement = true
         val maxStatements = when (scopeState) {
             ScopeState.IF     -> CNFG.maxStatementsInIfBody
+            ScopeState.LOOP   -> CNFG.maxStatementsInLoopBody
             ScopeState.SWITCH -> CNFG.maxStatementsInSwitchBody
             else              -> CNFG.maxStatementsInBody
         }
 
         while (generateAnotherStatement && currentStatements < maxStatements) {
-            val statement = StatementGenerator.getStatement(symbolTable, depth, scopeState)
+            val statement = StatementGenerator.getStatement(symbolTable, scopeState, depth, inLoop)
             statements.add(statement)
             currentStatements++
 
-            generateAnotherStatement = if (
-                (statement.stat == ContextSpecificStat.SWITCH_BREAK && CNFG.preventCodeAfterBreakStatement)
-                || statement.stat == ContextSpecificStat.SWITCH_FALLTHROUGH
-            ) {
+            generateAnotherStatement = if (((statement.stat == ContextSpecificStat.SWITCH_BREAK
+                        || (statement is ContextSpecificStatement && inLoop))
+                        && CNFG.preventCodeAfterControlFlowInterruption)
+                || statement.stat == ContextSpecificStat.SWITCH_FALLTHROUGH) {
                 false
             } else {
                 PRNG.eval(CNFG.generateStatement)
             }
         }
-
-        return this
     }
 
     fun getTabbedLines(): ArrayList<String> {

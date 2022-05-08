@@ -26,46 +26,48 @@ internal object CNFG {
     val maxStatementNestDepth: Int by lazy { bounds[statBoundsStartIndex + 1] }
     val maxStatementsInBody: Int by lazy { bounds[statBoundsStartIndex + 2] }
     val maxStatementsInIfBody: Int by lazy { bounds[statBoundsStartIndex + 3] }
-    val maxStatementsInSwitchBody: Int by lazy { bounds[statBoundsStartIndex + 4] }
-    val maxSwitchCases: Int by lazy { bounds[statBoundsStartIndex + 5] }
+    val maxStatementsInLoopBody: Int by lazy { bounds[statBoundsStartIndex + 4] }
+    val maxStatementsInSwitchBody: Int by lazy { bounds[statBoundsStartIndex + 5] }
+    val maxSwitchCases: Int by lazy { bounds[statBoundsStartIndex + 6] }
 
     private var typeChanceOptionsStartIndex = 0
     val constructVectorWithSingleValue: Double by lazy { chanceOptions[typeChanceOptionsStartIndex] }
     val omitTypeFromDeclaration: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 1] }
-
-    // temporarily zeroed due to lack of implementation in naga
-    // val omitTypeFromCompositeConstruction: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 2] }
-    const val omitTypeFromCompositeConstruction = 0.0
+    val omitTypeFromCompositeConstruction: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 2] }
     val useHexadecimalNumericLiteral: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 3] }
-    // val useSuffixWithNumericLiteral: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 4] }
+
+    // temporarily set to 1 due to lack of recognition for un-suffixed unsigned integers in Tint
+    //val useSuffixWithNumericLiteral: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 4] }
+    const val useSuffixWithNumericLiteral = 1.0
 
     private var exprChanceOptionsStartIndex = 0
 
-    // temporarily set to 1 due to lack of support for non-constant matrix subscript access in naga
+    // temporarily set to 1 due to lack of naga support
     // val generateSimpleSubscriptAccess: Double by lazy { chanceOptions[exprChanceOptionsStartIndex] }
     const val generateSimpleSubscriptAccess = 1.0
     val generateParenthesesAroundExpression: Double by lazy { chanceOptions[exprChanceOptionsStartIndex + 1] }
-    private val replaceMatrixMultOperandWithOtherUserdef: Double by lazy {
+    private val replaceMatrixBinaryOperandWithOtherTypeUserdef: Double by lazy {
         chanceOptions[exprChanceOptionsStartIndex + 2]
     }
-    var replaceMatrixMultOperandWithOther = 0.0
-    private val replaceVectorMultOperandWithOtherUserdef: Double by lazy {
+    var replaceMatrixBinaryOperandWithOtherType = 0.0
+    private val replaceVectorBinaryOperandWithOtherTypeUserdef: Double by lazy {
         chanceOptions[exprChanceOptionsStartIndex + 3]
     }
-    var replaceVectorMultOperandWithOther = 0.0
-    private val replaceVectorNonMultOperandWithScalarUserdef: Double by lazy {
-        chanceOptions[exprChanceOptionsStartIndex + 4]
-    }
-    var replaceVectorNonMultOperandWithScalar = 0.0
-    private val ratioSymbolSelectionToZeroValue: Double by lazy { chanceOptions[exprChanceOptionsStartIndex + 5] }
+    var replaceVectorBinaryOperandWithOtherType = 0.0
+    private val ratioSymbolSelectionToZeroValue: Double by lazy { chanceOptions[exprChanceOptionsStartIndex + 4] }
 
     private var statChanceOptionsStartIndex = 0
     val assignExpressionToNewVariable: Double by lazy { chanceOptions[statChanceOptionsStartIndex] }
-    val generateDefaultSwitchCaseBeforeLast: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 1] }
-    val generateElseBranch: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 2] }
-    val generateIfElseBranch: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 3] }
-    val generateStatement: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 4] }
-    val generateSwitchCase: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 5] }
+    val generateContinuingBlock: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 1] }
+    val generateContinuingBreakIfStatement: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 2] }
+    val generateDefaultSwitchCaseBeforeLast: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 3] }
+    val generateElseBranch: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 4] }
+    val generateIfElseBranch: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 5] }
+    val generateStatement: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 6] }
+    val generateSwitchCase: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 7] }
+    val omitForLoopCondition: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 8] }
+    val omitForLoopInitializer: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 9] }
+    val omitForLoopUpdate: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 10] }
 
     private var exprOptionsStartIndex = 0
     val ensureComplexSubscriptAccessInBounds: Boolean by lazy { options[exprOptionsStartIndex] }
@@ -74,9 +76,13 @@ internal object CNFG {
     val useUsefulExpressionParentheses: Boolean by lazy { options[exprOptionsStartIndex + 3] }
 
     private var statOptionsStartIndex = 0
-    val ensureNoDuplicateSwitchCases: Boolean by lazy { options[statOptionsStartIndex] }
-    val preventCodeAfterBreakStatement: Boolean by lazy { options[statOptionsStartIndex + 1] }
-    val preventFallthroughInLastSwitchCase: Boolean by lazy { options[statOptionsStartIndex + 2] }
+    val ensureContinueIsValid: Boolean by lazy { options[statOptionsStartIndex] }
+    val ensureForLoopTermination: Boolean by lazy { options[statOptionsStartIndex + 1] }
+    val ensureLoopTermination: Boolean by lazy { options[statOptionsStartIndex + 2] }
+    val ensureWhileLoopTermination: Boolean by lazy { options[statOptionsStartIndex + 3] }
+    val ensureNoDuplicateSwitchCases: Boolean by lazy { options[statOptionsStartIndex + 4] }
+    val preventCodeAfterControlFlowInterruption: Boolean by lazy { options[statOptionsStartIndex + 5] }
+    val preventFallthroughInLastSwitchCase: Boolean by lazy { options[statOptionsStartIndex + 6] }
 
     private val typeProbMap = HashMap<WGSLType, Double>()
     private val scalarProbTotal: Double by lazy {
@@ -139,10 +145,16 @@ internal object CNFG {
             Pair("increment", AssignmentCompoundStat.INCREMENT),
             Pair("phony_assignment", AssignmentEqStat.ASSIGN_PHONY),
             Pair("simple_assignment", AssignmentEqStat.ASSIGN_SIMPLE),
+            Pair("loop_break", ContextSpecificStat.LOOP_BREAK),
+            Pair("loop_continue", ContextSpecificStat.LOOP_CONTINUE),
+            Pair("loop_return", ContextSpecificStat.LOOP_RETURN),
             Pair("switch_break", ContextSpecificStat.SWITCH_BREAK),
             Pair("switch_fallthrough", ContextSpecificStat.SWITCH_FALLTHROUGH),
+            Pair("for_loop", ControlFlowStat.FOR),
             Pair("if_else", ControlFlowStat.IF),
-            Pair("switch", ControlFlowStat.SWITCH)
+            Pair("loop", ControlFlowStat.LOOP),
+            Pair("switch", ControlFlowStat.SWITCH),
+            Pair("while_loop", ControlFlowStat.WHILE)
         )
     }
     private val statProbMap = HashMap<Stat, Double>()
@@ -235,6 +247,12 @@ internal object CNFG {
                                 val parentStatement = statementParameterMap[parameter.name.removeRange(0..3)]!!
                                 subStatProbMap[subStatParameterMap[subParameter.name]!!] =
                                     subParameterValue / subStatSizeMap[parentStatement]!!
+
+                                // temporarily disable inc/dec due to nonfunctional implementation in Tint when
+                                // acting on subscript/convenience accesses
+                                if (subParameter.name == "increment" || subParameter.name == "decrement") {
+                                    subStatProbMap[subStatParameterMap[subParameter.name]!!] = 0.0
+                                }
                             }
                         }
                     }
@@ -256,23 +274,53 @@ internal object CNFG {
                     }
                     is SubControlFlowStatProbabilities     -> {
                         for (subParameter in SubControlFlowStatProbabilities::class.memberProperties) {
-                            val subParameterValue = subParameter.get(
+                            var subParameterValue = subParameter.get(
                                 config.statConfig.statProbabilities.sub_control_flow
                             )
                             if (subParameterValue is Double) {
                                 if (subParameterValue < 0.0 || !subParameterValue.isFinite()) {
                                     throw Exception("Invalid value passed in config file for parameter ${subParameter.name}!")
                                 }
+
+                                val subStat = subStatParameterMap[subParameter.name]!!
+
+                                when (subStat) {
+                                    ControlFlowStat.LOOP,
+                                    ControlFlowStat.WHILE -> {
+                                        if (ensureLoopTermination) {
+                                            // ensure loop termination can be achieved within specified prob parameters
+                                            val requisitesProb = prob(AssignmentEqStat.ASSIGN_SIMPLE) *
+                                                    prob(scalarBoolType) * prob(scalarIntType) *
+                                                    prob(ContextSpecificStat.LOOP_BREAK) * prob(AssignmentCompoundStat.INCREMENT)
+                                            val requisiteComparisonProb = if (subStat == ControlFlowStat.LOOP) {
+                                                prob(ComparisonThExpr.MORE_THAN_OR_EQUAL)
+                                            } else {
+                                                prob(ComparisonThExpr.LESS_THAN)
+                                            }
+                                            if (requisitesProb == 0.0 || requisiteComparisonProb == 0.0) {
+                                                subParameterValue = 0.0
+                                            }
+                                        }
+                                    }
+                                }
+
                                 // remove "sub_" prefix for sub stat size retrieval
                                 val parentStatement = statementParameterMap[parameter.name.removeRange(0..3)]!!
-                                subStatProbMap[subStatParameterMap[subParameter.name]!!] =
-                                    subParameterValue / subStatSizeMap[parentStatement]!!
+                                subStatProbMap[subStat] = subParameterValue / subStatSizeMap[parentStatement]!!
+
+                                // temporarily disable while loops due to lack of implementation in Tint
+                                if (subParameter.name == "while_loop") {
+                                    subStatProbMap[subStat] = 0.0
+                                }
                             }
                         }
                     }
                     else                                   -> throw Exception("Attempt to access SubStat data for unknown Stat $parameterValue!")
                 }
             }
+        }
+        if (prob(AssignmentEqStat.ASSIGN_SIMPLE) == 0.0) {
+            throw Exception("Simple assignment may not be completely disabled!")
         }
     }
 
@@ -349,36 +397,28 @@ internal object CNFG {
 
             for (concreteExprType in concreteExprTypes) {
                 val probForExprType = when {
-                    expr == BinaryArithmeticMatrixNumericExpr.MULT && concreteExprType is WGSLVectorType -> {
+                    expr == BinaryArithmeticMatrixNumericExpr.MULT
+                            && concreteExprType is WGSLMatrixType -> {
                         val (configValue, probConfigEnabled, probConfigDisabled) = getConfigValidity(
-                            BinaryExpression, expr, concreteExprType, replaceVectorMultOperandWithOtherUserdef
+                            BinaryExpression, expr, concreteExprType, replaceMatrixBinaryOperandWithOtherTypeUserdef
                         )
-                        replaceVectorMultOperandWithOther = configValue
+                        replaceMatrixBinaryOperandWithOtherType = configValue
 
-                        (replaceVectorMultOperandWithOther * probConfigEnabled) +
-                                ((1 - replaceVectorMultOperandWithOther) * probConfigDisabled)
+                        (replaceMatrixBinaryOperandWithOtherType * probConfigEnabled) +
+                                ((1 - replaceMatrixBinaryOperandWithOtherType) * probConfigDisabled)
                     }
-                    expr == BinaryArithmeticMatrixNumericExpr.MULT && concreteExprType is WGSLMatrixType -> {
+                    (expr is BinaryArithmeticMatrixNumericExpr || expr is BinaryArithmeticNumericExpr)
+                            && concreteExprType is WGSLVectorType -> {
                         val (configValue, probConfigEnabled, probConfigDisabled) = getConfigValidity(
-                            BinaryExpression, expr, concreteExprType, replaceMatrixMultOperandWithOtherUserdef
+                            BinaryExpression, expr, concreteExprType, replaceVectorBinaryOperandWithOtherTypeUserdef
                         )
-                        replaceMatrixMultOperandWithOther = configValue
+                        replaceVectorBinaryOperandWithOtherType = configValue
 
-                        (replaceMatrixMultOperandWithOther * probConfigEnabled) +
-                                ((1 - replaceMatrixMultOperandWithOther) * probConfigDisabled)
-                    }
-                    (expr is BinaryArithmeticMatrixNumericExpr || expr is BinaryArithmeticNumericExpr) &&
-                            concreteExprType is WGSLVectorType                                           -> {
-                        val (configValue, probConfigEnabled, probConfigDisabled) = getConfigValidity(
-                            BinaryExpression, expr, concreteExprType, replaceVectorNonMultOperandWithScalarUserdef
-                        )
-                        replaceVectorNonMultOperandWithScalar = configValue
-
-                        (replaceVectorNonMultOperandWithScalar * probConfigEnabled) +
-                                ((1 - replaceVectorNonMultOperandWithScalar) * probConfigDisabled)
+                        (replaceVectorBinaryOperandWithOtherType * probConfigEnabled) +
+                                ((1 - replaceVectorBinaryOperandWithOtherType) * probConfigDisabled)
                     }
 
-                    else                                                                                 -> {
+                    else                                          -> {
                         when (expr) {
                             is AccessExpr     -> prob(AccessExpression.argsForExprType(expr, concreteExprType))
                             is BinaryExpr     ->

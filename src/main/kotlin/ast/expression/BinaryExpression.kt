@@ -16,7 +16,7 @@ internal class BinaryExpression(
     override var numberOfParentheses = PRNG.getNumberOfParentheses()
 
     init {
-        val (lhsTypes, rhsTypes) = argsForExprType(expr, returnType, probEval(expr, returnType)).unzip()
+        val (lhsTypes, rhsTypes) = argsForExprType(expr, returnType, probEval(returnType)).unzip()
         lhsType = PRNG.getRandomTypeFrom(lhsTypes as ArrayList<WGSLType>)
         rhsType = rhsTypes[lhsTypes.indexOf(lhsType)]
         lhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, lhsType, depth + 1)
@@ -111,15 +111,11 @@ internal class BinaryExpression(
             return argTypes
         }
 
-        fun probEval(expr: Expr, returnType: WGSLType): Boolean {
-            return when {
-                returnType is WGSLVectorType && expr == BinaryArithmeticMatrixNumericExpr.MULT ->
-                    PRNG.eval(CNFG.replaceVectorMultOperandWithOther)
-                returnType is WGSLMatrixType && expr == BinaryArithmeticMatrixNumericExpr.MULT ->
-                    PRNG.eval(CNFG.replaceMatrixMultOperandWithOther)
-                returnType is WGSLVectorType                                                   ->
-                    PRNG.eval(CNFG.replaceVectorNonMultOperandWithScalar)
-                else                                                                           -> false
+        fun probEval(returnType: WGSLType): Boolean {
+            return when (returnType) {
+                is WGSLMatrixType -> PRNG.eval(CNFG.replaceMatrixBinaryOperandWithOtherType)
+                is WGSLVectorType -> PRNG.eval(CNFG.replaceVectorBinaryOperandWithOtherType)
+                else              -> false
             }
         }
     }

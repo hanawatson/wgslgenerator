@@ -37,7 +37,14 @@ fun main(/*args: Array<String>*/) {
     try {
         val processNaga = ProcessBuilder("cargo", "run", "../test.wgsl").directory(File("../naga")).start()
         processNaga.inputStream.reader(Charset.defaultCharset()).use { it.readText() }
-        println("naga: OK")
+        processNaga.errorStream.reader(Charset.defaultCharset()).use {
+            val errorText = it.readText()
+            if (errorText.isEmpty()) {
+                println("naga: OK")
+            } else {
+                println(errorText)
+            }
+        }
     } catch (e: Error) {
         println(e)
     }
