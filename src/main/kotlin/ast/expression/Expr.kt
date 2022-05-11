@@ -107,6 +107,7 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
 }
 
 internal enum class BuiltinFloatScalarExpr(override val operator: String, override val args: Int) : BuiltinExpr {
+    DETERMINANT("determinant", 1),
     DISTANCE("distance", 2),
     LENGTH("length", 1);
 }
@@ -150,6 +151,10 @@ internal enum class BuiltinIntegerExpr(override val operator: String, override v
 internal enum class BuiltinLogicalExpr(override val operator: String, override val args: Int) : BuiltinExpr {
     ALL("all", 1),
     ANY("any", 1);
+}
+
+internal enum class BuiltinMatrixExpr(override val operator: String, override val args: Int) : BuiltinExpr {
+    TRANSPOSE("transpose", 1);
 }
 
 internal interface ComparisonExpr : Expr
@@ -232,6 +237,7 @@ internal val allExprs = ArrayList<Expr>(
             BuiltinGeneralExpr.values().asList() +
             BuiltinIntegerExpr.values().asList() +
             BuiltinLogicalExpr.values().asList() +
+            BuiltinMatrixExpr.values().asList() +
             ComparisonEqExpr.values().asList() +
             ComparisonThExpr.values().asList() +
             ConversionBitcastExpr.values().asList() +

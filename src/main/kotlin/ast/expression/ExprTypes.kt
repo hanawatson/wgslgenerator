@@ -67,6 +67,10 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
         arrayListOf(scalarBoolType),
         BuiltinLogicalExpr.values().asList()
     ),
+    BUILTIN_MATRIX(
+        arrayListOf(abstractWGSLMatrixType),
+        BuiltinMatrixExpr.values().asList()
+    ),
     COMPARISON_EQ(
         arrayListOf(scalarBoolType),
         ComparisonEqExpr.values().asList()

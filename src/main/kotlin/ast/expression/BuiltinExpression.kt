@@ -69,6 +69,16 @@ internal class BuiltinExpression(
             if (returnType is WGSLScalarType) {
                 matchingVectorType = WGSLVectorType(returnType, 0)
             }
+            val matchingSquareMatrixTypes = ArrayList<WGSLType>()
+            if (returnType is WGSLScalarType) {
+                for (i in 2..4) {
+                    matchingSquareMatrixTypes.add(WGSLMatrixType(returnType, i, i))
+                }
+            }
+            var transposeMatrixType: WGSLType = abstractWGSLMatrixType
+            if (returnType is WGSLMatrixType) {
+                transposeMatrixType = WGSLMatrixType(returnType.componentType, returnType.length, returnType.width)
+            }
 
             when (expr) {
                 BuiltinArithmeticScalarExpr.DOT                -> {
@@ -82,6 +92,11 @@ internal class BuiltinExpression(
                     argTypeLists.add(arrayListOf(returnType, returnType, scalarFloatType))
                     argTypeLists.add(arrayListOf(returnType, returnType, returnType))
                 }
+                BuiltinFloatScalarExpr.DETERMINANT             -> {
+                    for (matchingSquareMatrixType in matchingSquareMatrixTypes) {
+                        argTypeLists.add(arrayListOf(matchingSquareMatrixType))
+                    }
+                }
                 BuiltinFloatScalarExpr.DISTANCE                -> {
                     argTypeLists.add(arrayListOf(scalarFloatType, scalarFloatType))
                     argTypeLists.add(arrayListOf(vectorFloatType, vectorFloatType))
@@ -94,7 +109,10 @@ internal class BuiltinExpression(
                     argTypeLists.add(arrayListOf(returnType, returnType, scalarFloatType))
                 }*/
                 BuiltinGeneralExpr.SELECT                      -> {
-                    argTypeLists.add(arrayListOf(returnType, returnType, matchingBoolType))
+                    argTypeLists.add(arrayListOf(returnType, returnType, scalarBoolType))
+                    if (matchingBoolType != scalarBoolType) {
+                        argTypeLists.add(arrayListOf(returnType, returnType, matchingBoolType))
+                    }
                 }
                 BuiltinIntegerExpr.EXTRACT_BITS                -> {
                     argTypeLists.add(arrayListOf(returnType, scalarUnIntType, scalarUnIntType))
@@ -114,6 +132,9 @@ internal class BuiltinExpression(
                 BuiltinLogicalExpr.ALL, BuiltinLogicalExpr.ANY -> {
                     // argTypeLists.add(arrayListOf(scalarBoolType))
                     argTypeLists.add(arrayListOf(vectorBoolType))
+                }
+                BuiltinMatrixExpr.TRANSPOSE                    -> {
+                    argTypeLists.add(arrayListOf(transposeMatrixType))
                 }
                 else                                           -> {
                     argTypeLists.add(ArrayList(generateSequence { returnType }.take(expr.args).toList()))
