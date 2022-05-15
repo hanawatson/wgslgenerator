@@ -4,48 +4,58 @@ import wgslsmith.wgslgenerator.ast.Shader
 import wgslsmith.wgslgenerator.utils.ConfigParser
 import wgslsmith.wgslgenerator.utils.PRNG
 import java.io.File
-import java.nio.charset.Charset
 
-fun main(/*args: Array<String>*/) {
-    val seed: Long? = null
-    if (seed != null) {
-        PRNG.initializeWithSeed(seed)
-    } else {
-        PRNG.initializeWithoutSeed()
+fun main(args: Array<String>) {
+    if (args.size != 3) {
+        throw Exception("Invalid arguments provided! Expecting 3, received ${args.size}.")
     }
-    ConfigParser()
 
-    val shader = Shader().generate()
-    println(shader)
-    println("Random seed: ${PRNG.seed}")
+    val seed = args[2].toLongOrNull()
+    if (seed == null && args[2] != "NULL") {
+        throw Exception("Invalid seed value provided! The provided seed must be a valid Long.")
+    }
 
-    File("../test.wgsl").writeText(shader.toString().replaceFirst("COMPUTE_STAGE", "stage(compute)"))
-    val processTint =
-        ProcessBuilder("./tint", "../../../test.wgsl"/*, "--validate"*/).directory(File("../tint/out/Debug")).start()
-    processTint.inputStream.reader(Charset.defaultCharset()).use { it.readText() }
-    processTint.errorStream.reader(Charset.defaultCharset()).use {
-        val errorText = it.readText()
-        if (errorText.isEmpty()) {
-            println("Tint: OK")
+    val outputText: String = try {
+        if (seed != null) {
+            PRNG.initializeWithSeed(seed)
         } else {
-            println(errorText)
+            PRNG.initializeWithoutSeed()
         }
+        ConfigParser()
+
+        val shader = Shader().generate()
+        "// Random seed: ${PRNG.seed}\n" +
+                shader.toString().replaceFirst("COMPUTE_STAGE", "stage(compute)")
+    } catch (e: Exception) {
+        println("Warning: internal error during shader creation!")
+        "Error generating WGSL shader: ${e.message}"
     }
 
 
-    File("../test.wgsl").writeText(shader.toString().replaceFirst("COMPUTE_STAGE", "compute"))
-    try {
-        val processNaga = ProcessBuilder("cargo", "run", "../test.wgsl").directory(File("../naga")).start()
-        processNaga.inputStream.reader(Charset.defaultCharset()).use { it.readText() }
-        processNaga.errorStream.reader(Charset.defaultCharset()).use {
-            val errorText = it.readText()
-            if (errorText.isEmpty()) {
-                println("naga: OK")
-            } else {
-                println(errorText)
-            }
-        }
-    } catch (e: Error) {
-        println(e)
+    if (args[0] != "NULL" && !args[0].endsWith(".wgsl")) {
+        throw Exception("Invalid output file path provided! The provided path must end with the .wgsl extension.")
+    }
+    if (args[0] != "NULL" && File(args[0].substringBeforeLast("/")).isDirectory) {
+        throw Exception("Invalid output file path provided! The provided path must be in an existing directory.")
+    }
+    var outputFilePath = if (args[0] == "NULL") "" else args[0]
+    if (args[1] == "1") {
+        outputFilePath = outputFilePath.replace(".wgsl", "")
+        outputFilePath += "${PRNG.seed}.wgsl"
+    }
+    val outputFile = if (outputFilePath != "") {
+        File(outputFilePath)
+    } else {
+        null
+    }
+    val outputFileCreated = outputFile?.createNewFile() ?: true
+    if (!outputFileCreated) {
+        throw Exception("Invalid output file path provided! A file must not already exist at the provided path.")
+    }
+
+    if (outputFile == null) {
+        println(outputText)
+    } else {
+        outputFile.writeText(outputText)
     }
 }
