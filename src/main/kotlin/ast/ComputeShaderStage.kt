@@ -3,10 +3,10 @@ package wgslsmith.wgslgenerator.ast
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 
-internal class ComputeShaderStage {
-    private lateinit var body: ScopeBody
+internal class ComputeShaderStage(symbolTable: SymbolTable) {
+    private var body: ScopeBody
 
-    fun generate(symbolTable: SymbolTable): ComputeShaderStage {
+    init {
         if (CNFG.prob(scalarUnIntType) > 0.0) {
             symbolTable.addNewNonWriteableSymbol("local_index", scalarUnIntType)
         }
@@ -18,7 +18,6 @@ internal class ComputeShaderStage {
         }
 
         body = ScopeBody(symbolTable, ScopeState.NONE, 0)
-        return this
     }
 
     override fun toString(): String {
@@ -42,7 +41,7 @@ internal class ComputeShaderStage {
         }
 
         // calculate checksum of globals - currently unimplemented and simply returns as 0
-        stringBuilder.append("\tchecksum = 0;\n")
+        stringBuilder.append("\tchecksum.output = 0;\n")
 
         stringBuilder.append("}")
         return stringBuilder.toString()

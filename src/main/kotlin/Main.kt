@@ -23,8 +23,8 @@ fun main(args: Array<String>) {
         }
         ConfigParser()
 
-        val shader = Shader().generate()
-        "// Random seed: ${PRNG.seed}\n" +
+        val shader = Shader()
+        "// Random seed: ${PRNG.seed}\n\n" +
                 shader.toString().replaceFirst("COMPUTE_STAGE", "stage(compute)")
     } catch (e: Exception) {
         println("Warning: internal error during shader creation!")
@@ -48,14 +48,14 @@ fun main(args: Array<String>) {
     } else {
         null
     }
-    val outputFileCreated = outputFile?.createNewFile() ?: true
-    if (!outputFileCreated) {
-        throw Exception("Invalid output file path provided! A file must not already exist at the provided path.")
-    }
-
-    if (outputFile == null) {
-        println(outputText)
+    if (outputFile != null) {
+        try {
+            outputFile.createNewFile()
+            outputFile.writeText(outputText)
+        } catch (e: Exception) {
+            println("Error writing WGSL shader to file: ${e.message}")
+        }
     } else {
-        outputFile.writeText(outputText)
+        println(outputText)
     }
 }
