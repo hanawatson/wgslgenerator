@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 
 @Serializable
 internal data class Config(
-    val typeConfig: TypeConfig, val exprConfig: ExprConfig, val statConfig: StatConfig
+    val typeConfig: TypeConfig, val exprConfig: ExprConfig, val statConfig: StatConfig, val moduleConfig: ModuleConfig
 )
 
 @Serializable
@@ -119,6 +119,26 @@ internal data class SubContextSpecificStatProbabilities(
 internal data class SubControlFlowStatProbabilities(
     val for_loop: Double, val if_else: Double, val loop: Double, val switch: Double, val while_loop: Double
 ) : SubStatProbabilities
+
+@Serializable
+internal data class ModuleConfig(
+    val moduleBounds: ModuleBounds, val moduleChanceOptions: ModuleChanceOptions, val moduleOptions: ModuleOptions
+)
+
+@Serializable
+internal data class ModuleBounds(
+    val max_consts: Int
+)
+
+@Serializable
+internal data class ModuleChanceOptions(
+    val generate_const: Double, val declare_const_with_let: Double
+)
+
+@Serializable
+internal data class ModuleOptions(
+    val use_output_buffer: Boolean
+)
 
 internal class ConfigParser(configFileContents: String) {
     init {

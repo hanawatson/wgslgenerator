@@ -41,9 +41,11 @@ internal class ComputeShaderStage(symbolTable: SymbolTable) {
             stringBuilder.append(bodyLine + "\n")
         }
 
-        // calculate checksum of globals - currently unimplemented and simply returns as 0
-        stringBuilder.append("\tchecksum.output = 0;\n")
-
+        if (CNFG.useOutputBuffer) {
+            // calculate checksum of globals - currently unimplemented and simply returns as 0
+            stringBuilder.append("\tchecksum.output = 0;\n")
+        }
+        
         stringBuilder.append("}")
         return stringBuilder.toString()
     }

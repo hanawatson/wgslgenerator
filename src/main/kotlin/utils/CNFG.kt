@@ -30,10 +30,16 @@ internal object CNFG {
     val maxStatementsInSwitchBody: Int by lazy { bounds[statBoundsStartIndex + 5] }
     val maxSwitchCases: Int by lazy { bounds[statBoundsStartIndex + 6] }
 
+    private var moduleBoundsStartIndex = 0
+    val maxConsts: Int by lazy { bounds[moduleBoundsStartIndex] }
+
     private var typeChanceOptionsStartIndex = 0
     val constructVectorWithSingleValue: Double by lazy { chanceOptions[typeChanceOptionsStartIndex] }
     val omitTypeFromDeclaration: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 1] }
-    val omitTypeFromCompositeConstruction: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 2] }
+    private val omitTypeFromCompositeConstructionUserdef: Double by lazy {
+        chanceOptions[typeChanceOptionsStartIndex + 2]
+    }
+    var omitTypeFromCompositeConstruction = 0.0
     val useHexadecimalNumericLiteral: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 3] }
 
     // temporarily set to 1 due to lack of recognition for un-suffixed unsigned integers in Tint
@@ -69,6 +75,10 @@ internal object CNFG {
     val omitForLoopInitializer: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 9] }
     val omitForLoopUpdate: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 10] }
 
+    private var moduleChanceOptionsStartIndex = 0
+    val declareConstWithLet: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex] }
+    val generateConst: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex] + 1 }
+
     private var exprOptionsStartIndex = 0
     val ensureComplexSubscriptAccessInBounds: Boolean by lazy { options[exprOptionsStartIndex] }
     val useExcessExpressionParentheses: Boolean by lazy { options[exprOptionsStartIndex + 1] }
@@ -83,6 +93,9 @@ internal object CNFG {
     val ensureNoDuplicateSwitchCases: Boolean by lazy { options[statOptionsStartIndex + 4] }
     val preventCodeAfterControlFlowInterruption: Boolean by lazy { options[statOptionsStartIndex + 5] }
     val preventFallthroughInLastSwitchCase: Boolean by lazy { options[statOptionsStartIndex + 6] }
+
+    private var moduleOptionsStartIndex = 0
+    val useOutputBuffer: Boolean by lazy { options[moduleOptionsStartIndex] }
 
     private val typeProbMap = HashMap<WGSLType, Double>()
     private val scalarProbTotal: Double by lazy {
@@ -176,7 +189,9 @@ internal object CNFG {
         val exprBoundsParameters = getParameterValues(ExprBounds::class, config.exprConfig.exprBounds)
         statBoundsStartIndex = exprBoundsStartIndex + exprBoundsParameters.size
         val statBoundsParameters = getParameterValues(StatBounds::class, config.statConfig.statBounds)
-        (typeBoundsParameters + exprBoundsParameters + statBoundsParameters).forEach {
+        moduleBoundsStartIndex = statBoundsStartIndex + statBoundsParameters.size
+        val moduleBoundsParameters = getParameterValues(ModuleBounds::class, config.moduleConfig.moduleBounds)
+        (typeBoundsParameters + exprBoundsParameters + statBoundsParameters + moduleBoundsParameters).forEach {
             bounds.add(it as Int)
         }
 
@@ -188,14 +203,23 @@ internal object CNFG {
         statChanceOptionsStartIndex = exprChanceOptionsStartIndex + exprChanceOptionsParameters.size
         val statChanceOptionsParameters =
             getParameterValues(StatChanceOptions::class, config.statConfig.statChanceOptions)
-        (typeChanceOptionsParameters + exprChanceOptionsParameters + statChanceOptionsParameters).forEach {
+        moduleChanceOptionsStartIndex = statChanceOptionsStartIndex + statChanceOptionsParameters.size
+        val moduleChanceOptionsParameters =
+            getParameterValues(ModuleChanceOptions::class, config.moduleConfig.moduleChanceOptions)
+        (typeChanceOptionsParameters + exprChanceOptionsParameters + statChanceOptionsParameters + moduleChanceOptionsParameters).forEach {
             chanceOptions.add(it as Double)
         }
+
+        // handle omitTypeFromCompositeConstruction differently due to lack of support in naga for type-omitted
+        // composite consts
+        omitTypeFromCompositeConstruction = omitTypeFromCompositeConstructionUserdef
 
         val exprOptionsParameters = getParameterValues(ExprOptions::class, config.exprConfig.exprOptions)
         statOptionsStartIndex = exprOptionsStartIndex + exprOptionsParameters.size
         val statOptionsParameters = getParameterValues(StatOptions::class, config.statConfig.statOptions)
-        (exprOptionsParameters + statOptionsParameters).forEach {
+        moduleOptionsStartIndex = statOptionsStartIndex + statOptionsParameters.size
+        val moduleOptionsParameters = getParameterValues(ModuleOptions::class, config.moduleConfig.moduleOptions)
+        (exprOptionsParameters + statOptionsParameters + moduleOptionsParameters).forEach {
             options.add(it as Boolean)
         }
 

@@ -109,6 +109,18 @@
         "switch": 1.0,
         "while_loop": 1.0
       }
+    },
+    "moduleConfig": {
+      "moduleBounds": {
+        "max_consts": 10
+      },
+      "moduleChanceOptions": {
+        "generate_const": 0.6,
+        "declare_const_with_let": 0.5
+      },
+      "moduleOptions": {
+        "use_output_buffer": true
+      }
     }
   }
 }
