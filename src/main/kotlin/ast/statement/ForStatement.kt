@@ -19,7 +19,7 @@ internal class ForStatement(symbolTable: SymbolTable, override var stat: Stat, d
         val forSymbolTable = symbolTable.copy()
 
         if (CNFG.ensureForLoopTermination) {
-            initSymbol = forSymbolTable.addNewNonWriteableSymbol("for$iteratorLabel", scalarIntType)
+            initSymbol = forSymbolTable.addNewNonWriteableSymbol(Symbol("for$iteratorLabel", scalarIntType))
             iteratorLabel++
         } else {
             if (!PRNG.eval(CNFG.omitForLoopInitializer)) {

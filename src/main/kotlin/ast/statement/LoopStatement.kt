@@ -17,7 +17,7 @@ internal class LoopStatement(
 
     init {
         if (CNFG.ensureLoopTermination) {
-            safeIteratorSymbol = symbolTable.addNewNonWriteableSymbol("loop$iteratorLabel", scalarIntType)
+            safeIteratorSymbol = symbolTable.addNewNonWriteableSymbol(Symbol("loop$iteratorLabel", scalarIntType))
             iteratorLabel++
         }
 

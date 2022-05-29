@@ -8,13 +8,13 @@ internal class ComputeShaderStage(symbolTable: SymbolTable) {
 
     init {
         if (CNFG.prob(scalarUnIntType) > 0.0) {
-            symbolTable.addNewNonWriteableSymbol("local_index", scalarUnIntType)
+            symbolTable.addNewNonWriteableSymbol(Symbol("local_index", scalarUnIntType))
         }
         if (CNFG.prob(vector3UnIntType) > 0.0) {
-            symbolTable.addNewNonWriteableSymbol("global_id", vector3UnIntType)
-            symbolTable.addNewNonWriteableSymbol("local_id", vector3UnIntType)
-            symbolTable.addNewNonWriteableSymbol("workgroup_id", vector3UnIntType)
-            symbolTable.addNewNonWriteableSymbol("num_workgroups", vector3UnIntType)
+            symbolTable.addNewNonWriteableSymbol(Symbol("global_id", vector3UnIntType))
+            symbolTable.addNewNonWriteableSymbol(Symbol("local_id", vector3UnIntType))
+            symbolTable.addNewNonWriteableSymbol(Symbol("workgroup_id", vector3UnIntType))
+            symbolTable.addNewNonWriteableSymbol(Symbol("num_workgroups", vector3UnIntType))
         }
         body = ScopeBody(symbolTable, ScopeState.NONE, 0)
     }

@@ -14,7 +14,7 @@ internal class WhileStatement(symbolTable: SymbolTable, override var stat: Stat,
 
     init {
         if (CNFG.ensureWhileLoopTermination) {
-            safeIteratorSymbol = symbolTable.addNewNonWriteableSymbol("while$iteratorLabel", scalarIntType)
+            safeIteratorSymbol = symbolTable.addNewNonWriteableSymbol(Symbol("while$iteratorLabel", scalarIntType))
             iteratorLabel++
         } else {
             whileCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, scalarBoolType, 0)

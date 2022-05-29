@@ -19,7 +19,7 @@ internal class IdentityExpression(
         if (expr == IdentityUniversalExpr.SYMBOL) {
             // indicates that no symbol of matching type yet exists
             // instead of continuing, find a new IdentityExpr (constructor, literal or zero value)
-            if (!symbolTable.hasWriteableOf(returnType)) {
+            if (!symbolTable.hasAnyOf(returnType)) {
                 val replacementExprs: ArrayList<Expr> = when (returnType) {
                     is WGSLScalarType -> arrayListOf(
                         IdentityScalarExpr.LITERAL,
@@ -75,6 +75,16 @@ internal class IdentityExpression(
         }
 
         return identityExpressionString
+    }
+
+    override fun getConstValue(): ArrayList<*> {
+        return when (expr) {
+            IdentityCompositeExpr.CONSTRUCTOR -> subExpression!!.getConstValue()
+            IdentityScalarExpr.LITERAL        -> subExpression!!.getConstValue()
+            IdentityUniversalExpr.SYMBOL      -> symbol!!.getConstValue()
+            IdentityUniversalExpr.ZERO_VALUE  -> subExpression!!.getConstValue()
+            else                              -> super.getConstValue()
+        }
     }
 
     companion object : ExpressionCompanion {

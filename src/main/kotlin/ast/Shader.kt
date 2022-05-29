@@ -8,6 +8,13 @@ class Shader {
     init {
         val symbolTable = SymbolTable()
         // globals/structs/functions generated here, globals should be added to table also
+
+        // temporarily disabled due to rejection of type omission in consts in naga
+        /*for (i in 1..20) {
+            val symbol = ModuleScope.generateNewConst()
+            symbolTable.addNewNonWriteableSymbol(symbol)
+        }*/
+
         computeShaderStage = ComputeShaderStage(symbolTable)
     }
 
@@ -20,6 +27,8 @@ class Shader {
         stringBuilder.append("}\n\n")
         stringBuilder.append("@group(0) @binding(0)\n")
         stringBuilder.append("var<storage, read_write> checksum: outputBuffer;\n\n")
+
+        //stringBuilder.append("$ModuleScope\n")
 
         // here we add globals/structs/functions. make sure to add extra lines between them
 

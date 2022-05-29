@@ -54,7 +54,7 @@
   "statConfig": {
     "statBounds": {
       "max_statement_nest_depth": 5,
-      "max_statements_in_body": 20,
+      "max_statements_in_body": 1,
       "max_statements_in_if_body": 3,
       "max_statements_in_loop_body": 5,
       "max_statements_in_switch_body": 3,

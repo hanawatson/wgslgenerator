@@ -2,10 +2,10 @@ package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.*
 
-internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Expr>) {
+internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Expr>, val areConsts: Boolean = false) {
     ACCESS_CONVENIENCE(
         arrayListOf(abstractWGSLScalarType, abstractWGSLVectorType),
-        AccessConvenienceExpr.values().asList()
+        AccessConvenienceExpr.values().asList(),
     ),
     ACCESS_SUBSCRIPT(
         arrayElementTypes,
@@ -97,15 +97,19 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
     ),
     IDENTITY_COMPOSITE(
         compositeTypes,
-        IdentityCompositeExpr.values().asList()
+        IdentityCompositeExpr.values().asList(),
+        areConsts = true
     ),
     IDENTITY_SCALAR(
         scalarTypes,
-        IdentityScalarExpr.values().asList()
+        IdentityScalarExpr.values().asList(),
+        areConsts = true
     ),
     IDENTITY_UNIVERSAL(
         allTypes,
-        IdentityUniversalExpr.values().asList()
+        IdentityUniversalExpr.values().asList(),
+        // disabled due to Tint and naga support lack of SYMBOL for consts, naga of ZERO_VALUE
+        areConsts = false // true
     ),
     UNARY_ARITHMETIC(
         arrayListOf(scalarFloatType, scalarIntType, vectorFloatType, vectorIntType),
@@ -131,20 +135,22 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
             throw Exception("Attempt to retrieve ExprTypes of unknown Expr $expr!")
         }
 
-        fun getExprs(returnType: WGSLType): ArrayList<Expr> {
+        fun getExprs(returnType: WGSLType, consts: Boolean = false): ArrayList<Expr> {
             val exprs = ArrayList<Expr>()
 
             for (exprType in ExprTypes.values()) {
-                var matchesType = false
-                for (type in exprType.types) {
-                    if (returnType == type || returnType.isRepresentedBy(type)) {
-                        matchesType = true
-                        break
+                if (!consts || exprType.areConsts) {
+                    var matchesType = false
+                    for (type in exprType.types) {
+                        if (returnType == type || returnType.isRepresentedBy(type)) {
+                            matchesType = true
+                            break
+                        }
                     }
-                }
 
-                if (matchesType) {
-                    exprs.addAll(exprType.exprs)
+                    if (matchesType) {
+                        exprs.addAll(exprType.exprs)
+                    }
                 }
             }
 

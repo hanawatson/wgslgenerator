@@ -14,6 +14,7 @@ internal class IdentityLiteralExpression(override val returnType: WGSLType, over
     private var literalSuffix: String = ""
 
     var literalValue: String
+    private val constValues: ArrayList<*>
 
     override var numberOfParentheses = 0
 
@@ -24,20 +25,27 @@ internal class IdentityLiteralExpression(override val returnType: WGSLType, over
         useHex = PRNG.eval(CNFG.useHexadecimalNumericLiteral)
 
         literalValue = when (returnType.type) {
-            Type.BOOL  -> "${PRNG.getRandomBool()}"
+            Type.BOOL  -> {
+                val bool = PRNG.getRandomBool()
+                constValues = arrayListOf(bool)
+                "$bool"
+            }
             Type.FLOAT -> {
                 literalSuffix = "f"
                 val float = PRNG.getRandomPositiveFloat()
+                constValues = arrayListOf(float)
                 if (useHex) toHexString(float) else "$float"
             }
             Type.INT   -> {
                 literalSuffix = "i"
                 val int = PRNG.getRandomIntInRange(0, Int.MAX_VALUE)
+                constValues = arrayListOf(int)
                 if (useHex) "0x${int.toString(16)}" else "$int"
             }
             Type.UNINT -> {
                 literalSuffix = "u"
                 val unInt = PRNG.getRandomUnIntInRange(0u, UInt.MAX_VALUE)
+                constValues = arrayListOf(unInt)
                 if (useHex) "0x${unInt.toString(16)}" else "$unInt"
             }
             else       -> throw Exception("Attempt to generate literal of unknown type $returnType!")
@@ -52,6 +60,10 @@ internal class IdentityLiteralExpression(override val returnType: WGSLType, over
     override fun toString(): String {
         if (!useSuffix) literalSuffix = ""
         return literalValue + literalSuffix
+    }
+
+    override fun getConstValue(): ArrayList<*> {
+        return constValues
     }
 
     override fun equals(other: Any?): Boolean {

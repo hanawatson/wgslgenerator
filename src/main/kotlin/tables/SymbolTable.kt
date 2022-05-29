@@ -47,23 +47,26 @@ internal class SymbolTable {
 
     fun hasWriteableOf(type: WGSLType) = !getSubtable(type).isEmpty(type, ofWriteable = true)
 
+    fun hasAnyOf(type: WGSLType) = !getSubtable(type).isEmpty(type, ofWriteable = false) || hasWriteableOf(type)
+
     private fun getNextNewSymbolName() = "var$newVarLabelIndex"
 
     fun declareNewWriteableSymbol(type: WGSLType) =
-        addSymbol(getNextNewSymbolName(), type, writeable = true, declared = true)
+        addSymbol(Symbol(getNextNewSymbolName(), type), writeable = true, declared = true)
 
     fun declareNewNonWriteableSymbol(type: WGSLType) =
-        addSymbol(getNextNewSymbolName(), type, writeable = false, declared = true)
+        addSymbol(Symbol(getNextNewSymbolName(), type), writeable = false, declared = true)
 
-    fun addNewNonWriteableSymbol(name: String, type: WGSLType) =
-        addSymbol(name, type, writeable = false, declared = false)
+    fun addNewNonWriteableSymbol(symbol: Symbol) =
+        addSymbol(symbol, writeable = false, declared = false)
 
-    private fun addSymbol(name: String, type: WGSLType, writeable: Boolean, declared: Boolean): Symbol {
-        val symbol = Symbol(name, type)
+    private fun addSymbol(symbol: Symbol, writeable: Boolean, declared: Boolean): Symbol {
+        val name = symbol.name
+        val type = symbol.type
         getSubtable(type).addSymbol(type, symbol, writeable)
         if (declared) newVarLabelIndex++
 
-        if ((type is WGSLVectorType || type is WGSLMatrixType || type is WGSLArrayType)
+        if (symbol !is ConstSymbol && (type is WGSLVectorType || type is WGSLMatrixType || type is WGSLArrayType)
             && CNFG.prob(AccessSubscriptExpr.SUBSCRIPT) > 0.0) {
             val componentSymbol = when (type) {
                 is WGSLVectorType -> Symbol("$name[${type.length}]", type.componentType)
@@ -73,12 +76,12 @@ internal class SymbolTable {
                     "Attempt to add recursive component symbols to SymbolTable of unknown type $type!"
                 )
             }
-            addSymbol(componentSymbol.name, componentSymbol.type, writeable, false)
+            addSymbol(Symbol(componentSymbol.name, componentSymbol.type), writeable, false)
         }
 
-        if (type is WGSLVectorType && CNFG.prob(AccessConvenienceExpr.CONVENIENCE) > 0.0) {
+        if (symbol !is ConstSymbol && type is WGSLVectorType && CNFG.prob(AccessConvenienceExpr.CONVENIENCE) > 0.0) {
             val componentSymbol = Symbol("$name.${type.length}v", type.componentType)
-            addSymbol(componentSymbol.name, componentSymbol.type, writeable, false)
+            addSymbol(Symbol(componentSymbol.name, componentSymbol.type), writeable, false)
         }
 
         return symbol
@@ -113,7 +116,11 @@ internal class SymbolTable {
                 ".${PRNG.getConvenienceLetterInBound(matchResult.groupValues[1].toInt(), getRandomBool())}"
             }
 
-            return Symbol(convenienceString, symbol.type)
+            return if (symbol is ConstSymbol) {
+                ConstSymbol(convenienceString, symbol.type, symbol.value)
+            } else {
+                Symbol(convenienceString, symbol.type)
+            }
         }
 
         throw Exception("Out-of-bounds symbol index generated!")

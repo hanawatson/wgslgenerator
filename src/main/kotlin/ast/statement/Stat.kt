@@ -6,17 +6,17 @@ internal interface AssignmentStat : Stat {
     val operator: String
 }
 
+internal enum class AssignmentCompoundStat(override val operator: String) : AssignmentStat {
+    BINARY_OPERATOR(""),
+    DECREMENT("--"),
+    INCREMENT("++");
+}
+
 internal enum class AssignmentEqStat(override val operator: String = "=") : AssignmentStat {
     ASSIGN_DECLARE,
     ASSIGN_LET,
     ASSIGN_PHONY,
     ASSIGN_SIMPLE;
-}
-
-internal enum class AssignmentCompoundStat(override val operator: String) : AssignmentStat {
-    BINARY_OPERATOR(""),
-    DECREMENT("--"),
-    INCREMENT("++");
 }
 
 internal enum class ControlFlowStat : Stat {

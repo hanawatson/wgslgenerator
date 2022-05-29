@@ -1,9 +1,6 @@
 package wgslsmith.wgslgenerator.ast.expression
 
-import wgslsmith.wgslgenerator.ast.WGSLArrayType
-import wgslsmith.wgslgenerator.ast.WGSLMatrixType
-import wgslsmith.wgslgenerator.ast.WGSLType
-import wgslsmith.wgslgenerator.ast.WGSLVectorType
+import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
@@ -70,6 +67,46 @@ internal class IdentityConstructorExpression(
                 )
             }
         }
+    }
+
+    override fun getConstValue(): ArrayList<*> {
+        val constValues = ArrayList<Any>()
+
+        when (returnType) {
+            is WGSLVectorType -> {
+                for (component in components) {
+                    constValues.addAll(component.getConstValue())
+                }
+            }
+            is WGSLMatrixType -> {
+                when (components[0].returnType) {
+                    is WGSLVectorType -> {
+                        for (component in components) {
+                            constValues.add(component.getConstValue())
+                        }
+                    }
+                    is WGSLScalarType -> {
+                        for (c in 0 until returnType.width) {
+                            val constSubValues = ArrayList<Any>()
+                            for (r in 0 until returnType.length) {
+                                constSubValues.add(components[c * returnType.length + r].getConstValue())
+                            }
+                            constValues.add(constSubValues)
+                        }
+                    }
+                    else              -> {
+                        constValues.addAll(components[0].getConstValue())
+                    }
+                }
+            }
+            is WGSLArrayType  -> {
+                for (component in components) {
+                    constValues.add(component.getConstValue())
+                }
+            }
+        }
+
+        return constValues
     }
 
     companion object : ExpressionCompanion {

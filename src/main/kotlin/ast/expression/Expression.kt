@@ -6,6 +6,7 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal object ExpressionGenerator {
+    private var isGeneratingConsts = false
     fun getUsefulParenthesizedExpressionString(expression: Expression): String {
         return if (CNFG.useUsefulExpressionParentheses && (expression is BinaryExpression
                     || expression is ComparisonExpression)) {
@@ -15,14 +16,18 @@ internal object ExpressionGenerator {
         }
     }
 
-    fun getExpressionWithoutReturnType(symbolTable: SymbolTable, depth: Int) =
-        getExpressionFromList(symbolTable, PRNG.getRandomTypeFrom(allTypes), null, depth)
+    fun getConstExpressionWithReturnType(symbolTable: SymbolTable, returnType: WGSLType, depth: Int): Expression {
+        isGeneratingConsts = true
+        val expression = getExpressionWithReturnType(symbolTable, returnType, depth)
+        isGeneratingConsts = false
+        return expression
+    }
 
     fun getExpressionWithReturnType(symbolTable: SymbolTable, returnType: WGSLType, depth: Int) =
-        getExpressionFromList(symbolTable, returnType, ExprTypes.getExprs(returnType), depth)
+        getExpressionFromList(symbolTable, returnType, ExprTypes.getExprs(returnType, isGeneratingConsts), depth)
 
     private fun getExpressionFromList(
-        symbolTable: SymbolTable, returnType: WGSLType, exprs: ArrayList<Expr>?, depth: Int
+        symbolTable: SymbolTable, returnType: WGSLType, exprs: ArrayList<Expr>, depth: Int
     ): Expression {
         val possibleExprs = ArrayList<Expr>()
         if (depth >= CNFG.maxExpressionNestDepth - 1) {
@@ -36,10 +41,8 @@ internal object ExpressionGenerator {
                     "Unable to generate non-recursive Expression for unknown type $returnType!"
                 )
             }
-        } else if (exprs != null) {
-            possibleExprs += exprs
         } else {
-            possibleExprs += ExprTypes.getExprs(returnType)
+            possibleExprs += exprs
         }
 
         return when (val expr = PRNG.getRandomExprFrom(possibleExprs)) {
@@ -60,6 +63,8 @@ internal interface Expression {
     val returnType: WGSLType
     var expr: Expr
     var numberOfParentheses: Int
+
+    fun getConstValue(): ArrayList<*> = throw Exception("Attempt to evaluate constValue of non-const Expression $this!")
 }
 
 internal interface ExpressionCompanion {
