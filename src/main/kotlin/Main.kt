@@ -5,9 +5,7 @@ import wgslsmith.wgslgenerator.utils.ConfigParser
 import wgslsmith.wgslgenerator.utils.PRNG
 import java.io.File
 
-fun main(/*args: Array<String>*/) {
-    val args = arrayOf("0")
-
+fun main(args: Array<String>) {
     var configFile: File? = null
     var output: String? = null
     var inputSeed: Long? = null
