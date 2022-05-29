@@ -6,56 +6,98 @@ import wgslsmith.wgslgenerator.utils.PRNG
 import java.io.File
 
 fun main(args: Array<String>) {
-    if (args.size != 3) {
-        throw Exception("Invalid arguments provided! Expecting 3, received ${args.size}.")
-    }
+    var configFile: File? = null
+    var output: String? = null
+    var inputSeed: Long? = null
 
-    val seed = args[2].toLongOrNull()
-    if (seed == null && args[2] != "NULL") {
-        throw Exception("Invalid seed value provided! The provided seed must be a valid Long.")
-    }
-
-    val outputText: String = try {
-        if (seed != null) {
-            PRNG.initializeWithSeed(seed)
-        } else {
-            PRNG.initializeWithoutSeed()
+    for (arg in args) {
+        when {
+            arg.startsWith("out:")  -> {
+                output = arg.removePrefix("out:").ifBlank { null }
+            }
+            arg.startsWith("conf:") -> {
+                configFile = if (arg.removePrefix("conf:").isBlank()) null else {
+                    File(arg.removePrefix("conf:"))
+                }
+            }
+            arg.startsWith("seed:") -> {
+                inputSeed = if (arg.removePrefix("seed:").isBlank()) null else {
+                    val seedAsLong = arg.removePrefix("seed:").toLongOrNull()
+                    if (seedAsLong == null) {
+                        System.err.println("Error: provided seed is not a valid Long.")
+                        return
+                    }
+                    seedAsLong
+                }
+            }
         }
-        ConfigParser()
+    }
 
-        val shader = Shader()
-        "// Random seed: ${PRNG.seed}\n\n" +
-                shader.toString().replaceFirst("COMPUTE_STAGE", "stage(compute)")
+    val randomizeOutputFile = args[0] == "1"
+
+    val config = try {
+        if (configFile == null) {
+            val defaultConfig = File("src/main/resources/tintAndNagaConfig.json")
+            if (!defaultConfig.isFile) {
+                System.err.println("Error: default config file could not be found in expected location.")
+                return
+            }
+            configFile = defaultConfig
+        }
+
+        configFile.readText()
     } catch (e: Exception) {
-        println("Warning: internal error during shader creation!")
-        "Error generating WGSL shader: ${e.message}"
+        System.err.println(
+            "Error: failed to read config file. Internal error follows." +
+                    "\n\n\t${e.message?.replace("\n", "\n\t")}"
+        )
+        return
     }
 
+    try {
+        PRNG.initialize(inputSeed)
+        ConfigParser(config)
+    } catch (e: Exception) {
+        System.err.println(
+            "Error: failed to initialize internal tools. Internal error follows." +
+                    "\n\n\t${e.message?.replace("\n", "\n\t")}"
+        )
+        return
+    }
 
-    if (args[0] != "NULL" && !args[0].endsWith(".wgsl")) {
-        throw Exception("Invalid output file path provided! The provided path must end with the .wgsl extension.")
+    val outputText: String
+
+    try {
+        val shader = Shader()
+        val seedComment = "// Random seed: ${PRNG.getSeed()}"
+        outputText = "$seedComment\n\n$shader"
+    } catch (e: Exception) {
+        System.err.println(
+            "Error: failed to generate WGSL shader. Internal error follows." +
+                    "\n\n\t${e.message?.replace("\n", "\n\t")}"
+        )
+        return
     }
-    if (args[0] != "NULL" && File(args[0].substringBeforeLast("/")).isDirectory) {
-        throw Exception("Invalid output file path provided! The provided path must be in an existing directory.")
-    }
-    var outputFilePath = if (args[0] == "NULL") "" else args[0]
-    if (args[1] == "1") {
-        outputFilePath = outputFilePath.replace(".wgsl", "")
-        outputFilePath += "${PRNG.seed}.wgsl"
-    }
-    val outputFile = if (outputFilePath != "") {
-        File(outputFilePath)
-    } else {
-        null
-    }
-    if (outputFile != null) {
-        try {
+
+    try {
+        if (output?.isNotBlank() == true || randomizeOutputFile) {
+            val outputFull = if (randomizeOutputFile) {
+                (output ?: "").removeSuffix(".wgsl") + PRNG.getSeed() + ".wgsl"
+            } else {
+                output
+            }
+
+            val outputFile = File(outputFull)
             outputFile.createNewFile()
             outputFile.writeText(outputText)
-        } catch (e: Exception) {
-            println("Error writing WGSL shader to file: ${e.message}")
+        } else {
+            println(outputText)
         }
-    } else {
-        println(outputText)
+    } catch (e: Exception) {
+        System.err.println(
+            "Error: failed to write to output shader file. Internal error follows." +
+                    "\n\n\t${e.message?.replace("\n", "\n\t")}"
+        )
+        return
     }
 }

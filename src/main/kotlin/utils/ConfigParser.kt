@@ -3,7 +3,6 @@ package wgslsmith.wgslgenerator.utils
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import java.io.File
 
 @Serializable
 internal data class Config(
@@ -121,18 +120,10 @@ internal data class SubControlFlowStatProbabilities(
     val for_loop: Double, val if_else: Double, val loop: Double, val switch: Double, val while_loop: Double
 ) : SubStatProbabilities
 
-internal class ConfigParser(configPath: String) {
-    // default config path
-    constructor() : this("src/main/resources/tintAndNagaConfig.json")
-
+internal class ConfigParser(configFileContents: String) {
     init {
-        val configString = try {
-            File(configPath).readText()
-        } catch (exception: Exception) {
-            throw Exception("Invalid file path provided!")
-        }
         val config = try {
-            Json.decodeFromString<Config>(configString)
+            Json.decodeFromString<Config>(configFileContents)
         } catch (exception: Exception) {
             throw Exception("Invalid config file provided!")
         }

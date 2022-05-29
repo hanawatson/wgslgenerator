@@ -14,24 +14,19 @@ import kotlin.random.nextUInt
 // PseudoRandomNumberGenerator
 internal object PRNG {
     private var initialized = false
-    var seed: Long = 0
+    private var seed: Long = 0
 
     private lateinit var random: Random
 
-    fun initializeWithSeed(seed: Long) {
-        if (initialized) {
-            throw Exception("Pseudorandom generator already initialized!")
-        }
-        this.seed = seed
-        random = Random(seed)
-        initialized = true
-    }
+    fun getSeed() = seed
 
-    fun initializeWithoutSeed() {
+    fun initialize(seed: Long?) {
         if (initialized) {
             throw Exception("Pseudorandom generator already initialized!")
         }
-        initializeWithSeed(Random.Default.nextLong())
+        this.seed = seed ?: Random.Default.nextLong()
+        random = Random(this.seed)
+        initialized = true
     }
 
     fun eval(probabilityThreshold: Double): Boolean {

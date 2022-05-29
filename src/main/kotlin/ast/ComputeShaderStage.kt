@@ -16,15 +16,16 @@ internal class ComputeShaderStage(symbolTable: SymbolTable) {
             symbolTable.addNewNonWriteableSymbol("workgroup_id", vector3UnIntType)
             symbolTable.addNewNonWriteableSymbol("num_workgroups", vector3UnIntType)
         }
-
         body = ScopeBody(symbolTable, ScopeState.NONE, 0)
     }
 
     override fun toString(): String {
         val stringBuilder = StringBuilder()
-        // temporary workaround for Tint and naga recognising opposite ways of declaring compute stage
-        stringBuilder.append("@COMPUTE_STAGE @workgroup_size(1)\n")
-        stringBuilder.append("fn compute_main(\n")
+        stringBuilder.append("@stage(compute) @workgroup_size(1)\n")
+
+        // defined as "main" to ensure compatibility with wgslsmith harness
+        stringBuilder.append("fn main(\n")
+
         if (CNFG.prob(scalarUnIntType) > 0.0) {
             stringBuilder.append("\t@builtin(local_invocation_index) local_index: u32,\n")
         }
