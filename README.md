@@ -1,7 +1,7 @@
 # wgslgenerator
 
 This tool can be used to generate random shaders in [WebGPU Shading Language](https://gpuweb.github.io/gpuweb/wgsl/). It
-can be used with [wgslsmith](https://github.com/hanawatson/wgslsmith) to faciliate the testing of
+can be used with [wgslrunner](https://github.com/hanawatson/wgslrunner) to faciliate the testing of
 the [Dawn](https://dawn.googlesource.com/dawn/) and [wgpu](https://github.com/gfx-rs/wgpu) WebGPU APIs, as well as their
 respective WGSL compilers [Tint](https://dawn.googlesource.com/tint) and [naga](https://github.com/gfx-rs/naga).
 
@@ -57,9 +57,9 @@ Additionally, care should be taken with some values (e.g. maximums such as `max_
 generating more of something such as `generate_parentheses_around_expression`), as setting them too high may cause
 extremely long runtimes or terminations due to overflow.
 
-If used with wgslsmith, some wgslgenerator configuration options can be useful in disabling/suppressing parts of the
-generator that generate code that may trigger bugs in the tools tested by wgslsmith. Configuration files can be directly
-passed to wgslsmith: more about this can be found in the wgslsmith documentation.
+If used with wgslrunner, some wgslgenerator configuration options can be useful in disabling/suppressing parts of the
+generator that generate code that may trigger bugs in the tools tested by wgslrunner. Configuration files can be directly
+passed to wgslrunner: more about this can be found in the wgslrunner documentation.
 
 ## Requirements
 
