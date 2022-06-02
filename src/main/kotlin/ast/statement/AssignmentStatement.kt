@@ -5,6 +5,7 @@ import wgslsmith.wgslgenerator.ast.expression.*
 import wgslsmith.wgslgenerator.ast.expression.BinaryExpression.Companion.probEval
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.CNFG.nagaSafe
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class AssignmentStatement(
@@ -77,8 +78,8 @@ internal class AssignmentStatement(
             val rhsType = PRNG.getRandomTypeFrom(lhsRhsTypes.unzip().second as ArrayList<WGSLType>)
             rhs = ExpressionGenerator.getExpressionWithReturnType(symbolTable, rhsType, 0)
 
-            // temporary code to handle lack of implementation in naga of mixed operands during compound assignment
-            if (rhs.returnType != type) {
+            // handle lack of implementation in naga of mixed operands during compound assignment
+            if (nagaSafe && rhs.returnType != type) {
                 val rhsNonMixedType =
                     if (exprEquivalent == BinaryArithmeticMatrixNumericExpr.MULT && type is WGSLMatrixType) {
                         if (rhs.returnType is WGSLMatrixType) {

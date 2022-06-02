@@ -1,6 +1,8 @@
 package wgslsmith.wgslgenerator.ast.expression
 
 import wgslsmith.wgslgenerator.ast.*
+import wgslsmith.wgslgenerator.utils.CNFG.nagaSafe
+import wgslsmith.wgslgenerator.utils.CNFG.tintSafe
 
 internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Expr>, val areConsts: Boolean = false) {
     ACCESS_CONVENIENCE(
@@ -108,8 +110,8 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
     IDENTITY_UNIVERSAL(
         allTypes,
         IdentityUniversalExpr.values().asList(),
-        // disabled due to Tint and naga support lack of SYMBOL for consts, naga of ZERO_VALUE
-        areConsts = false // true
+        // disable due to Tint and naga support lack of SYMBOL for consts, naga of ZERO_VALUE
+        areConsts = !nagaSafe && !tintSafe
     ),
     UNARY_ARITHMETIC(
         arrayListOf(scalarFloatType, scalarIntType, vectorFloatType, vectorIntType),

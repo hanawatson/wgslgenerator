@@ -2,7 +2,6 @@ package wgslsmith.wgslgenerator.ast.expression
 
 internal interface Expr {
     val operator: String
-    // val probability: Int
 }
 
 internal interface AccessExpr : Expr
@@ -61,17 +60,8 @@ internal enum class BuiltinArithmeticScalarExpr(override val operator: String, o
 
 internal enum class BuiltinFloatExpr(override val operator: String, override val args: Int) : BuiltinExpr {
     ACOS("acos", 1),
-
-    // temporarily commented due to lack of implementation in Tint and naga
-    // ACOSH("acosh", 1),
     ASIN("asin", 1),
-
-    // temporarily commented due to lack of implementation in Tint and naga
-    // ASINH("asinh", 1),
     ATAN("atan", 1),
-
-    // temporarily commented due to lack of implementation in Tint and naga
-    // ATANH("atanh", 1),
     ATAN2("atan2", 2),
     CEIL("ceil", 1),
     COS("cos", 1),
@@ -85,14 +75,14 @@ internal enum class BuiltinFloatExpr(override val operator: String, override val
     INVERSE_SQRT("inverseSqrt", 1),
 
     // temporarily commented due to nonfunctional implementation in naga
-    // LDEXP("ldexp", 2),
+    LDEXP("ldexp", 2),
     LOG("log", 1),
     LOG2("log2", 1),
     MIX("mix", 3),
     POW("pow", 2),
 
     // temporarily commented due to lack of implementation in Tint and naga
-    // QUANTIZE_TO_F16("quantizeToF16", 1),
+    QUANTIZE_TO_F16("quantizeToF16", 1),
     RADIANS("radians", 1),
     ROUND("round", 1),
     SIGN("sign", 1),
@@ -113,13 +103,12 @@ internal enum class BuiltinFloatScalarExpr(override val operator: String, overri
 }
 
 internal enum class BuiltinFloatVectorExpr(override val operator: String, override val args: Int) : BuiltinExpr {
-    // temporarily commented due to lack of implementation in Tint and naga
     FACE_FORWARD("faceForward", 3),
     NORMALIZE("normalize", 1),
     REFLECT("reflect", 2),
 
     // temporarily commented out due to lack of implementation in naga
-    // REFRACT("refract", 3);
+    REFRACT("refract", 3);
 }
 
 internal enum class BuiltinFloatVector3Expr(override val operator: String, override val args: Int) : BuiltinExpr {
@@ -132,11 +121,11 @@ internal enum class BuiltinGeneralExpr(override val operator: String, override v
 
 internal enum class BuiltinIntegerExpr(override val operator: String, override val args: Int) : BuiltinExpr {
     // temporarily commented out due to lack of implementation in naga
-    // COUNT_LEADING_ZEROS("countLeadingZeros", 1),
+    COUNT_LEADING_ZEROS("countLeadingZeros", 1),
     COUNT_ONE_BITS("countOneBits", 1),
 
     // temporarily commented out due to lack of implementation in naga
-    // COUNT_TRAILING_ZEROS("countTrailingZeros", 1),
+    COUNT_TRAILING_ZEROS("countTrailingZeros", 1),
     FIRST_LEADING_BIT("firstLeadingBit", 1),
     FIRST_TRAILING_BIT("firstTrailingBit", 1),
     EXTRACT_BITS("extractBits", 3),
@@ -144,8 +133,8 @@ internal enum class BuiltinIntegerExpr(override val operator: String, override v
     REVERSE_BITS("reverseBits", 1),
 
     // temporarily commented out due to lack of implementation in Tint and naga
-    // SHIFT_LEFT("shiftLeft", 2),
-    // SHIFT_RIGHT("shiftRight", 2);
+    SHIFT_LEFT("shiftLeft", 2),
+    SHIFT_RIGHT("shiftRight", 2);
 }
 
 internal enum class BuiltinLogicalExpr(override val operator: String, override val args: Int) : BuiltinExpr {
@@ -220,37 +209,6 @@ internal enum class UnaryLogicalExpr(override val operator: String) : UnaryExpr 
     NOT("!");
 }
 
-internal val allExprs = ArrayList<Expr>(
-    AccessConvenienceExpr.values().asList() +
-            AccessSubscriptExpr.values().asList() +
-            BinaryArithmeticMatrixNumericExpr.values().asList() +
-            BinaryArithmeticNumericExpr.values().asList() +
-            BinaryBitExpr.values().asList() +
-            BinaryLogicalExpr.values().asList() +
-            BinaryLogicalScalarExpr.values().asList() +
-            BuiltinArithmeticExpr.values().asList() +
-            BuiltinArithmeticScalarExpr.values().asList() +
-            BuiltinFloatExpr.values().asList() +
-            BuiltinFloatScalarExpr.values().asList() +
-            BuiltinFloatVectorExpr.values().asList() +
-            BuiltinFloatVector3Expr.values().asList() +
-            BuiltinGeneralExpr.values().asList() +
-            BuiltinIntegerExpr.values().asList() +
-            BuiltinLogicalExpr.values().asList() +
-            BuiltinMatrixExpr.values().asList() +
-            ComparisonEqExpr.values().asList() +
-            ComparisonThExpr.values().asList() +
-            ConversionBitcastExpr.values().asList() +
-            ConversionGeneralExpr.values().asList() +
-            DataPackExpr.values().asList() +
-            DataUnpackExpr.values().asList() +
-            IdentityCompositeExpr.values().asList() +
-            IdentityScalarExpr.values().asList() +
-            IdentityUniversalExpr.values().asList() +
-            UnaryArithmeticExpr.values().asList() +
-            UnaryBitExpr.values().asList() +
-            UnaryLogicalExpr.values().asList()
-)
 internal val compoundAssignableExprs = ArrayList<Expr>(
     BinaryArithmeticMatrixNumericExpr.values().asList() +
             BinaryArithmeticNumericExpr.values().asList() +

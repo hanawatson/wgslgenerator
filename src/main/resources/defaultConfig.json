@@ -6,7 +6,7 @@
     },
     "typeChanceOptions": {
       "omit_type_from_declaration": 0.2,
-      "omit_type_from_composite_construction": 0.0,
+      "omit_type_from_composite_construction": 0.2,
       "use_hexadecimal_numeric_literal": 0.3,
       "use_suffix_with_numeric_literal": 0.5,
       "construct_vector_with_single_value": 0.2
@@ -37,8 +37,8 @@
     "exprOptions": {
       "use_necessary_expression_parentheses": true,
       "use_useful_expression_parentheses": true,
-      "use_excess_expression_parentheses": true,
-      "ensure_complex_subscript_access_in_bounds": true
+      "use_excess_expression_parentheses": false,
+      "ensure_complex_subscript_access_in_bounds": false
     },
     "exprProbabilities": {
       "binary_operation": 1.0,
@@ -53,23 +53,23 @@
   },
   "statConfig": {
     "statBounds": {
-      "max_statement_nest_depth": 5,
-      "max_statements_in_body": 40,
-      "max_statements_in_if_body": 5,
+      "max_statement_nest_depth": 10,
+      "max_statements_in_body": 20,
+      "max_statements_in_if_body": 3,
       "max_statements_in_loop_body": 5,
-      "max_statements_in_switch_body": 5,
+      "max_statements_in_switch_body": 3,
       "max_if_else_branches": 5,
-      "max_switch_cases": 10
+      "max_switch_cases": 5
     },
     "statChanceOptions": {
-      "generate_statement": 1.0,
+      "generate_statement": 0.75,
       "generate_continuing_block": 0.8,
-      "generate_continuing_break_if_statement": 0.5,
+      "generate_continuing_break_if_statement": 0.0,
       "generate_if_else_branch": 0.3,
       "generate_else_branch": 0.6,
       "generate_switch_case": 0.4,
-      "generate_default_switch_case_before_last": 0.1,
-      "assign_expression_to_new_variable": 0.4,
+      "generate_default_switch_case_before_last": 0.5,
+      "assign_expression_to_new_variable": 0.6,
       "omit_for_loop_initializer": 0.2,
       "omit_for_loop_condition": 0.2,
       "omit_for_loop_update": 0.2
@@ -80,7 +80,7 @@
       "ensure_continue_is_valid": true,
       "ensure_for_loop_termination": true,
       "ensure_loop_termination": true,
-      "ensure_while_loop_termination": true,
+      "ensure_while_loop_termination": false,
       "ensure_no_duplicate_switch_cases": true
     },
     "statProbabilities": {
@@ -101,7 +101,7 @@
         "switch_break": 1.0,
         "switch_fallthrough": 1.0
       },
-      "control_flow": 1.0,
+      "control_flow": 0.6,
       "sub_control_flow": {
         "for_loop": 1.0,
         "if_else": 1.0,
@@ -109,18 +109,18 @@
         "switch": 1.0,
         "while_loop": 1.0
       }
+    }
+  },
+  "moduleConfig": {
+    "moduleBounds": {
+      "max_consts": 5
     },
-    "moduleConfig": {
-      "moduleBounds": {
-        "max_consts": 10
-      },
-      "moduleChanceOptions": {
-        "generate_const": 0.6,
-        "declare_const_with_let": 0.5
-      },
-      "moduleOptions": {
-        "use_output_buffer": true
-      }
+    "moduleChanceOptions": {
+      "generate_const": 0.4,
+      "declare_const_with_let": 0.5
+    },
+    "moduleOptions": {
+      "use_output_buffer": true
     }
   }
 }

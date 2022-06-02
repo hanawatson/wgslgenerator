@@ -3,6 +3,7 @@ package wgslsmith.wgslgenerator.ast.expression
 import wgslsmith.wgslgenerator.ast.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.CNFG.nagaSafe
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class BuiltinExpression(
@@ -58,12 +59,12 @@ internal class BuiltinExpression(
             val argTypeLists = ArrayList<ArrayList<WGSLType>>()
 
             var matchingBoolType: WGSLType = WGSLScalarType(Type.BOOL)
-            // var matchingIntType: WGSLType = WGSLScalarType(Type.INT)
-            // var matchingUnIntType: WGSLType = WGSLScalarType(Type.UNINT)
+            var matchingIntType: WGSLType = WGSLScalarType(Type.INT)
+            var matchingUnIntType: WGSLType = WGSLScalarType(Type.UNINT)
             if (returnType is WGSLVectorType) {
                 matchingBoolType = WGSLVectorType(matchingBoolType as WGSLScalarType, returnType.length)
-                // matchingIntType = WGSLVectorType(matchingIntType as WGSLScalarType, returnType.length)
-                // matchingUnIntType = WGSLVectorType(matchingUnIntType as WGSLScalarType, 0)
+                matchingIntType = WGSLVectorType(matchingIntType as WGSLScalarType, returnType.length)
+                matchingUnIntType = WGSLVectorType(matchingUnIntType as WGSLScalarType, 0)
             }
             var matchingVectorType: WGSLType = abstractWGSLVectorType
             if (returnType is WGSLScalarType) {
@@ -84,9 +85,9 @@ internal class BuiltinExpression(
                 BuiltinArithmeticScalarExpr.DOT                -> {
                     argTypeLists.add(arrayListOf(matchingVectorType, matchingVectorType))
                 }
-                /*BuiltinFloatExpr.LDEXP                         -> {
+                BuiltinFloatExpr.LDEXP                         -> {
                     argTypeLists.add(arrayListOf(returnType, matchingIntType))
-                }*/
+                }
                 BuiltinFloatExpr.MIX                           -> {
                     // cover both the linear and component versions of the mix function
                     argTypeLists.add(arrayListOf(returnType, returnType, scalarFloatType))
@@ -105,9 +106,9 @@ internal class BuiltinExpression(
                     argTypeLists.add(arrayListOf(scalarFloatType))
                     argTypeLists.add(arrayListOf(vectorFloatType))
                 }
-                /*BuiltinFloatVectorExpr.REFRACT                 -> {
+                BuiltinFloatVectorExpr.REFRACT                 -> {
                     argTypeLists.add(arrayListOf(returnType, returnType, scalarFloatType))
-                }*/
+                }
                 BuiltinGeneralExpr.SELECT                      -> {
                     argTypeLists.add(arrayListOf(returnType, returnType, scalarBoolType))
                     if (matchingBoolType != scalarBoolType) {
@@ -120,17 +121,15 @@ internal class BuiltinExpression(
                 BuiltinIntegerExpr.INSERT_BITS                 -> {
                     argTypeLists.add(arrayListOf(returnType, returnType, scalarUnIntType, scalarUnIntType))
                 }
-                /*BuiltinIntegerExpr.SHIFT_LEFT                  -> {
+                BuiltinIntegerExpr.SHIFT_LEFT                  -> {
                     argTypeLists.add(arrayListOf(returnType, matchingUnIntType))
                 }
                 BuiltinIntegerExpr.SHIFT_RIGHT                 -> {
                     argTypeLists.add(arrayListOf(returnType, matchingUnIntType))
-                }*/
-
-                // temporarily restricted to vectorBools only due to nonfunctional implementation
-                // acting on scalarBools in naga
+                }
+                // restrict to vectorBools only due to nonfunctional implementation acting on scalarBools in naga
                 BuiltinLogicalExpr.ALL, BuiltinLogicalExpr.ANY -> {
-                    // argTypeLists.add(arrayListOf(scalarBoolType))
+                    if (!nagaSafe) argTypeLists.add(arrayListOf(scalarBoolType))
                     argTypeLists.add(arrayListOf(vectorBoolType))
                 }
                 BuiltinMatrixExpr.TRANSPOSE                    -> {

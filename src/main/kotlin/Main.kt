@@ -1,6 +1,7 @@
 package wgslsmith.wgslgenerator
 
 import wgslsmith.wgslgenerator.ast.Shader
+import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.ConfigParser
 import wgslsmith.wgslgenerator.utils.PRNG
 import java.io.File
@@ -10,7 +11,8 @@ fun main(args: Array<String>) {
     var output: String? = null
     var inputSeed: Long? = null
 
-    for (arg in args) {
+    val mandatoryArguments = 3
+    for (arg in args.drop(mandatoryArguments)) {
         when {
             arg.startsWith("out:")  -> {
                 output = arg.removePrefix("out:").ifBlank { null }
@@ -34,10 +36,12 @@ fun main(args: Array<String>) {
     }
 
     val randomizeOutputFile = args[0] == "1"
+    CNFG.tintSafe = args[1] == "1"
+    CNFG.nagaSafe = args[2] == "1"
 
     val config = try {
         if (configFile == null) {
-            val defaultConfig = File("src/main/resources/tintAndNagaConfig.json")
+            val defaultConfig = File("src/main/resources/defaultConfig.json")
             if (!defaultConfig.isFile) {
                 System.err.println("Error: default config file could not be found in expected location.")
                 return

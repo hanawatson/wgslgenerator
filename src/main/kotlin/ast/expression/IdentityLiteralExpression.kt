@@ -5,6 +5,8 @@ import wgslsmith.wgslgenerator.ast.WGSLType
 import wgslsmith.wgslgenerator.ast.scalarIntType
 import wgslsmith.wgslgenerator.ast.scalarUnIntType
 import wgslsmith.wgslgenerator.utils.CNFG
+import wgslsmith.wgslgenerator.utils.CNFG.nagaSafe
+import wgslsmith.wgslgenerator.utils.CNFG.tintSafe
 import wgslsmith.wgslgenerator.utils.PRNG
 import java.lang.Float.toHexString
 
@@ -20,8 +22,8 @@ internal class IdentityLiteralExpression(override val returnType: WGSLType, over
 
     init {
         useSuffix = PRNG.eval(CNFG.useSuffixWithNumericLiteral)
-        // temporary mandating of numeric suffixes due to unsupported status in naga
-        useSuffix = returnType == scalarUnIntType
+        // enable and make mandatory u suffixes only due to lack of implementation in Tint and naga
+        useSuffix = if (tintSafe || nagaSafe) returnType == scalarUnIntType else false
         useHex = PRNG.eval(CNFG.useHexadecimalNumericLiteral)
 
         literalValue = when (returnType.type) {

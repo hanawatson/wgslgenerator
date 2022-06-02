@@ -41,16 +41,12 @@ internal object CNFG {
     }
     var omitTypeFromCompositeConstruction = 0.0
     val useHexadecimalNumericLiteral: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 3] }
-
-    // temporarily set to 1 due to lack of recognition for un-suffixed unsigned integers in Tint
-    //val useSuffixWithNumericLiteral: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 4] }
-    const val useSuffixWithNumericLiteral = 1.0
+    private val useSuffixWithNumericLiteralUserdef: Double by lazy { chanceOptions[typeChanceOptionsStartIndex + 4] }
+    var useSuffixWithNumericLiteral = 0.0
 
     private var exprChanceOptionsStartIndex = 0
-
-    // temporarily set to 1 due to lack of naga support
-    // val generateSimpleSubscriptAccess: Double by lazy { chanceOptions[exprChanceOptionsStartIndex] }
-    const val generateSimpleSubscriptAccess = 1.0
+    private val generateSimpleSubscriptAccessUserdef: Double by lazy { chanceOptions[exprChanceOptionsStartIndex] }
+    var generateSimpleSubscriptAccess = 0.0
     val generateParenthesesAroundExpression: Double by lazy { chanceOptions[exprChanceOptionsStartIndex + 1] }
     private val replaceMatrixBinaryOperandWithOtherTypeUserdef: Double by lazy {
         chanceOptions[exprChanceOptionsStartIndex + 2]
@@ -77,7 +73,7 @@ internal object CNFG {
 
     private var moduleChanceOptionsStartIndex = 0
     val declareConstWithLet: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex] }
-    val generateConst: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex] + 1 }
+    val generateConst: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex + 1] }
 
     private var exprOptionsStartIndex = 0
     val ensureComplexSubscriptAccessInBounds: Boolean by lazy { options[exprOptionsStartIndex] }
@@ -172,6 +168,9 @@ internal object CNFG {
     }
     private val statProbMap = HashMap<Stat, Double>()
 
+    var tintSafe = true
+    var nagaSafe = true
+
     private inline fun <reified T : Any> getParameterValues(
         propertiedClass: KClass<T>,
         classInstance: T
@@ -210,10 +209,6 @@ internal object CNFG {
             chanceOptions.add(it as Double)
         }
 
-        // handle omitTypeFromCompositeConstruction differently due to lack of support in naga for type-omitted
-        // composite consts
-        omitTypeFromCompositeConstruction = omitTypeFromCompositeConstructionUserdef
-
         val exprOptionsParameters = getParameterValues(ExprOptions::class, config.exprConfig.exprOptions)
         statOptionsStartIndex = exprOptionsStartIndex + exprOptionsParameters.size
         val statOptionsParameters = getParameterValues(StatOptions::class, config.statConfig.statOptions)
@@ -222,6 +217,11 @@ internal object CNFG {
         (exprOptionsParameters + statOptionsParameters + moduleOptionsParameters).forEach {
             options.add(it as Boolean)
         }
+
+        // disable/enable certain features that are unsupported in Tint or naga
+        omitTypeFromCompositeConstruction = if (nagaSafe) 0.0 else omitTypeFromCompositeConstructionUserdef
+        generateSimpleSubscriptAccess = if (nagaSafe) 1.0 else generateSimpleSubscriptAccessUserdef
+        useSuffixWithNumericLiteral = if (tintSafe) 1.0 else useSuffixWithNumericLiteralUserdef
 
         for (parameter in TypeProbabilities::class.memberProperties) {
             val parameterValue = parameter.get(config.typeConfig.typeProbabilities) as Double
@@ -257,7 +257,6 @@ internal object CNFG {
                 statementProbMap[statementParameterMap[parameter.name]!!] = parameterValue
             } else if (parameterValue is SubStatProbabilities) {
                 when (parameterValue) {
-                    // MUST FIND A WAY TO ABSTRACT THIS (AND PREVIOUS ONES)!!
                     is SubAssignmentStatProbabilities      -> {
                         for (subParameter in SubAssignmentStatProbabilities::class.memberProperties) {
                             val subParameterValue = subParameter.get(
@@ -272,10 +271,12 @@ internal object CNFG {
                                 subStatProbMap[subStatParameterMap[subParameter.name]!!] =
                                     subParameterValue / subStatSizeMap[parentStatement]!!
 
-                                // temporarily disable inc/dec due to nonfunctional implementation in Tint when
+                                // disable inc/dec due to nonfunctional implementation in Tint when
                                 // acting on subscript/convenience accesses
-                                if (subParameter.name == "increment" || subParameter.name == "decrement") {
-                                    subStatProbMap[subStatParameterMap[subParameter.name]!!] = 0.0
+                                if (tintSafe) {
+                                    if (subParameter.name == "increment" || subParameter.name == "decrement") {
+                                        subStatProbMap[subStatParameterMap[subParameter.name]!!] = 0.0
+                                    }
                                 }
                             }
                         }
@@ -332,9 +333,11 @@ internal object CNFG {
                                 val parentStatement = statementParameterMap[parameter.name.removeRange(0..3)]!!
                                 subStatProbMap[subStat] = subParameterValue / subStatSizeMap[parentStatement]!!
 
-                                // temporarily disable while loops due to lack of implementation in Tint
-                                if (subParameter.name == "while_loop") {
-                                    subStatProbMap[subStat] = 0.0
+                                // disable while loops due to lack of implementation in Tint
+                                if (tintSafe) {
+                                    if (subParameter.name == "while_loop") {
+                                        subStatProbMap[subStat] = 0.0
+                                    }
                                 }
                             }
                         }
@@ -407,6 +410,23 @@ internal object CNFG {
         val hashedProb = exprProbMap[expr]
         if (hashedProb != null) {
             return hashedProb
+        }
+
+        // disable certain exprs unsupported in Tint, naga or both
+
+        if (tintSafe || nagaSafe) {
+            if (expr == BuiltinIntegerExpr.SHIFT_LEFT || expr == BuiltinIntegerExpr.SHIFT_RIGHT || expr ==
+                BuiltinFloatExpr.QUANTIZE_TO_F16) {
+                exprProbMap[expr] = 0.0
+                return 0.0
+            }
+        }
+        if (nagaSafe) {
+            if (expr == BuiltinFloatExpr.LDEXP || expr == BuiltinFloatVectorExpr.REFRACT || expr ==
+                BuiltinIntegerExpr.COUNT_LEADING_ZEROS || expr == BuiltinIntegerExpr.COUNT_TRAILING_ZEROS) {
+                exprProbMap[expr] = 0.0
+                return 0.0
+            }
         }
 
         val exprTypes = ExprTypes.exprTypeOf(expr).types

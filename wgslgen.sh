@@ -5,13 +5,11 @@ SEED=
 OUTPUT_FILE=
 RANDOMIZE_OUTPUT_FILE=0
 CONFIG_FILE=
+TINT_SAFE=1
+NAGA_SAFE=1
 
 while [ $# -gt 0 ]; do
   case "${1}" in
-    -h|--help)
-    echo "help message"
-    exit 0
-    ;;
     -s|--seed)
     if [ ! "${2}" ]; then
       echo "Error: no seed was provided."
@@ -40,14 +38,6 @@ while [ $# -gt 0 ]; do
     shift
     shift
     ;;
-    -r|--enable-randomize-output-file)
-    RANDOMIZE_OUTPUT_FILE=1
-    shift
-    ;;
-    -R|--disable-randomize-output-file)
-    RANDOMIZE_OUTPUT_FILE=0
-    shift
-    ;;
     -c|--config-file)
     if [ ! "${2}" ]; then
       echo "Error: no config file was provided."
@@ -66,7 +56,31 @@ while [ $# -gt 0 ]; do
     shift
     shift
     ;;
+    -r|--enable-randomize-output-file)
+    RANDOMIZE_OUTPUT_FILE=1
+    shift
+    ;;
+    -R|--disable-randomize-output-file)
+    RANDOMIZE_OUTPUT_FILE=0
+    shift
+    ;;
+    --set-tint-safe)
+    TINT_SAFE=1
+    shift
+    ;;
+    --set-tint-not-safe)
+    TINT_SAFE=0
+    shift
+    ;;
+    --set-naga-safe)
+    NAGA_SAFE=1
+    shift
+    ;;
+    --set-naga-not-safe)
+    NAGA_SAFE=0
+    shift
   esac
 done
 
-./gradlew run --args="${RANDOMIZE_OUTPUT_FILE} conf:${CONFIG_FILE} out:${OUTPUT_FILE} seed:${SEED}" -quiet
+./gradlew run --args="${RANDOMIZE_OUTPUT_FILE} ${TINT_SAFE} ${NAGA_SAFE} conf:${CONFIG_FILE} out:${OUTPUT_FILE} \
+seed:${SEED}" -quiet
