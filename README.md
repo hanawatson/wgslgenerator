@@ -24,7 +24,7 @@ wgslgenerator can be used by running its associated shell script, `wgslgenerator
 | `-r`, `--randomize-output-file` | Enables randomization of created filenames by appending the random seed associated with the generated shader to it, e.g. `filename.wgsl` -> `filename12345.wgsl` | Disabled |
 | `--set-tint-(safe/not-safe)` | Enables/disables safety toggle for Tint, e.g. prevents generation of code known to be unsupported by Tint | Enabled |
 | `--set-naga-(safe/not-safe)` | Enables/disables safety toggle for naga, e.g. prevents generation of code known to be unsupported by naga | Enabled |
-| `--use-jar` | Enables usage of the standalone `wgslgenerator.jar` jar (see the following README section) | Disabled |
+| `j`, `--use-jar` | Enables usage of the standalone `wgslgenerator.jar` jar (see the following README section) | Disabled |
 
 Notes:
 
