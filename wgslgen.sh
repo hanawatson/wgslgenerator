@@ -7,6 +7,7 @@ RANDOMIZE_OUTPUT_FILE=0
 CONFIG_FILE=
 TINT_SAFE=1
 NAGA_SAFE=1
+USE_JAR=0
 
 while [ $# -gt 0 ]; do
   case "${1}" in
@@ -79,8 +80,18 @@ while [ $# -gt 0 ]; do
     --set-naga-not-safe)
     NAGA_SAFE=0
     shift
+    ;;
+    -u|--use-jar)
+    USE_JAR=1
+    shift
+    ;;
   esac
 done
 
-./gradlew run --args="${RANDOMIZE_OUTPUT_FILE} ${TINT_SAFE} ${NAGA_SAFE} conf:${CONFIG_FILE} out:${OUTPUT_FILE} \
-seed:${SEED}" -quiet
+if [ "${USE_JAR}" -eq 1 ]; then
+  java -jar wgslgenerator.jar "${RANDOMIZE_OUTPUT_FILE}" "${TINT_SAFE}" "${NAGA_SAFE}" \
+  "conf:${CONFIG_FILE}" "out:${OUTPUT_FILE}" "seed:${SEED}"
+else
+  ./gradlew run --args="${RANDOMIZE_OUTPUT_FILE} ${TINT_SAFE} ${NAGA_SAFE} \
+  conf:${CONFIG_FILE} out:${OUTPUT_FILE} seed:${SEED}" -quiet
+fi

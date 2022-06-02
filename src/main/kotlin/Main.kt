@@ -1,5 +1,6 @@
 package wgslsmith.wgslgenerator
 
+import com.sun.tools.javac.Main
 import wgslsmith.wgslgenerator.ast.Shader
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.ConfigParser
@@ -41,15 +42,11 @@ fun main(args: Array<String>) {
 
     val config = try {
         if (configFile == null) {
-            val defaultConfig = File("src/main/resources/defaultConfig.json")
-            if (!defaultConfig.isFile) {
-                System.err.println("Error: default config file could not be found in expected location.")
-                return
-            }
-            configFile = defaultConfig
+            val defaultConfig = Main::class.java.classLoader.getResourceAsStream("defaultConfig.json")
+            defaultConfig.reader().readText()
+        } else {
+            configFile.readText()
         }
-
-        configFile.readText()
     } catch (e: Exception) {
         System.err.println(
             "Error: failed to read config file. Internal error follows." +
