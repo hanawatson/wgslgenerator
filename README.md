@@ -10,20 +10,12 @@ respective WGSL compilers [Tint](https://dawn.googlesource.com/tint) and [naga](
 wgslgenerator can be used by running its associated shell script, `wgslgenerator.sh`. Several flags may be specified.
 | Flag | Meaning | Default value |
 | ---- | ------- | ------------- |
-| `-o <argument>`, `--output-file <argument>` | The path that the generated shader should be saved to - must end
-in `.wgsl` and be in an existing, writeable directory | None - if unspecified, the shader will be printed to standard
-output |
-| `-c <argument>`, `--config-file <argument>` | The path of the configuration JSON file that should be used (more
-details in the corresponding section below) | None - if unspecified, the default configuration will be used |
-| `-s <argument>`, `--seed <argument>` | Specifies a seed to provide to the random generator to aid reproduction of
-interesting shaders - must be a signed 64-bit integer | None - if unspecified, a random seed will be produced internally
-|
-| `-r`, `--randomize-output-file` | Enables randomization of created filenames by appending the random seed associated
-with the generated shader to it, e.g. `filename.wgsl` -> `filename12345.wgsl` | Disabled |
-| `--set-tint-(safe/not-safe)` | Enables/disables safety toggle for Tint, e.g. prevents generation of code known to
-be unsupported by Tint | Enabled |
-| `--set-naga-(safe/not-safe)` | Enables/disables safety toggle for naga, e.g. prevents generation of code known to
-be unsupported by naga | Enabled |
+| `-o <argument>`, `--output-file <argument>` | The path that the generated shader should be saved to - must end in `.wgsl` and be in an existing, writeable directory | None - if unspecified, the shader will be printed to standard output |
+| `-c <argument>`, `--config-file <argument>` | The path of the configuration JSON file that should be used (more details in the corresponding section below) | None - if unspecified, the default configuration will be used |
+| `-s <argument>`, `--seed <argument>` | Specifies a seed to provide to the random generator to aid reproduction of interesting shaders - must be a signed 64-bit integer | None - if unspecified, a random seed will be produced internally |
+| `-r`, `--randomize-output-file` | Enables randomization of created filenames by appending the random seed associated with the generated shader to it, e.g. `filename.wgsl` -> `filename12345.wgsl` | Disabled |
+| `--set-tint-(safe/not-safe)` | Enables/disables safety toggle for Tint, e.g. prevents generation of code known to be unsupported by Tint | Enabled |
+| `--set-naga-(safe/not-safe)` | Enables/disables safety toggle for naga, e.g. prevents generation of code known to be unsupported by naga | Enabled |
 
 Notes:
 
