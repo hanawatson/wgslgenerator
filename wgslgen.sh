@@ -81,9 +81,13 @@ while [ $# -gt 0 ]; do
     NAGA_SAFE=0
     shift
     ;;
-    -u|--use-jar)
+    -j|--use-jar)
     USE_JAR=1
     shift
+    ;;
+    *)
+    echo "Error: unrecognised argument provided."
+    exit 1
     ;;
   esac
 done
