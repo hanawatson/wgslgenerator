@@ -39,11 +39,3 @@ tasks.withType<KotlinCompile> {
 application {
     mainClass.set("wgslsmith.wgslgenerator.MainKt")
 }
-
-sourceSets {
-    main {
-        resources {
-            srcDirs("src/main/resources")
-        }
-    }
-}
