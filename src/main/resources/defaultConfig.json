@@ -113,11 +113,12 @@
   },
   "moduleConfig": {
     "moduleBounds": {
-      "max_consts": 5
+      "max_consts": 5,
+      "max_globals": 10
     },
     "moduleChanceOptions": {
-      "generate_const": 0.4,
-      "declare_const_with_let": 0.5
+      "generate_const": 0.6,
+      "generate_global": 0.9
     },
     "moduleOptions": {
       "use_output_buffer": true

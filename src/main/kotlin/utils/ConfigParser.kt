@@ -127,12 +127,12 @@ internal data class ModuleConfig(
 
 @Serializable
 internal data class ModuleBounds(
-    val max_consts: Int
+    val max_consts: Int, val max_globals: Int
 )
 
 @Serializable
 internal data class ModuleChanceOptions(
-    val generate_const: Double, val declare_const_with_let: Double
+    val generate_const: Double, val generate_global: Double
 )
 
 @Serializable

@@ -11,16 +11,20 @@ class Shader {
         val symbolTable = SymbolTable()
 
         var currentConsts = 0
-        var generateAnotherConst = true
 
-        while (generateAnotherConst && currentConsts < CNFG.maxConsts) {
+        while (PRNG.eval(CNFG.generateConst) && currentConsts < CNFG.maxConsts) {
             ModuleScope.generateNewConst(symbolTable)
             currentConsts++
-
-            generateAnotherConst = PRNG.eval(CNFG.generateConst)
         }
 
-        computeShaderStage = ComputeShaderStage(symbolTable)
+        var currentGlobals = 0
+
+        while (PRNG.eval(CNFG.generateGlobal) && currentGlobals < CNFG.maxGlobals) {
+            ModuleScope.generateNewGlobal(symbolTable)
+            currentGlobals++
+        }
+
+        computeShaderStage = ComputeShaderStage(symbolTable, ModuleScope.globals)
     }
 
     override fun toString(): String {
@@ -29,7 +33,7 @@ class Shader {
         if (CNFG.useOutputBuffer) {
             // insert fixed output buffer to hold checksum
             stringBuilder.append("struct outputBuffer {\n")
-            stringBuilder.append("\toutput: i32,\n")
+            stringBuilder.append("\toutput: u32,\n")
             stringBuilder.append("}\n\n")
             stringBuilder.append("@group(0) @binding(0)\n")
             stringBuilder.append("var<storage, read_write> checksum: outputBuffer;\n\n")

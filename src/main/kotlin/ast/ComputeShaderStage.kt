@@ -3,7 +3,7 @@ package wgslsmith.wgslgenerator.ast
 import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 
-internal class ComputeShaderStage(symbolTable: SymbolTable) {
+internal class ComputeShaderStage(symbolTable: SymbolTable, private val globals: ArrayList<Symbol>) {
     private var body: ScopeBody
 
     init {
@@ -17,6 +17,38 @@ internal class ComputeShaderStage(symbolTable: SymbolTable) {
             symbolTable.addNewNonWriteableSymbol(Symbol("num_workgroups", vector3UnIntType))
         }
         body = ScopeBody(symbolTable, ScopeState.NONE, 0)
+    }
+
+    private fun getChecksumComponents(global: Symbol): ArrayList<String> {
+        val checksumComponents = ArrayList<String>()
+
+        when (val type = global.type) {
+            is WGSLScalarType -> {
+                checksumComponents.add(global.name)
+            }
+            is WGSLVectorType -> {
+                for (i in 0 until type.length) {
+                    val component = Symbol("${global.name}[$i]", type.componentType)
+                    checksumComponents.addAll(getChecksumComponents(component))
+                }
+            }
+            is WGSLMatrixType -> {
+                val columnType = WGSLVectorType(type.componentType, type.length)
+                for (i in 0 until type.width) {
+                    val column = Symbol("${global.name}[$i]", columnType)
+                    checksumComponents.addAll(getChecksumComponents(column))
+                }
+            }
+            is WGSLArrayType  -> {
+                for (i in 0 until type.elementCountValue) {
+                    val element = Symbol("${global.name}[$i]", type.elementType)
+                    checksumComponents.addAll(getChecksumComponents(element))
+                }
+            }
+            else              -> throw Exception("Attempt to generate checksum for unknown type ${global.type}!")
+        }
+
+        return checksumComponents
     }
 
     override fun toString(): String {
@@ -38,14 +70,26 @@ internal class ComputeShaderStage(symbolTable: SymbolTable) {
         stringBuilder.append(") {\n")
 
         for (bodyLine in body.getTabbedLines()) {
-            stringBuilder.append(bodyLine + "\n")
+            stringBuilder.append("$bodyLine\n")
         }
 
         if (CNFG.useOutputBuffer) {
-            // calculate checksum of globals - currently unimplemented and simply returns as 0
-            stringBuilder.append("\tchecksum.output = 0;\n")
+            // calculate checksum of globals
+            val checksumComponents = ArrayList<String>()
+
+            for (global in globals) {
+                checksumComponents.addAll(getChecksumComponents(global))
+            }
+
+            stringBuilder.append("\n\t// Checksum calculation\n")
+            stringBuilder.append("\tchecksum.output = 0u;\n")
+
+            // use a sum method to calculate the checksum due to low cost and lack of WGSL hash functions
+            for (checksumComponent in checksumComponents) {
+                stringBuilder.append("\tchecksum.output += u32($checksumComponent);\n")
+            }
         }
-        
+
         stringBuilder.append("}")
         return stringBuilder.toString()
     }

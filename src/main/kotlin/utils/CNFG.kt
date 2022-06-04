@@ -32,6 +32,7 @@ internal object CNFG {
 
     private var moduleBoundsStartIndex = 0
     val maxConsts: Int by lazy { bounds[moduleBoundsStartIndex] }
+    val maxGlobals: Int by lazy { bounds[moduleBoundsStartIndex + 1] }
 
     private var typeChanceOptionsStartIndex = 0
     val constructVectorWithSingleValue: Double by lazy { chanceOptions[typeChanceOptionsStartIndex] }
@@ -72,8 +73,8 @@ internal object CNFG {
     val omitForLoopUpdate: Double by lazy { chanceOptions[statChanceOptionsStartIndex + 10] }
 
     private var moduleChanceOptionsStartIndex = 0
-    val declareConstWithLet: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex] }
-    val generateConst: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex + 1] }
+    val generateConst: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex] }
+    val generateGlobal: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex + 1] }
 
     private var exprOptionsStartIndex = 0
     val ensureComplexSubscriptAccessInBounds: Boolean by lazy { options[exprOptionsStartIndex] }

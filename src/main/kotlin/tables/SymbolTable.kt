@@ -57,6 +57,9 @@ internal class SymbolTable {
     fun declareNewNonWriteableSymbol(type: WGSLType) =
         addSymbol(Symbol(getNextNewSymbolName(), type), writeable = false, declared = true)
 
+    fun addNewWriteableSymbol(symbol: Symbol) =
+        addSymbol(symbol, writeable = true, declared = false)
+
     fun addNewNonWriteableSymbol(symbol: Symbol) =
         addSymbol(symbol, writeable = false, declared = false)
 
