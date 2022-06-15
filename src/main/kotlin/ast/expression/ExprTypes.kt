@@ -127,14 +127,24 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
     );
 
     companion object {
-        fun exprTypeOf(expr: Expr): ExprTypes {
+        private val funcReturnTypes = ArrayList<WGSLType>()
+
+        fun registerFuncReturnType(type: WGSLType) {
+            funcReturnTypes.add(type)
+        }
+
+        fun exprTypes(expr: Expr): ArrayList<WGSLType> {
+            if (expr is FunctionExpr) {
+                return funcReturnTypes
+            }
+
             for (exprType in ExprTypes.values()) {
                 if (exprType.exprs.contains(expr)) {
-                    return exprType
+                    return exprType.types
                 }
             }
 
-            throw Exception("Attempt to retrieve ExprTypes of unknown Expr $expr!")
+            throw Exception("Attempt to retrieve ExprTypes types of unknown Expr $expr!")
         }
 
         fun getExprs(returnType: WGSLType, consts: Boolean = false): ArrayList<Expr> {
@@ -154,6 +164,10 @@ internal enum class ExprTypes(val types: ArrayList<WGSLType>, val exprs: List<Ex
                         exprs.addAll(exprType.exprs)
                     }
                 }
+            }
+
+            if (returnType in funcReturnTypes) {
+                exprs.add(FunctionExpr.FUNCTION)
             }
 
             return exprs

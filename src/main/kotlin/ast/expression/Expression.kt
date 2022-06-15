@@ -7,6 +7,7 @@ import wgslsmith.wgslgenerator.utils.PRNG
 
 internal object ExpressionGenerator {
     private var isGeneratingConsts = false
+
     fun getUsefulParenthesizedExpressionString(expression: Expression): String {
         return if (CNFG.useUsefulExpressionParentheses && (expression is BinaryExpression
                     || expression is ComparisonExpression)) {
@@ -52,6 +53,7 @@ internal object ExpressionGenerator {
             is BuiltinExpr    -> BuiltinExpression(symbolTable, returnType, expr, depth)
             is ComparisonExpr -> ComparisonExpression(symbolTable, returnType, expr, depth)
             is DataExpr       -> DataExpression(symbolTable, returnType, expr, depth)
+            is FunctionExpr   -> FunctionExpression(symbolTable, returnType, expr, depth)
             is IdentityExpr   -> IdentityExpression(symbolTable, returnType, expr, depth)
             is UnaryExpr      -> UnaryExpression(symbolTable, returnType, expr, depth)
             else              -> throw Exception("Attempt to generate Expression with uncategorized Expr $expr!")

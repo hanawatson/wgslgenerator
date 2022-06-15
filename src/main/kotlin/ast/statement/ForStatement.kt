@@ -8,7 +8,9 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.CNFG.prob
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class ForStatement(symbolTable: SymbolTable, override var stat: Stat, depth: Int) : Statement {
+internal class ForStatement(
+    symbolTable: SymbolTable, override var stat: Stat, depth: Int, inFunction: Boolean
+) : Statement {
     private var initSymbol: Symbol? = null
     private var initStatement: Statement? = null
     private var condExpression: Expression? = null
@@ -44,7 +46,7 @@ internal class ForStatement(symbolTable: SymbolTable, override var stat: Stat, d
                 updateStatement = AssignmentStatement(forSymbolTable, updateStat, mustBeExistingSymbol = true)
             }
         }
-        forBody = ScopeBody(forSymbolTable, ScopeState.LOOP, depth + 1, inLoop = true)
+        forBody = ScopeBody(forSymbolTable, ScopeState.LOOP, depth + 1, inLoop = true, inFunction)
     }
 
     override fun getTabbedLines(): ArrayList<String> {

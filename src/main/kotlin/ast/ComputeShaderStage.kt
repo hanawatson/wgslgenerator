@@ -53,6 +53,8 @@ internal class ComputeShaderStage(symbolTable: SymbolTable, private val globals:
 
     override fun toString(): String {
         val stringBuilder = StringBuilder()
+
+        stringBuilder.append("// Main function\n")
         stringBuilder.append("@stage(compute) @workgroup_size(1)\n")
 
         // defined as "main" to ensure compatibility with wgslsmith harness

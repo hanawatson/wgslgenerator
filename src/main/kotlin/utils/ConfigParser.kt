@@ -61,7 +61,7 @@ internal data class ExprOptions(
 internal data class ExprProbabilities(
     val binary_operation: Double, val unary_operation: Double, val comparison: Double, val identity: Double,
     val type_conversion: Double, val builtin_function: Double, val data_pack_unpack: Double,
-    val swizzle_subscript_access: Double
+    val swizzle_subscript_access: Double, val user_defined_function: Double
 )
 
 @Serializable
@@ -72,9 +72,9 @@ internal data class StatConfig(
 
 @Serializable
 internal data class StatBounds(
-    val max_statement_nest_depth: Int, val max_statements_in_body: Int, val max_statements_in_if_body: Int,
-    val max_statements_in_loop_body: Int, val max_statements_in_switch_body: Int, val max_if_else_branches: Int,
-    val max_switch_cases: Int
+    val max_statement_nest_depth: Int, val max_statements_in_body: Int, val max_statements_in_function_body: Int,
+    val max_statements_in_if_body: Int, val max_statements_in_loop_body: Int, val max_statements_in_switch_body: Int,
+    val max_if_else_branches: Int, val max_switch_cases: Int
 )
 
 @Serializable
@@ -127,12 +127,13 @@ internal data class ModuleConfig(
 
 @Serializable
 internal data class ModuleBounds(
-    val max_consts: Int, val max_globals: Int
+    val max_consts: Int, val max_globals: Int, val max_functions: Int, val max_function_params: Int
 )
 
 @Serializable
 internal data class ModuleChanceOptions(
-    val generate_const: Double, val generate_global: Double
+    val generate_const: Double, val generate_global: Double, val generate_function: Double,
+    val generate_function_param: Double
 )
 
 @Serializable

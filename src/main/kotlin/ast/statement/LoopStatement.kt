@@ -8,7 +8,7 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class LoopStatement(
-    symbolTable: SymbolTable, override var stat: Stat, depth: Int, inLoop: Boolean
+    symbolTable: SymbolTable, override var stat: Stat, depth: Int, inLoop: Boolean, inFunction: Boolean
 ) : Statement {
     private var safeIteratorSymbol: Symbol? = null
     private val loopBody: ScopeBody
@@ -22,12 +22,11 @@ internal class LoopStatement(
         }
 
         val loopSymbolTable = symbolTable.copy()
-        loopBody = ScopeBody(loopSymbolTable, ScopeState.LOOP, depth + 1, inLoop = true)
+        loopBody = ScopeBody(loopSymbolTable, ScopeState.LOOP, depth + 1, inLoop = true, inFunction)
         if (PRNG.eval(CNFG.generateContinuingBlock)) {
             val continuingSymbolTable = if (CNFG.ensureContinueIsValid) symbolTable.copy() else loopSymbolTable
             continuingSymbolTable.newVarLabelIndex = loopSymbolTable.newVarLabelIndex
-            // in loop might be wrong immediately below ! not sure yet
-            ScopeBody(continuingSymbolTable, ScopeState.NONE, depth + 1, inLoop)
+            ScopeBody(continuingSymbolTable, ScopeState.NONE, depth + 1, inLoop, inFunction)
             if (PRNG.eval(CNFG.generateContinuingBreakIfStatement)) {
                 breakIfCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, scalarBoolType, 0)
             }

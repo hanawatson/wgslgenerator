@@ -166,8 +166,8 @@ internal enum class ConversionBitcastExpr(override val operator: String) : Conve
     BITCAST("bitcast");
 }
 
-internal enum class ConversionGeneralExpr(override val operator: String) : ConversionExpr {
-    CONVERSION("");
+internal enum class ConversionGeneralExpr(override val operator: String = "") : ConversionExpr {
+    CONVERSION;
 }
 
 internal interface DataExpr : Expr
@@ -178,6 +178,10 @@ internal enum class DataPackExpr(override val operator: String) : DataExpr {
 
 internal enum class DataUnpackExpr(override val operator: String) : DataExpr {
     UNPACK("unpack");
+}
+
+internal enum class FunctionExpr(override val operator: String = "") : Expr {
+    FUNCTION;
 }
 
 internal interface IdentityExpr : Expr

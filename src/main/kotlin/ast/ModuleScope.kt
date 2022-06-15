@@ -7,11 +7,13 @@ import wgslsmith.wgslgenerator.utils.CNFG.nagaSafe
 import wgslsmith.wgslgenerator.utils.CNFG.omitTypeFromCompositeConstruction
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal object ModuleScope {
+internal class ModuleScope() {
     private val consts = ArrayList<Pair<ConstSymbol, Expression>>()
     private var newConstLabelIndex = 0
     val globals = ArrayList<Symbol>()
     private var newGlobalLabelIndex = 0
+    private val functions = ArrayList<Function>()
+    private var newFunctionLabelIndex = 0
 
     fun generateNewConst(symbolTable: SymbolTable) {
         // avoid issues with the implementation of composite consts in naga
@@ -35,6 +37,14 @@ internal object ModuleScope {
         symbolTable.addNewWriteableSymbol(global)
     }
 
+    fun generateNewFunction(symbolTable: SymbolTable) {
+        // figure out some way of logging the function. for now just add and print and stuff
+        val function = Function(symbolTable, newFunctionLabelIndex)
+
+        newFunctionLabelIndex++
+        functions.add(function)
+    }
+
     override fun toString(): String {
         val stringBuilder = StringBuilder()
 
@@ -55,6 +65,13 @@ internal object ModuleScope {
         stringBuilder.append("// Module scope vars\n")
         for (global in globals) {
             stringBuilder.append("var<private> ${global}: ${global.type};\n")
+        }
+
+        stringBuilder.append("\n")
+
+        stringBuilder.append("// Functions\n")
+        for (function in functions) {
+            stringBuilder.append("$function\n")
         }
 
         return stringBuilder.toString()

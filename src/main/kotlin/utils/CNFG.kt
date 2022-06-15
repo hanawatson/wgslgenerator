@@ -1,6 +1,7 @@
 package wgslsmith.wgslgenerator.utils
 
 import wgslsmith.wgslgenerator.ast.*
+import wgslsmith.wgslgenerator.ast.Function
 import wgslsmith.wgslgenerator.ast.expression.*
 import wgslsmith.wgslgenerator.ast.statement.*
 import kotlin.reflect.KClass
@@ -25,14 +26,17 @@ internal object CNFG {
     val maxIfElseBranches: Int by lazy { bounds[statBoundsStartIndex] }
     val maxStatementNestDepth: Int by lazy { bounds[statBoundsStartIndex + 1] }
     val maxStatementsInBody: Int by lazy { bounds[statBoundsStartIndex + 2] }
-    val maxStatementsInIfBody: Int by lazy { bounds[statBoundsStartIndex + 3] }
-    val maxStatementsInLoopBody: Int by lazy { bounds[statBoundsStartIndex + 4] }
-    val maxStatementsInSwitchBody: Int by lazy { bounds[statBoundsStartIndex + 5] }
-    val maxSwitchCases: Int by lazy { bounds[statBoundsStartIndex + 6] }
+    val maxStatementsInFunctionBody: Int by lazy { bounds[statBoundsStartIndex + 3] }
+    val maxStatementsInIfBody: Int by lazy { bounds[statBoundsStartIndex + 4] }
+    val maxStatementsInLoopBody: Int by lazy { bounds[statBoundsStartIndex + 5] }
+    val maxStatementsInSwitchBody: Int by lazy { bounds[statBoundsStartIndex + 6] }
+    val maxSwitchCases: Int by lazy { bounds[statBoundsStartIndex + 7] }
 
     private var moduleBoundsStartIndex = 0
     val maxConsts: Int by lazy { bounds[moduleBoundsStartIndex] }
-    val maxGlobals: Int by lazy { bounds[moduleBoundsStartIndex + 1] }
+    val maxFunctionParams: Int by lazy { bounds[moduleBoundsStartIndex + 1] }
+    val maxFunctions: Int by lazy { bounds[moduleBoundsStartIndex + 2] }
+    val maxGlobals: Int by lazy { bounds[moduleBoundsStartIndex + 3] }
 
     private var typeChanceOptionsStartIndex = 0
     val constructVectorWithSingleValue: Double by lazy { chanceOptions[typeChanceOptionsStartIndex] }
@@ -74,7 +78,9 @@ internal object CNFG {
 
     private var moduleChanceOptionsStartIndex = 0
     val generateConst: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex] }
-    val generateGlobal: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex + 1] }
+    val generateFunction: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex + 1] }
+    val generateFunctionParam: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex + 2] }
+    val generateGlobal: Double by lazy { chanceOptions[moduleChanceOptionsStartIndex + 3] }
 
     private var exprOptionsStartIndex = 0
     val ensureComplexSubscriptAccessInBounds: Boolean by lazy { options[exprOptionsStartIndex] }
@@ -125,6 +131,7 @@ internal object CNFG {
             Pair("comparison", ComparisonExpression),
             Pair("type_conversion", ConversionExpression),
             Pair("data_pack_unpack", DataExpression),
+            Pair("user_defined_function", FunctionExpression),
             Pair("identity", IdentityExpression),
             Pair("unary_operation", UnaryExpression)
         )
@@ -168,6 +175,8 @@ internal object CNFG {
         )
     }
     private val statProbMap = HashMap<Stat, Double>()
+
+    private val functionProbMap = HashMap<Function, Double>()
 
     var tintSafe = true
     var nagaSafe = true
@@ -358,6 +367,7 @@ internal object CNFG {
             is WGSLType     -> typeProb(given)
             is Expr         -> exprProb(given)
             is Stat         -> statProb(given)
+            is Function     -> functionProb(given)
             is ArrayList<*> -> listProb(given)
             else            -> throw Exception("Attempt to retrieve probability for given of unknown type $given!")
         }
@@ -430,10 +440,16 @@ internal object CNFG {
             }
         }
 
-        val exprTypes = ExprTypes.exprTypeOf(expr).types
+        val exprTypes = ExprTypes.exprTypes(expr)
         if (exprTypes.size == 0 || prob(exprTypes) == 0.0) {
             exprProbMap[expr] = 0.0
             return 0.0
+        }
+
+        if (expr is FunctionExpr) {
+            val exprProb = expressionProbMap[FunctionExpression]!!
+            exprProbMap[expr] = exprProb
+            return exprProb
         }
 
         var probForAllExprTypes = 0.0
@@ -468,9 +484,7 @@ internal object CNFG {
                             is AccessExpr     -> prob(AccessExpression.argsForExprType(expr, concreteExprType))
                             is BinaryExpr     ->
                                 prob(ArrayList(BinaryExpression.argsForExprType(expr, concreteExprType).unzip().first))
-                            is BuiltinExpr    -> {
-                                prob(BuiltinExpression.argsForExprType(expr, concreteExprType))
-                            }
+                            is BuiltinExpr    -> prob(BuiltinExpression.argsForExprType(expr, concreteExprType))
                             is ComparisonExpr -> prob(ComparisonExpression.argsForExprType(expr, concreteExprType))
                             is ConversionExpr -> prob(ConversionExpression.argsForExprType(expr, concreteExprType))
                             is DataExpr       -> prob(DataExpression.argsForExprType(expr, concreteExprType))
@@ -534,6 +548,18 @@ internal object CNFG {
         val statProb = statementProbMap[parentStatement]!! * subStatProb
         statProbMap[stat] = statProb
         return statProb
+    }
+
+    private fun functionProb(function: Function): Double {
+        val hashedProb = functionProbMap[function]
+        if (hashedProb != null) {
+            return hashedProb
+        }
+
+        val functionProb =
+            prob(FunctionExpr.FUNCTION) * prob(function.params.map { it.type }) / FunctionRegistry.noOfFuncs
+        functionProbMap[function] = functionProb
+        return functionProb
     }
 
     private fun listProb(list: ArrayList<*>): Double {

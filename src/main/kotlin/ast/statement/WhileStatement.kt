@@ -7,7 +7,9 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class WhileStatement(symbolTable: SymbolTable, override var stat: Stat, depth: Int) : Statement {
+internal class WhileStatement(
+    symbolTable: SymbolTable, override var stat: Stat, depth: Int, inFunction: Boolean
+) : Statement {
     private var safeIteratorSymbol: Symbol? = null
     private var whileCond: Expression? = null
     private val whileBody: ScopeBody
@@ -19,7 +21,7 @@ internal class WhileStatement(symbolTable: SymbolTable, override var stat: Stat,
         } else {
             whileCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, scalarBoolType, 0)
         }
-        whileBody = ScopeBody(symbolTable.copy(), ScopeState.LOOP, depth + 1, inLoop = true)
+        whileBody = ScopeBody(symbolTable.copy(), ScopeState.LOOP, depth + 1, inLoop = true, inFunction)
     }
 
     override fun getTabbedLines(): ArrayList<String> {

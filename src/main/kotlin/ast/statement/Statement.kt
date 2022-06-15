@@ -6,16 +6,19 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal object StatementGenerator {
-    fun getStatement(symbolTable: SymbolTable, scopeState: ScopeState, depth: Int, inLoop: Boolean): Statement {
+    fun getStatement(
+        symbolTable: SymbolTable, scopeState: ScopeState, depth: Int, inLoop: Boolean, inFunction: Boolean
+    ): Statement {
         var stats = ArrayList<Stat>()
         stats.addAll(allStats)
 
         if (inLoop) {
-            stats.addAll(
-                arrayListOf(
-                    ContextSpecificStat.LOOP_BREAK, ContextSpecificStat.LOOP_CONTINUE, ContextSpecificStat.LOOP_RETURN
-                )
-            )
+            stats.addAll(arrayListOf(ContextSpecificStat.LOOP_BREAK, ContextSpecificStat.LOOP_CONTINUE))
+
+            // prevent unexpected return statements returning nothing from being used in functions
+            if (!inFunction) {
+                stats.add(ContextSpecificStat.LOOP_RETURN)
+            }
         }
 
         if (scopeState == ScopeState.SWITCH) {
@@ -29,7 +32,7 @@ internal object StatementGenerator {
         return when (val stat = PRNG.getRandomStatFrom(stats)) {
             is AssignmentStat      -> AssignmentStatement(symbolTable, stat)
             is ContextSpecificStat -> ContextSpecificStatement(stat)
-            is ControlFlowStat     -> ControlFlowStatement(symbolTable, stat, depth, inLoop)
+            is ControlFlowStat     -> ControlFlowStatement(symbolTable, stat, depth, inLoop, inFunction)
             else                   -> throw Exception("Attempt to generate Statement with uncategorized Stat $stat!")
         }
     }

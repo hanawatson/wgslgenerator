@@ -33,7 +33,7 @@ internal class AssignmentStatement(
             val possibleExprEquivalents = ArrayList<Expr>()
             possibleExprEquivalents.addAll(compoundAssignableExprs)
             for (expr in compoundAssignableExprs) {
-                if (type !in ExprTypes.exprTypeOf(expr).types.fold(ArrayList<WGSLType>()) { acc, accType ->
+                if (type !in ExprTypes.exprTypes(expr).fold(ArrayList<WGSLType>()) { acc, accType ->
                         ArrayList(acc + getConcreteTypes(accType))
                     }) {
                     possibleExprEquivalents.remove(expr)

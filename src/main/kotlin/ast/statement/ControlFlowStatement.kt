@@ -5,7 +5,7 @@ import wgslsmith.wgslgenerator.ast.statement.ControlFlowStat.*
 import wgslsmith.wgslgenerator.tables.SymbolTable
 
 internal class ControlFlowStatement(
-    symbolTable: SymbolTable, override var stat: Stat, depth: Int, inLoop: Boolean = false
+    symbolTable: SymbolTable, override var stat: Stat, depth: Int, inLoop: Boolean = false, inFunction: Boolean = false
 ) : Statement {
     private val statement: Statement
 
@@ -14,11 +14,11 @@ internal class ControlFlowStatement(
             throw Exception("Failure to validate ControlFlowStat during ControlFlowStatement generation!")
         }
         statement = when (stat as ControlFlowStat) {
-            FOR    -> ForStatement(symbolTable, stat, depth)
-            IF     -> IfStatement(symbolTable, stat, depth, inLoop)
-            LOOP   -> LoopStatement(symbolTable, stat, depth, inLoop)
-            SWITCH -> SwitchStatement(symbolTable, stat, depth, inLoop)
-            WHILE  -> WhileStatement(symbolTable, stat, depth)
+            FOR    -> ForStatement(symbolTable, stat, depth, inFunction)
+            IF     -> IfStatement(symbolTable, stat, depth, inLoop, inFunction)
+            LOOP   -> LoopStatement(symbolTable, stat, depth, inLoop, inFunction)
+            SWITCH -> SwitchStatement(symbolTable, stat, depth, inLoop, inFunction)
+            WHILE  -> WhileStatement(symbolTable, stat, depth, inFunction)
         }
     }
 

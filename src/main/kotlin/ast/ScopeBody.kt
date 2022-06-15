@@ -9,13 +9,17 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal enum class ScopeState {
+    FUNCTION,
     IF,
     LOOP,
     NONE,
     SWITCH;
 }
 
-internal class ScopeBody(symbolTable: SymbolTable, scopeState: ScopeState, depth: Int, var inLoop: Boolean = false) {
+internal class ScopeBody(
+    symbolTable: SymbolTable, scopeState: ScopeState, depth: Int,
+    var inLoop: Boolean = false, var inFunction: Boolean = false
+) {
     private val statements: ArrayList<Statement> = ArrayList()
 
     fun getLastStatement() = statements.last()
@@ -29,14 +33,15 @@ internal class ScopeBody(symbolTable: SymbolTable, scopeState: ScopeState, depth
         var currentStatements = 0
         var generateAnotherStatement = true
         val maxStatements = when (scopeState) {
-            ScopeState.IF     -> CNFG.maxStatementsInIfBody
-            ScopeState.LOOP   -> CNFG.maxStatementsInLoopBody
-            ScopeState.SWITCH -> CNFG.maxStatementsInSwitchBody
-            else              -> CNFG.maxStatementsInBody
+            ScopeState.FUNCTION -> CNFG.maxStatementsInFunctionBody
+            ScopeState.IF       -> CNFG.maxStatementsInIfBody
+            ScopeState.LOOP     -> CNFG.maxStatementsInLoopBody
+            ScopeState.SWITCH   -> CNFG.maxStatementsInSwitchBody
+            else                -> CNFG.maxStatementsInBody
         }
 
         while (generateAnotherStatement && currentStatements < maxStatements) {
-            val statement = StatementGenerator.getStatement(symbolTable, scopeState, depth, inLoop)
+            val statement = StatementGenerator.getStatement(symbolTable, scopeState, depth, inLoop, inFunction)
             statements.add(statement)
             currentStatements++
 

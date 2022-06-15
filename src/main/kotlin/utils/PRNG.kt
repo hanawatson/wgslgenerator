@@ -1,6 +1,7 @@
 package wgslsmith.wgslgenerator.utils
 
 import wgslsmith.wgslgenerator.ast.*
+import wgslsmith.wgslgenerator.ast.Function
 import wgslsmith.wgslgenerator.ast.expression.BinaryExpression
 import wgslsmith.wgslgenerator.ast.expression.Expr
 import wgslsmith.wgslgenerator.ast.expression.ExpressionGenerator
@@ -45,6 +46,12 @@ internal object PRNG {
         if (!initialized) {
             throw Exception("Pseudorandom generator must be initialized before use!")
         }
+
+        // Allow for zero-probability events
+        if (startDouble == endDouble) {
+            return startDouble
+        }
+
         return random.nextDouble(startDouble, endDouble)
     }
 
@@ -52,6 +59,7 @@ internal object PRNG {
         if (!initialized) {
             throw Exception("Pseudorandom generator must be initialized before use!")
         }
+
         // Kotlin has no "float in range" function, so we use its safe Double->Float cast function
         // we also need to add overflow/underflow checks to make certain the cast result is defined in WGSL
         val result = getRandomDoubleInRange(Float.MIN_VALUE.toDouble(), Float.MAX_VALUE.toDouble()).toFloat()
@@ -180,48 +188,7 @@ internal object PRNG {
     fun getRandomTypeListFrom(typeLists: ArrayList<ArrayList<WGSLType>>) = getRandomFrom(typeLists)
     fun getRandomExprFrom(exprs: ArrayList<Expr>) = getRandomFrom(exprs)
     fun getRandomStatFrom(stats: ArrayList<Stat>) = getRandomFrom(stats)
-
-    /*fun getRandomTypeListFrom(typeLists: ArrayList<ArrayList<WGSLType>>): ArrayList<WGSLType> {
-        val typeListProbabilities = ArrayList(typeLists.map { typeList -> prob(typeList) })
-
-        val totalProb = typeListProbabilities.fold(0.0) { acc, prob -> acc + prob }
-        val randomDouble = getRandomDoubleInRange(0.0, totalProb)
-        var intervalProb = 0.0
-        for (i in 0 until typeListProbabilities.size) {
-            intervalProb += typeListProbabilities[i]
-            if (randomDouble <= intervalProb) {
-                return typeLists[i]
-            }
-        }
-
-        return getRandomFrom(typeLists)
-    }*/
-
-    /*fun getRandomExprFrom(givenExprs: ArrayList<Expr>): Expr {
-        var expr: Expr? = null
-
-        val totalProb = givenExprs.fold(0.0) { acc, givenExpr -> acc + prob(givenExpr) }
-        val randomDouble = getRandomDoubleInRange(0.0, totalProb)
-        var intervalProb = 0.0
-        for (givenExpr in givenExprs) {
-            intervalProb += prob(givenExpr)
-            if (randomDouble <= intervalProb) {
-                expr = givenExpr
-                break
-            }
-        }
-
-        if (expr == null) {
-            throw Exception("Failure to select random Expr from $givenExprs!")
-        }
-
-        return expr
-    }*/
-
-    /*fun getRandomStatFrom(stats: ArrayList<Stat>): Stat {
-        val statIndex = getRandomIntInRange(0, stats.size)
-        return stats[statIndex]
-    }*/
+    fun getRandomFunctionFrom(functions: ArrayList<Function>) = getRandomFrom(functions)
 
     fun getNumberOfParentheses(): Int {
         var numberOfParentheses = 0

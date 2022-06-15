@@ -48,13 +48,15 @@
       "type_conversion": 1.0,
       "builtin_function": 1.0,
       "data_pack_unpack": 1.0,
-      "swizzle_subscript_access": 1.0
+      "swizzle_subscript_access": 1.0,
+      "user_defined_function": 1.0
     }
   },
   "statConfig": {
     "statBounds": {
       "max_statement_nest_depth": 10,
       "max_statements_in_body": 20,
+      "max_statements_in_function_body": 15,
       "max_statements_in_if_body": 3,
       "max_statements_in_loop_body": 5,
       "max_statements_in_switch_body": 3,
@@ -114,11 +116,15 @@
   "moduleConfig": {
     "moduleBounds": {
       "max_consts": 5,
-      "max_globals": 10
+      "max_globals": 10,
+      "max_functions": 10,
+      "max_function_params": 6
     },
     "moduleChanceOptions": {
       "generate_const": 0.6,
-      "generate_global": 0.9
+      "generate_global": 0.9,
+      "generate_function": 1.0,
+      "generate_function_param": 0.7
     },
     "moduleOptions": {
       "use_output_buffer": true

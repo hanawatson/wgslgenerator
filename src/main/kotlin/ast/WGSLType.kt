@@ -243,7 +243,7 @@ internal val arrayElementTypes: ArrayList<WGSLType> = ArrayList(
 
 internal val compoundAssignableTypes: ArrayList<WGSLType> by lazy {
     val types: ArrayList<WGSLType> = compoundAssignableExprs.fold(ArrayList()) { acc, expr ->
-        ArrayList(acc + ExprTypes.exprTypeOf(expr).types)
+        ArrayList(acc + ExprTypes.exprTypes(expr))
     }
     ArrayList(types.distinct())
 }

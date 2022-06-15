@@ -5,26 +5,32 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 class Shader {
-    private var computeShaderStage: ComputeShaderStage
+    private val moduleScope: ModuleScope
+    private val computeShaderStage: ComputeShaderStage
 
     init {
         val symbolTable = SymbolTable()
+        moduleScope = ModuleScope()
 
         var currentConsts = 0
-
         while (PRNG.eval(CNFG.generateConst) && currentConsts < CNFG.maxConsts) {
-            ModuleScope.generateNewConst(symbolTable)
+            moduleScope.generateNewConst(symbolTable)
             currentConsts++
         }
 
         var currentGlobals = 0
-
         while (PRNG.eval(CNFG.generateGlobal) && currentGlobals < CNFG.maxGlobals) {
-            ModuleScope.generateNewGlobal(symbolTable)
+            moduleScope.generateNewGlobal(symbolTable)
             currentGlobals++
         }
 
-        computeShaderStage = ComputeShaderStage(symbolTable, ModuleScope.globals)
+        var currentFunctions = 0
+        while (PRNG.eval(CNFG.generateFunction) && currentFunctions < CNFG.maxFunctions) {
+            moduleScope.generateNewFunction(symbolTable)
+            currentFunctions++
+        }
+
+        computeShaderStage = ComputeShaderStage(symbolTable, moduleScope.globals)
     }
 
     override fun toString(): String {
@@ -39,9 +45,7 @@ class Shader {
             stringBuilder.append("var<storage, read_write> checksum: outputBuffer;\n\n")
         }
 
-        stringBuilder.append("$ModuleScope\n")
-
-        // here we add globals/structs/functions. make sure to add extra lines between them
+        stringBuilder.append("$moduleScope\n")
 
         stringBuilder.append(computeShaderStage.toString())
         return stringBuilder.toString()

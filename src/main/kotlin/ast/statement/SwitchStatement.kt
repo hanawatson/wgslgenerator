@@ -8,8 +8,9 @@ import wgslsmith.wgslgenerator.tables.SymbolTable
 import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
-internal class SwitchStatement(symbolTable: SymbolTable, override var stat: Stat, depth: Int, inLoop: Boolean) :
-    Statement {
+internal class SwitchStatement(
+    symbolTable: SymbolTable, override var stat: Stat, depth: Int, inLoop: Boolean, inFunction: Boolean
+) : Statement {
     private val selectorType = PRNG.getRandomTypeFrom(usedTypes(stat))
     private val selector = ExpressionGenerator.getExpressionWithReturnType(symbolTable, selectorType, 0)
     private val switchCases = ArrayList<IdentityLiteralExpression?>()
@@ -32,7 +33,7 @@ internal class SwitchStatement(symbolTable: SymbolTable, override var stat: Stat
                 }
                 switchCases.add(switchCase)
             }
-            val switchBody = ScopeBody(symbolTable.copy(), ScopeState.SWITCH, depth + 1, inLoop)
+            val switchBody = ScopeBody(symbolTable.copy(), ScopeState.SWITCH, depth + 1, inLoop, inFunction)
             switchBodies.add(switchBody)
             currentSwitchCases++
         }

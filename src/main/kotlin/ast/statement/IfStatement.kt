@@ -11,7 +11,7 @@ import wgslsmith.wgslgenerator.utils.CNFG
 import wgslsmith.wgslgenerator.utils.PRNG
 
 internal class IfStatement(
-    symbolTable: SymbolTable, override var stat: Stat, depth: Int, inLoop: Boolean
+    symbolTable: SymbolTable, override var stat: Stat, depth: Int, inLoop: Boolean, inFunction: Boolean
 ) : Statement {
     private val ifCond: Expression
     private val ifBody: ScopeBody
@@ -23,17 +23,17 @@ internal class IfStatement(
     init {
         var condType = PRNG.getRandomTypeFrom(usedTypes(stat))
         ifCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, condType, 0)
-        ifBody = ScopeBody(symbolTable.copy(), ScopeState.IF, depth + 1, inLoop)
+        ifBody = ScopeBody(symbolTable.copy(), ScopeState.IF, depth + 1, inLoop, inFunction)
         while (PRNG.eval(CNFG.generateIfElseBranch) && currentIfElseBranches < CNFG.maxIfElseBranches) {
             condType = PRNG.getRandomTypeFrom(usedTypes(stat))
             val elseIfCond = ExpressionGenerator.getExpressionWithReturnType(symbolTable, condType, 0)
-            val elseIfBody = ScopeBody(symbolTable.copy(), ScopeState.IF, depth + 1, inLoop)
+            val elseIfBody = ScopeBody(symbolTable.copy(), ScopeState.IF, depth + 1, inLoop, inFunction)
             elseIfConds.add(elseIfCond)
             elseIfBodies.add(elseIfBody)
             currentIfElseBranches++
         }
         if (PRNG.eval(CNFG.generateElseBranch)) {
-            elseBody = ScopeBody(symbolTable.copy(), ScopeState.IF, depth + 1, inLoop)
+            elseBody = ScopeBody(symbolTable.copy(), ScopeState.IF, depth + 1, inLoop, inFunction)
         }
     }
 
