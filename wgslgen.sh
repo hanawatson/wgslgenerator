@@ -11,6 +11,29 @@ USE_JAR=0
 
 while [ $# -gt 0 ]; do
   case "${1}" in
+    -h|--help)
+    echo "
+    USAGE: ./wgslgen.sh [OPTIONS]
+
+    OPTIONS:
+        -h, --help                                              Print help message
+        -o, --output-shader <OUTPUT_SHADER>                     Path the generated shader should be written to
+                                                                [default: none - shader printed to stdout]
+        -c, --input-config <INPUT_CONFIG>                       Path of the config file that should be passed [default:
+                                                                none - internal default config used]
+        -s, --seed <SEED>                                       Seed (signed 64-bit integer) to provide to internal
+                                                                random generator [default: none - random seed generated]
+        -j, --use-jar                                           Use the standalone wgslgenerator jar, which must be
+                                                                located in the top-level wgslgenerator directory
+                                                                [default: disabled]
+        -(r/R), --(enable/disable)-randomize-output-file        Enable/disable output logging if any test fails
+                                                                [default: enabled]
+        -(t/T), --set-tint-(safe/not-safe)                      Enable/disable output logging if all tests pass
+                                                                [default: disabled]
+        -(n/N), --set-naga-(safe/not-safe)                      Enable/disable printing error output to the console if
+                                                                any tests fail [default: disabled]"
+    exit 0
+    ;;
     -s|--seed)
     if [ ! "${2}" ]; then
       echo "Error: no seed was provided."
@@ -21,7 +44,7 @@ while [ $# -gt 0 ]; do
     shift
     shift
     ;;
-    -o|--output)
+    -o|--output-shader)
     if [ ! "${2}" ]; then
       echo "Error: no output file path was provided."
       exit 1
@@ -39,7 +62,7 @@ while [ $# -gt 0 ]; do
     shift
     shift
     ;;
-    -c|--config-file)
+    -c|--input-config)
     if [ ! "${2}" ]; then
       echo "Error: no config file was provided."
       exit 1
@@ -65,19 +88,19 @@ while [ $# -gt 0 ]; do
     RANDOMIZE_OUTPUT_FILE=0
     shift
     ;;
-    --set-tint-safe)
+    -t|--set-tint-safe)
     TINT_SAFE=1
     shift
     ;;
-    --set-tint-not-safe)
+    -T|--set-tint-not-safe)
     TINT_SAFE=0
     shift
     ;;
-    --set-naga-safe)
+    -n|--set-naga-safe)
     NAGA_SAFE=1
     shift
     ;;
-    --set-naga-not-safe)
+    -N|--set-naga-not-safe)
     NAGA_SAFE=0
     shift
     ;;
