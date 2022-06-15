@@ -201,7 +201,18 @@ internal object CNFG {
         moduleBoundsStartIndex = statBoundsStartIndex + statBoundsParameters.size
         val moduleBoundsParameters = getParameterValues(ModuleBounds::class, config.moduleConfig.moduleBounds)
         (typeBoundsParameters + exprBoundsParameters + statBoundsParameters + moduleBoundsParameters).forEach {
-            bounds.add(it as Int)
+            try {
+                bounds.add(it as Int)
+            } catch (e: Exception) {
+                throw Exception(
+                    "Invalid bound provided in config file - must be positive 64-bit signed integer!"
+                )
+            }
+        }
+        for (bound in bounds) {
+            if (bound < 0) {
+                throw Exception("Negative bound provided in config file - must be positive 64-bit signed integer!")
+            }
         }
 
         val typeChanceOptionsParameters =
@@ -216,7 +227,20 @@ internal object CNFG {
         val moduleChanceOptionsParameters =
             getParameterValues(ModuleChanceOptions::class, config.moduleConfig.moduleChanceOptions)
         (typeChanceOptionsParameters + exprChanceOptionsParameters + statChanceOptionsParameters + moduleChanceOptionsParameters).forEach {
-            chanceOptions.add(it as Double)
+            try {
+                chanceOptions.add(it as Double)
+            } catch (e: Exception) {
+                throw Exception(
+                    "Invalid chance option provided in config file - must be positive 64-bit floating point number!"
+                )
+            }
+        }
+        for (chanceOption in chanceOptions) {
+            if (chanceOption < 0) {
+                throw Exception(
+                    "Negative chance option provided in config file - must be positive 64-bit floating point number!"
+                )
+            }
         }
 
         val exprOptionsParameters = getParameterValues(ExprOptions::class, config.exprConfig.exprOptions)
@@ -225,7 +249,13 @@ internal object CNFG {
         moduleOptionsStartIndex = statOptionsStartIndex + statOptionsParameters.size
         val moduleOptionsParameters = getParameterValues(ModuleOptions::class, config.moduleConfig.moduleOptions)
         (exprOptionsParameters + statOptionsParameters + moduleOptionsParameters).forEach {
-            options.add(it as Boolean)
+            try {
+                options.add(it as Boolean)
+            } catch (e: Exception) {
+                throw Exception(
+                    "Invalid option provided in config file - must be Boolean value!"
+                )
+            }
         }
 
         // disable/enable certain features that are unsupported in Tint or naga

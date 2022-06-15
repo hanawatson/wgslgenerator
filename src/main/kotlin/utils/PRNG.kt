@@ -63,7 +63,7 @@ internal object PRNG {
         // Kotlin has no "float in range" function, so we use its safe Double->Float cast function
         // we also need to add overflow/underflow checks to make certain the cast result is defined in WGSL
         val result = getRandomDoubleInRange(Float.MIN_VALUE.toDouble(), Float.MAX_VALUE.toDouble()).toFloat()
-        if (result == Float.POSITIVE_INFINITY || result.isNaN()) {
+        if (result >= Float.POSITIVE_INFINITY || result.isNaN()) {
             return 0f
         }
         return result
