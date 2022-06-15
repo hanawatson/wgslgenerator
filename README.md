@@ -18,20 +18,15 @@ $ git clone https://github.com/hanawatson/wgslgenerator
 wgslgenerator can be used by running its associated shell script, `wgslgenerator.sh`. Several flags may be specified.
 | Flag | Meaning | Default value |
 | ---- | ------- | ------------- |
-| `-o <argument>`, `--output-file <argument>` | The path that the generated shader should be saved to - must end in `.wgsl` and be in an existing, writeable directory | None - if unspecified, the shader will be printed to standard output |
-| `-c <argument>`, `--config-file <argument>` | The path of the configuration JSON file that should be used (more details in the corresponding section below) | None - if unspecified, the default configuration will be used |
-| `-s <argument>`, `--seed <argument>` | Specifies a seed to provide to the random generator to aid reproduction of interesting shaders - must be a signed 64-bit integer | None - if unspecified, a random seed will be produced internally |
-| `-r`, `--randomize-output-file` | Enables randomization of created filenames by appending the random seed associated with the generated shader to it, e.g. `filename.wgsl` -> `filename12345.wgsl` | Disabled |
-| `--set-tint-(safe/not-safe)` | Enables/disables safety toggle for Tint, e.g. prevents generation of code known to be unsupported by Tint | Enabled |
-| `--set-naga-(safe/not-safe)` | Enables/disables safety toggle for naga, e.g. prevents generation of code known to be unsupported by naga | Enabled |
-| `j`, `--use-jar` | Enables usage of the standalone `wgslgenerator.jar` jar (see the following README section) | Disabled |
+| `-o <argument>`, `--output-shader <argument>` | The path that the generated shader should be output to (must end in `.wgsl` and be in an existing, writeable directory) | None - if unspecified, the shader will be printed to standard output |
+| `-c <argument>`, `--input-config <argument>` | The path of the configuration JSON file that should be passed to the generator (see the corresponding section below) | None - if unspecified, the default configuration will be used |
+| `-s <argument>`, `--seed <argument>` | The seed to provide to the internal random generator (must be a signed 64-bit integer) | None - if unspecified, a random seed will be produced internally |
+| `j`, `--use-jar` | Enable usage of the standalone `wgslgenerator.jar` jar (see the following README section), which must be located in the top-level wgslgenerator directory | Disabled |
+| `-(r/R)`, `--(enable/disable)-randomize-output-file` | Enable/disable randomization of filenames by appending the random seed associated with the generated shader (e.g. `filename.wgsl` -> `filename12345.wgsl`) | Disabled |
+| `-(t/T)`, `--set-tint-(safe/not-safe)` | Enable/disable safety toggle for Tint (prevents generation of code known to be unsupported by Tint) | Enabled |
+| `-(n/N)`, `--set-naga-(safe/not-safe)` | Enable/disable safety toggle for naga (prevents generation of code known to be unsupported by naga) | Enabled |
 
-Notes:
-
-- if no output filepath is provided but the `-r` flag is enabled, the output will be a file consisting of just the
-  associated seed and the `.wgsl` extension.
-- the random seed for a shader is recorded as a comment at the start of any outputted WGSL code, regardless of if
-  the `-r` flag has been enabled or not.
+Notes: if no output filepath is provided but the `-r` flag is enabled, the filename will be `<seed>.wgsl`. Additionally, the seed is recorded as a comment at the start of the outputted shader, regardless of any `-(r/R)` flag.
   
 ## Standalone jar
 
